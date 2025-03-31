@@ -69,35 +69,80 @@ body {
 /* Login Div */
 .login-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(3, auto); /* Colunas se ajustam ao conteúdo */
     gap: 1.5rem;
-    background: rgba(255,255,255,0.1);
-    padding: 2rem;
-    border-radius: 10px;
+    background: rgba(255,255,255,0.05);
+    padding: 1.5rem;
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(228, 188, 79, 0.3);
+    width: fit-content; /* Container se ajusta ao conteúdo interno */
+    margin: 2rem auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .input-container {
-    padding: 1rem;
+    position: relative;
+    /* Aumenta a altura do container */
+    height: 60px; /* ou o valor que preferir */
+}
+
+.input-container input {
+    width: 350px; /* Largura fixa aumentada */
+    padding: 12px 15px; /* Reduz o padding vertical */
     background: transparent;
     border: 2px solid var(--gold-accent);
     color: white;
-    border-radius: 5px;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    /* Alinha o texto no topo */
+    height: auto; /* Remove altura fixa */
+    min-height: 50px; /* Altura mínima */
+    vertical-align: top; /* Alinhamento superior */
+    box-sizing: border-box;
 }
 
-.button[type="submit"]{
+
+
+/* Ajusta a posição dos ícones para acompanhar o novo tamanho */
+.input-container::before {
+    content: '';
+    position: absolute;
+    left: 30px;
+    top: 15px;
+    transform: none;
+    width: 24px; /* Ícone ligeiramente maior */
+    height: 24px;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.input-container input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+    top: 0;
+}
+
+.button[type="submit"] {
+    grid-column: span 3;
     background: var(--gold-accent);
     color: var(--dark-bg);
-    padding: 1rem 2rem;
+    padding: 1.2rem;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 1.1rem;
-    transition: transform 0.3s;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    font-weight: bold;
+    letter-spacing: 1px;
 }
 
 .button[type="submit"]:hover {
     transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(228, 188, 79, 0.4);
 }
+
 
 /* Footer */
 .footer {
