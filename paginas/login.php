@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FelixBus - Viagens Premium</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="login.css">
 </head>
 <body>
     <!-- Navigation -->
     <nav class="navbar">
         <div class="logo">
-            <a href="index.php">
+            <a href="login.php">
                 <img src="../assets/img/logo.png" alt="FelixBus Logo">
             </a>
         </div>
