@@ -11,7 +11,7 @@
     <nav class="navbar">
         <div class="logo">
             <a href="index.php">
-                <img src="../assets/img/logo.png" alt="FelixBus Logo">
+                <img src="logo.png" alt="FelixBus Logo">
             </a>
         </div>
         <div class="nav-links">
