@@ -22,31 +22,6 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-content">
-            <h1 class="hero-title">Viagens de Luxo Reimaginadas</h1>
-            <p class="hero-subtitle">Conforto excepcional a preços acessíveis</p>
-            
-            <!-- Search Form -->
-            <form class="search-form">
-                <input type="text" class="form-input" placeholder="Origem">
-                <input type="text" class="form-input" placeholder="Destino">
-                <input type="date" class="form-input">
-                <button class="btn-primary">Pesquisar Viagens</button>
-            </form>
-        </div>
-    </section>
-
-    <!-- Main Content -->
-    <main class="container">
-        <!-- Alerts Section -->
-        <div class="alert-card">
-            <h3>Promoção Especial!</h3>
-            <p>25% de desconto em viagens noturnas este mês</p>
-        </div>
-    </main>
-
     <!-- Footer -->
     <footer class="footer">
         <div class="social-links">
