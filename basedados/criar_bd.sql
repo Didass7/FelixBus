@@ -94,3 +94,15 @@ CREATE TABLE bilhetes (
     FOREIGN KEY (id_horario) REFERENCES horarios(id_horario),
     FOREIGN KEY (id_utilizador) REFERENCES utilizadores(id_utilizador)
 );
+
+--Inserir utilizadores
+INSERT INTO utilizadores (nome_utilizador, hash_password, email, nome_completo, telefone, morada, perfil) VALUES
+('cliente', md5('cliente'), 'cliente@gmail.com', 'cliente', '999888777', 'Rua 1', 'cliente')
+
+INSERT INTO utilizadores 
+(nome_utilizador, hash_password, email, nome_completo, telefone, morada, perfil) VALUES
+ ('funcionario', MD5('funcionario'), 'funcionario@gmail.com', 'Funcionário', '999888777', 'Rua 2', 'funcionário');
+
+ INSERT INTO utilizadores 
+(nome_utilizador, hash_password, email, nome_completo, telefone, morada, perfil) VALUES 
+('admin', MD5('admin'), 'admin@gmail.com', 'Administrador', '933333333', 'Rua 3', 'administrador');
