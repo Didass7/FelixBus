@@ -37,16 +37,6 @@
             </form>
         </div>
     </section>
-
-    <!-- Main Content -->
-    <main class="container">
-        <!-- Alerts Section -->
-        <div class="alert-card">
-            <h3>Promoção Especial!</h3>
-            <p>25% de desconto em viagens noturnas este mês</p>
-        </div>
-    </main>
-
     <!-- Footer -->
     <footer class="footer">
         <div class="social-links">
