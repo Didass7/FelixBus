@@ -1,9 +1,64 @@
-<!DOCTYPE html>
+<?php
+session_start();
+require_once '../basedados/basedados.h'; // Ajuste o caminho conforme sua estrutura
+
+
+// Processar formulário de login
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = trim($_POST['username']);
+    $password = $_POST['password'];
+
+    // Validar inputs
+    if (empty($username) || empty($password)) {
+        $error = "Por favor, preencha todos os campos!";
+    } else {
+        $conn = conectarBD();
+        
+        // Consulta segura com prepared statements
+        $sql = "SELECT * FROM utilizadores WHERE nome_utilizador = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "s", $username);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        
+        if ($user = mysqli_fetch_assoc($result)) {
+            // Verificar password MD5 (ajuste conforme sua implementação)
+            if (md5($password) === $user['hash_password']) {
+                // Autenticação bem-sucedida
+                $_SESSION['id_utilizador'] = $user['id_utilizador'];
+                $_SESSION['nome_utilizador'] = $user['nome_utilizador'];
+                $_SESSION['perfil'] = $user['perfil'];
+                
+                // Redirecionar conforme perfil
+                switch ($user['perfil']) {
+                    case 'administrador':
+                        header("Location: admin.php");
+                        break;
+                    case 'funcionário':
+                        header("Location: funcionario.php");
+                        break;
+                    default:
+                        header("Location: index.php");
+                }
+                exit();
+            } else {
+                $error = "Credenciais inválidas!";
+            }
+        } else {
+            $error = "Utilizador não encontrado!";
+        }
+        
+        mysqli_close($conn);
+    }
+}
+?>
+
+
 <html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FelixBus - Viagens Premium</title>
+    <title>FelixBus - Login</title>
     <link rel="stylesheet" href="login.css">
 </head>
 <body>
@@ -26,19 +81,26 @@
         <div class="hero-content">
             
             <div class="login-container">
-                <form action="login.php" method="POST">
+                <?php if (isset($error)): ?>
+                    <div class="error-message"><?= $error ?></div>
+                <?php endif; ?>
 
+                <form method="POST">
+                    <!-- Campos do formulário mantêm-se iguais -->
                     <div class="email">
                         <div class="input-container">
                             <i class="fa fa-user" aria-hidden="true"></i>
-                            <input type="text" id="username" name="username" placeholder="Insira o nome de utilizador" required>
+                            <input type="text" id="username" name="username" 
+                                   placeholder="Insira o nome de utilizador" required
+                                   value="<?= isset($_POST['username']) ? htmlspecialchars($_POST['username']) : '' ?>">
                         </div>
                     </div>
 
                     <div class="password">
                         <div class="input-container">
                             <i class="fa fa-lock" aria-hidden="true"></i>
-                            <input type="password" id="password" name="password" placeholder="Insira a password" required>
+                            <input type="password" id="password" name="password" 
+                                   placeholder="Insira a password" required>
                         </div>
                     </div>
 

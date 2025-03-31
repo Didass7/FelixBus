@@ -17,7 +17,7 @@
         <div class="nav-links">
             <a href="#rotas" class="nav-link">Rotas</a>
             <a href="#horarios" class="nav-link">Horários</a>
-            <a href="#login" class="nav-link">login</a>
+            <a href="login.php" class="nav-link">login</a>
             
         </div>
     </nav>
