@@ -1,6 +1,5 @@
 <?php
 // basedados/basedados.h
-function conectarBD() {
     $host = 'localhost';
     $user = 'root';       // Utilizador da BD
     $password = '';       // Password (se aplicável)
@@ -14,5 +13,4 @@ function conectarBD() {
 
     mysqli_set_charset($conn, "utf8mb4");
     return $conn;
-}
 ?>
