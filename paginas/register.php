@@ -1,11 +1,11 @@
 <?php
 session_start();
+require_once '../basedados/basedados.h'; // Inclui o arquivo diretamente
+
 $error = isset($_SESSION['register_error']) ? $_SESSION['register_error'] : null;
 $old_email = isset($_SESSION['old_email']) ? $_SESSION['old_email'] : '';
 unset($_SESSION['register_error']);
 unset($_SESSION['old_email']);
-
-require_once '../basedados/basedados.h'; // Inclui o arquivo diretamente
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email']);
@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = mysqli_stmt_execute($stmt_insert);
             
             if ($result) {
-                // Registro bem-sucedido
+                echo "Registro bem-sucedido!";
                 $user_id = mysqli_insert_id($conn);
                 
                 $_SESSION['id_utilizador'] = $user_id;
@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header("Location: index.php");
                 exit();
             } else {
-                $error = "Erro ao registrar. Por favor, tente novamente.";
+                die("Erro ao registrar: " . mysqli_error($conn));
             }
         }
         
@@ -117,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php endif; ?>
 
                     <h2>Registo</h2>
-                    <form method="POST" action="processar_registo.php">
+                    <form method="POST" action="register.php">
                         <!-- Campo de Email -->
                         <div class="input-container">
                             <i class="fa fa-envelope"></i>
