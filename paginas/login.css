@@ -58,76 +58,84 @@ body {
     background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url(background.jpg) center/cover;
     display: flex;
     align-items: center;
-    padding: 0 10%;
+    justify-content: center;
+    padding: 2rem;
+    min-height: 100vh;
 }
 
-.hero-title {
-    font-size: 3rem;
-    max-width: 600px;
+.hero-content {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-/* Login Div */
+/* Login Container - Atualizado para combinar com o register */
 .login-container {
-    display: grid;
-    grid-template-columns: repeat(3, auto); /* Colunas se ajustam ao conteúdo */
-    gap: 1.5rem;
-    background: rgba(255,255,255,0.05);
-    padding: 1.5rem;
-    border-radius: 12px;
-    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2.5rem;
+    border-radius: 16px;
+    backdrop-filter: blur(12px);
     border: 1px solid rgba(228, 188, 79, 0.3);
-    width: fit-content; /* Container se ajusta ao conteúdo interno */
+    width: 100%;
+    max-width: 450px;
     margin: 2rem auto;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
+.login-container h2 {
+    color: var(--gold-accent);
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+/* Input Containers */
 .input-container {
     position: relative;
-    /* Aumenta a altura do container */
-    height: 60px; /* ou o valor que preferir */
+    margin-bottom: 1.5rem;
+}
+
+.input-container i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(228, 188, 79, 0.8);
+    font-size: 1.2rem;
 }
 
 .input-container input {
-    width: 350px; /* Largura fixa aumentada */
-    padding: 12px 15px; /* Reduz o padding vertical */
-    background: transparent;
-    border: 2px solid var(--gold-accent);
+    width: 100%;
+    padding: 15px 15px 15px 45px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(228, 188, 79, 0.3);
     color: white;
     border-radius: 8px;
     font-size: 1rem;
     transition: all 0.3s ease;
-    /* Alinha o texto no topo */
-    height: auto; /* Remove altura fixa */
-    min-height: 50px; /* Altura mínima */
-    vertical-align: top; /* Alinhamento superior */
-    box-sizing: border-box;
 }
 
-
-
-/* Ajusta a posição dos ícones para acompanhar o novo tamanho */
-.input-container::before {
-    content: '';
-    position: absolute;
-    left: 30px;
-    top: 15px;
-    transform: none;
-    width: 24px; /* Ícone ligeiramente maior */
-    height: 24px;
-    background-size: contain;
-    background-repeat: no-repeat;
+.input-container input:focus {
+    outline: none;
+    border-color: var(--gold-accent);
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .input-container input::placeholder {
-    color: rgba(255, 255, 255, 0.7);
-    top: 0;
+    color: rgba(255, 255, 255, 0.6);
 }
 
-.button[type="submit"] {
-    grid-column: span 3;
+/* Submit Button */
+button[type="submit"] {
+    width: 100%;
     background: var(--gold-accent);
-    color: var(--dark-bg);
-    padding: 1.2rem;
+    color: #1a1a1a;
+    padding: 1rem;
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -136,13 +144,60 @@ body {
     text-transform: uppercase;
     font-weight: bold;
     letter-spacing: 1px;
+    margin-top: 1rem;
 }
 
-.button[type="submit"]:hover {
+button[type="submit"]:hover {
     transform: translateY(-3px);
     box-shadow: 0 5px 15px rgba(228, 188, 79, 0.4);
+    background: #e4bc4f;
 }
 
+/* Error Message */
+.error-message {
+    color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.1);
+    padding: 0.8rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+/* Register Link */
+.register-link {
+    margin-top: 1.5rem;
+    text-align: center;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.register-link a {
+    color: var(--gold-accent);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.register-link a:hover {
+    text-decoration: underline;
+    color: #e4bc4f;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .hero {
+        padding: 1rem;
+    }
+    
+    .login-container {
+        padding: 1.5rem;
+        margin: 1rem auto;
+    }
+    
+    .input-container input {
+        padding: 12px 12px 12px 40px;
+    }
+}
 
 /* Footer */
 .footer {
