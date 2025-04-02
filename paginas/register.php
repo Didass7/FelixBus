@@ -5,8 +5,7 @@ $old_email = isset($_SESSION['old_email']) ? $_SESSION['old_email'] : '';
 unset($_SESSION['register_error']);
 unset($_SESSION['old_email']);
 
-
-require_once '../basedados/basedados.h';
+require_once '../basedados/basedados.h'; // Inclui o arquivo diretamente
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email']);
@@ -15,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Validação
     $error = null;
-    
+
     if (empty($email)) {
         $error = "Por favor, insira um email!";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -29,7 +28,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!$error) {
-        $conn = conectarBD();
+        // Verificar se a conexão com o banco de dados foi estabelecida
+        if (!$conn) {
+            die("Erro ao conectar ao banco de dados: " . mysqli_connect_error());
+        }
         
         // Verificar se email já existe
         $sql_check = "SELECT id_utilizador FROM utilizadores WHERE email = ?";
