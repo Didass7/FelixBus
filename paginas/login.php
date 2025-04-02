@@ -1,7 +1,6 @@
 <?php
 session_start();
-require_once '../basedados/basedados.h'; // Ajuste o caminho conforme sua estrutura
-
+require_once '../basedados/basedados.h'; // Inclui o arquivo diretamente
 
 // Processar formulário de login
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -12,15 +11,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($username) || empty($password)) {
         $error = "Por favor, preencha todos os campos!";
     } else {
-        $conn = conectarBD();
-        
+        // A variável $conn já está disponível após o include
+        if (!$conn) {
+            die("Erro ao conectar ao banco de dados: " . mysqli_connect_error());
+        }
+
         // Consulta segura com prepared statements
         $sql = "SELECT * FROM utilizadores WHERE nome_utilizador = ?";
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, "s", $username);
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
-        
+
         if ($user = mysqli_fetch_assoc($result)) {
             // Verificar password MD5 (ajuste conforme sua implementação)
             if (md5($password) === $user['hash_password']) {
@@ -28,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['id_utilizador'] = $user['id_utilizador'];
                 $_SESSION['nome_utilizador'] = $user['nome_utilizador'];
                 $_SESSION['perfil'] = $user['perfil'];
-                
+
                 // Redirecionar conforme perfil
                 switch ($user['perfil']) {
                     case 'administrador':
@@ -47,12 +49,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $error = "Utilizador não encontrado!";
         }
-        
+
         mysqli_close($conn);
     }
 }
 ?>
-
 
 <html lang="pt-PT">
 <head>
@@ -79,14 +80,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
-            
             <div class="login-container">
                 <?php if (isset($error)): ?>
-                    <div class="error-message"><?= $error ?></div>
+                    <div class="error-message"><?= htmlspecialchars($error) ?></div>
                 <?php endif; ?>
 
                 <form method="POST">
-                    <!-- Campos do formulário mantêm-se iguais -->
                     <div class="email">
                         <div class="input-container">
                             <i class="fa fa-user" aria-hidden="true"></i>
@@ -105,16 +104,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <button type="submit">Login</button>
-
                 </form>
             </div>
         </div>
     </section>
 
-
-
-
-    <!-- Novo Footer -->
+    <!-- Footer -->
     <footer class="footer">
         <div class="social-links">
             <a href="#" class="social-link">FB</a>
@@ -130,6 +125,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         <p>&copy; 2024 FelixBus. Todos os direitos reservados.</p>
     </footer>
-
 </body>
 </html>

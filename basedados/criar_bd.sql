@@ -97,7 +97,7 @@ CREATE TABLE bilhetes (
 
 --Inserir utilizadores
 INSERT INTO utilizadores (nome_utilizador, hash_password, email, nome_completo, telefone, morada, perfil) VALUES
-('cliente', md5('cliente'), 'cliente@gmail.com', 'cliente', '999888777', 'Rua 1', 'cliente')
+('cliente', md5('cliente'), 'cliente@gmail.com', 'cliente', '999888777', 'Rua 1', 'cliente');
 
 INSERT INTO utilizadores 
 (nome_utilizador, hash_password, email, nome_completo, telefone, morada, perfil) VALUES
