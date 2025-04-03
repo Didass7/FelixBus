@@ -35,10 +35,10 @@ require_once '../basedados/basedados.h'; // Inclui o arquivo diretamente
             <p class="hero-subtitle">Conforto excepcional a preços acessíveis</p>
             <p class="login-subtitle">Crie uma conta ou faça Login para usufruir dos nossos serviços!</p>
             
-            <!-- Search Form -->
+            <!-- Login Form -->
             <form class="login-button">
-                <button class="btn-primary">Login</button>
-                <button class="btn-secondary">Registar</button>
+                <button class="btn-primary" type="button" onclick="window.location.href='login.php'">Login</button>
+                <button class="btn-secondary" type="button" onclick="window.location.href='register.php'">Registar</button>
             </form>
         </div>
     </section>
