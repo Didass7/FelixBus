@@ -1,10 +1,15 @@
+<?php
+session_start();
+
+require_once '../basedados/basedados.h'; // Inclui o arquivo diretamente
+?>
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FelixBus - Viagens Premium</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="pagina_inicial_cliente.css">
 </head>
 <body>
     <!-- Navigation -->
@@ -17,8 +22,11 @@
         <div class="nav-links">
             <a href="#rotas" class="nav-link">Rotas</a>
             <a href="#horarios" class="nav-link">Horários</a>
-            <a href="login.php" class="nav-link">login</a>
-            
+            <?php if (isset($_SESSION['id_utilizador'])): ?>
+                <a href="logout.php" class="nav-link">Logout</a>
+            <?php else: ?>
+                <a href="login.php" class="nav-link">Login</a>
+            <?php endif; ?>
         </div>
     </nav>
 

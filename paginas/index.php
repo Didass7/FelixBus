@@ -1,3 +1,10 @@
+<?php
+session_start();
+
+require_once '../basedados/basedados.h'; // Inclui o arquivo diretamente
+?>
+
+
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
@@ -15,8 +22,7 @@
             </a>
         </div>
         <div class="nav-links">
-            <a href="#rotas" class="nav-link">Rotas</a>
-            <a href="#horarios" class="nav-link">Horários</a>
+            <a href="register.php" class="nav-link">registar</a>
             <a href="login.php" class="nav-link">login</a>
             
         </div>
@@ -27,13 +33,12 @@
         <div class="hero-content">
             <h1 class="hero-title">Viagens de Luxo Reimaginadas</h1>
             <p class="hero-subtitle">Conforto excepcional a preços acessíveis</p>
+            <p class="login-subtitle">Crie uma conta ou faça Login para usufruir dos nossos serviços!</p>
             
             <!-- Search Form -->
-            <form class="search-form">
-                <input type="text" class="form-input" placeholder="Origem">
-                <input type="text" class="form-input" placeholder="Destino">
-                <input type="date" class="form-input">
-                <button class="btn-primary">Pesquisar Viagens</button>
+            <form class="login-button">
+                <button class="btn-primary">Login</button>
+                <button class="btn-secondary">Registar</button>
             </form>
         </div>
     </section>

@@ -75,14 +75,26 @@ body {
     margin-bottom: 2rem;
 }
 
-/* Search Form */
-.search-form {
+/* Login Button */
+.login-button {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1.5rem;
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.05);
     padding: 2rem;
-    border-radius: 10px;
+    border-radius: 16px;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(228, 188, 79, 0.3);
+    margin: 2rem auto;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+/* Login Subtitle */
+.login-subtitle {
+    font-size: 1.5rem;
+    color: white;
+    margin-bottom: 0rem;
 }
 
 .form-input {
@@ -98,13 +110,28 @@ body {
     color: var(--dark-bg);
     padding: 1rem 2rem;
     border: none;
-    border-radius: 5px;
+    border-radius: 20px;
     cursor: pointer;
-    font-size: 1.1rem;
+    font-size: 3rem;
     transition: transform 0.3s;
 }
 
 .btn-primary:hover {
+    transform: translateY(-3px);
+}
+
+.btn-secondary {
+    background: var(--gold-accent);
+    color: var(--dark-bg);
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 3rem;
+    transition: transform 0.3s;
+}
+
+.btn-secondary:hover {
     transform: translateY(-3px);
 }
 

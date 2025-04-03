@@ -1,6 +1,26 @@
 <?php
 session_start();
+
 require_once '../basedados/basedados.h'; // Inclui o arquivo diretamente
+
+// Verificar se o usuário já está logado
+if (isset($_SESSION['id_utilizador'])) {
+    // Redirecionar para a página inicial ou painel do usuário
+    switch ($_SESSION['perfil']) {
+        case 'administrador':
+            header("Location: admin.php");
+            break;
+        case 'funcionário':
+            header("Location: funcionario.php");
+            break;
+        case "cliente":
+            header("Location: pagina_inicial_cliente.php");
+            break;
+        default:
+            header("Location: login.php");
+    }
+    exit();
+}
 
 // Processar formulário de login
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -26,7 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($user = mysqli_fetch_assoc($result)) {
             // Verificar password MD5 (ajuste conforme sua implementação)
             if (md5($password) === $user['hash_password']) {
-                // Autenticação bem-sucedida
+                // Regenerar ID da sessão para evitar roubo de sessão
+                session_regenerate_id(true);
+
+                // Armazenar informações do usuário na sessão
                 $_SESSION['id_utilizador'] = $user['id_utilizador'];
                 $_SESSION['nome_utilizador'] = $user['nome_utilizador'];
                 $_SESSION['perfil'] = $user['perfil'];
@@ -40,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         header("Location: funcionario.php");
                         break;
                     default:
-                        header("Location: index.php");
+                        header("Location: pagina_inicial_cliente.php");
                 }
                 exit();
             } else {
@@ -71,9 +94,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </a>
         </div>
         <div class="nav-links">
-            <a href="#rotas" class="nav-link">Rotas</a>
-            <a href="#horarios" class="nav-link">Horários</a>
-            <a href="#login" class="nav-link">Login</a>
+            <a href="index.php" class="nav-link">Página Inicial</a>
+            <a href="register.php" class="nav-link">Registar</a>
         </div>
     </nav>
 
