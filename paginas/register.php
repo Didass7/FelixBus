@@ -3,26 +3,24 @@ session_start();
 require_once '../basedados/basedados.h'; // Inclui o arquivo diretamente
 
 $error = isset($_SESSION['register_error']) ? $_SESSION['register_error'] : null;
-$old_email = isset($_SESSION['old_email']) ? $_SESSION['old_email'] : '';
+$old_username = isset($_SESSION['old_username']) ? $_SESSION['old_username'] : '';
 unset($_SESSION['register_error']);
-unset($_SESSION['old_email']);
+unset($_SESSION['old_username']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email']);
+    $username = trim($_POST['username']);
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
 
     // Validação
     $error = null;
 
-    if (empty($email)) {
-        $error = "Por favor, insira um email!";
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = "Formato de email inválido!";
+    if (empty($username)) {
+        $error = "Por favor, insira um nome de utilizador!";
     } elseif (empty($password)) {
         $error = "Por favor, insira uma password!";
-    } elseif (strlen($password) < 8) {
-        $error = "A password deve ter pelo menos 8 caracteres!";
+    } elseif (strlen($password) < 3) {
+        $error = "A password deve ter pelo menos 3 caracteres!";
     } elseif ($password !== $confirm_password) {
         $error = "As passwords não coincidem!";
     }
@@ -33,15 +31,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             die("Erro ao conectar ao banco de dados: " . mysqli_connect_error());
         }
         
-        // Verificar se email já existe
-        $sql_check = "SELECT id_utilizador FROM utilizadores WHERE email = ?";
+        // Verificar se nome de utilizador já existe
+        $sql_check = "SELECT id_utilizador FROM utilizadores WHERE nome_utilizador = ?";
         $stmt_check = mysqli_prepare($conn, $sql_check);
-        mysqli_stmt_bind_param($stmt_check, "s", $email);
+        mysqli_stmt_bind_param($stmt_check, "s", $username);
         mysqli_stmt_execute($stmt_check);
         mysqli_stmt_store_result($stmt_check);
         
         if (mysqli_stmt_num_rows($stmt_check) > 0) {
-            $error = "Este email já está registrado!";
+            $error = "Este nome de utilizador já está registrado!";
         } else {
             // Criar hash da password (MD5 para compatibilidade com o login existente)
             $hashed_password = md5($password);
@@ -51,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                           VALUES (?, ?, 'cliente', ?, NOW())";
             $stmt_insert = mysqli_prepare($conn, $sql_insert);
             
-            $username = strtok($email, '@'); // Cria nome de usuário a partir do email
+            $email = $username . '@example.com'; // Cria um email fictício
             
             mysqli_stmt_bind_param($stmt_insert, "sss", $email, $hashed_password, $username);
             $result = mysqli_stmt_execute($stmt_insert);
@@ -77,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Se houver erro, voltar para a página de registro
     $_SESSION['register_error'] = $error;
-    $_SESSION['old_email'] = $email;
+    $_SESSION['old_username'] = $username;
     header("Location: register.php");
     exit();
     }
@@ -118,11 +116,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <h2>Registo</h2>
                     <form method="POST" action="register.php">
-                        <!-- Campo de Email -->
+                        <!-- Campo de Nome de Utilizador -->
                         <div class="input-container">
-                            <i class="fa fa-envelope"></i>
-                            <input type="email" name="email" placeholder="Insira o seu email" required
-                                value="<?= htmlspecialchars($old_email) ?>">
+                            <i class="fa fa-user"></i>
+                            <input type="text" name="username" placeholder="Insira o seu nome de utilizador" required
+                                value="<?= htmlspecialchars($old_username) ?>">
                         </div>
 
                         <!-- Campo de Password -->
