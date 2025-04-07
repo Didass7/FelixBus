@@ -78,74 +78,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
+<!DOCTYPE html>
 <html lang="pt-PT">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FelixBus - Login</title>
-    <link rel="stylesheet" href="login.css">
-</head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="logo">
-            <a href="index.php">
-                <img src="logo.png" alt="FelixBus Logo">
-            </a>
-        </div>
-        <div class="nav-links">
-            <a href="index.php" class="nav-link">Página Inicial</a>
-            <a href="register.php" class="nav-link">Registar</a>
-        </div>
-    </nav>
-
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-content">
-            <div class="login-container">
-                <?php if (isset($error)): ?>
-                    <div class="error-message"><?= htmlspecialchars($error) ?></div>
-                <?php endif; ?>
-
-                <form method="POST">
-                    <div class="email">
-                        <div class="input-container">
-                            <i class="fa fa-user" aria-hidden="true"></i>
-                            <input type="text" id="username" name="username" 
-                                   placeholder="Insira o nome de utilizador" required
-                                   value="<?= isset($_POST['username']) ? htmlspecialchars($_POST['username']) : '' ?>">
-                        </div>
-                    </div>
-
-                    <div class="password">
-                        <div class="input-container">
-                            <i class="fa fa-lock" aria-hidden="true"></i>
-                            <input type="password" id="password" name="password" 
-                                   placeholder="Insira a password" required>
-                        </div>
-                    </div>
-
-                    <button type="submit">Login</button>
-                </form>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>FelixBus - Login</title>
+        <link rel="stylesheet" href="login.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    </head>
+    <body>
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="logo">
+                <a href="index.php">
+                    <img src="logo.png" alt="FelixBus Logo">
+                </a>
             </div>
-        </div>
-    </section>
+            <div class="nav-links">
+                <a href="#rotas" class="nav-link">Rotas</a>
+                <a href="#horarios" class="nav-link">Horários</a>
+                <a href="register.php" class="nav-link">Registar</a>
+            </div>
+        </nav>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="social-links">
-            <a href="#" class="social-link">FB</a>
-            <a href="#" class="social-link">TW</a>
-            <a href="#" class="social-link">IG</a>
-        </div>
-        
-        <div class="footer-links">
-            <a href="#" class="footer-link">Sobre Nós</a>
-            <a href="#" class="footer-link">Contactos</a>
-            <a href="#" class="footer-link">Termos</a>
-        </div>
-        
-        <p>&copy; 2024 FelixBus. Todos os direitos reservados.</p>
-    </footer>
-</body>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <div class="login-container">
+                    <?php if (isset($error)): ?>
+                        <div class="error-message"><?= htmlspecialchars($error) ?></div>
+                    <?php endif; ?>
+
+                    <h2>Login</h2>
+                    <form method="POST" action="login.php">
+                        <!-- Campo de Nome de Utilizador -->
+                        <div class="input-container">
+                            <i class="fa fa-user"></i>
+                            <input type="text" name="username" placeholder="Insira o seu nome de utilizador" required
+                                value="<?= isset($_POST['username']) ? htmlspecialchars($_POST['username']) : '' ?>">
+                        </div>
+
+                        <!-- Campo de Password -->
+                        <div class="input-container">
+                            <i class="fa fa-lock"></i>
+                            <input type="password" name="password" placeholder="Insira a password" required>
+                        </div>
+
+                        <button type="submit">Login</button>
+                        
+                        <div class="register-link">
+                                Não tem conta? <a href="register.php">Registe-se aqui</a>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="social-links">
+                <a href="#" class="social-link">FB</a>
+                <a href="#" class="social-link">TW</a>
+                <a href="#" class="social-link">IG</a>
+            </div>
+            
+            <div class="footer-links">
+                <a href="#" class="footer-link">Sobre Nós</a>
+                <a href="#" class="footer-link">Contactos</a>
+                <a href="#" class="footer-link">Termos</a>
+            </div>
+            
+            <p>&copy; 2024 FelixBus. Todos os direitos reservados.</p>
+        </footer>
+    </body>
 </html>
