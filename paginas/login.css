@@ -71,7 +71,7 @@ body {
     align-items: center;
 }
 
-/* Login Container - Atualizado para combinar com o register */
+/* Login Container */
 .login-container {
     display: flex;
     flex-direction: column;
@@ -188,14 +188,22 @@ button[type="submit"]:hover {
     .hero {
         padding: 1rem;
     }
-    
+
     .login-container {
         padding: 1.5rem;
         margin: 1rem auto;
     }
-    
+
     .input-container input {
         padding: 12px 12px 12px 40px;
+    }
+
+    .nav-links {
+        display: none;
+    }
+
+    .hero-title {
+        font-size: 2rem;
     }
 }
 
@@ -244,20 +252,4 @@ button[type="submit"]:hover {
 
 .footer-link:hover {
     color: var(--gold-accent);
-}
-
-/* Responsivo */
-@media (max-width: 768px) {
-    .footer-content {
-        grid-template-columns: 1fr;
-        gap: 2rem;
-    }
-    
-    .nav-links {
-        display: none;
-    }
-    
-    .hero-title {
-        font-size: 2rem;
-    }
 }
