@@ -38,7 +38,7 @@ require_once '../basedados/basedados.h'; // Inclui o arquivo diretamente
             <!-- Login Form -->
             <form class="login-button">
                 <button class="btn-primary" type="button" onclick="window.location.href='login.php'">Login</button>
-                <button class="btn-secondary" type="button" onclick="window.location.href='register.php'">Registar</button>
+                <button class="btn-primary" type="button" onclick="window.location.href='register.php'">Registar</button>
             </form>
         </div>
     </section>
