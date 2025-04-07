@@ -96,8 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </a>
             </div>
             <div class="nav-links">
-                <a href="#rotas" class="nav-link">Rotas</a>
-                <a href="#horarios" class="nav-link">Horários</a>
+                <a href="index.php" class="nav-link">Início</a>
                 <a href="register.php" class="nav-link">Registar</a>
             </div>
         </nav>
@@ -106,6 +105,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <section class="hero">
             <div class="hero-content">
                 <div class="login-container">
+                    <?php if (isset($_GET['success'])): ?>
+                        <div class="success-message">Registro concluído com sucesso! Faça login para continuar.</div>
+                    <?php endif; ?>
+
                     <?php if (isset($error)): ?>
                         <div class="error-message"><?= htmlspecialchars($error) ?></div>
                     <?php endif; ?>

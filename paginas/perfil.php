@@ -2,6 +2,12 @@
 session_start();
 
 require_once '../basedados/basedados.h'; // Inclui o arquivo diretamente
+
+if (!isset($_SESSION['id_utilizador']) || $_SESSION['perfil'] !== 'cliente') {
+    // Redireciona para a página de login se não for cliente
+    header("Location: login.php");
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-PT">
@@ -20,13 +26,13 @@ require_once '../basedados/basedados.h'; // Inclui o arquivo diretamente
             </a>
         </div>
         <div class="nav-links">
+        <div class="nav-links">
             <a href="#rotas" class="nav-link">Rotas</a>
             <a href="#horarios" class="nav-link">Horários</a>
-            <?php if (isset($_SESSION['id_utilizador'])): ?>
-                <a href="logout.php" class="nav-link">Logout</a>
-            <?php else: ?>
-                <a href="login.php" class="nav-link">Login</a>
-            <?php endif; ?>
+            <a href="carteira.php" class="nav-link">Carteira</a>
+            <a href="perfil.php" class="nav-link">Perfil</a>
+            <a href="logout.php" class="nav-link">Logout</a>
+        </div>
         </div>
     </nav>
 

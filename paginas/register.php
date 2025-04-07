@@ -2,6 +2,25 @@
 session_start();
 require_once '../basedados/basedados.h';
 
+// Verificar se o usuário já está logado
+if (isset($_SESSION['id_utilizador'])) {
+    // Redirecionar para a página inicial ou painel do usuário
+    switch ($_SESSION['perfil']) {
+        case 'administrador':
+            header("Location: admin.php");
+            break;
+        case 'funcionário':
+            header("Location: funcionario.php");
+            break;
+        case "cliente":
+            header("Location: pagina_inicial_cliente.php");
+            break;
+        default:
+            header("Location: login.php");
+    }
+    exit();
+}
+
 $error = isset($_SESSION['register_error']) ? $_SESSION['register_error'] : null;
 $old_username = isset($_SESSION['old_username']) ? $_SESSION['old_username'] : '';
 $old_nome_completo = isset($_SESSION['old_nome_completo']) ? $_SESSION['old_nome_completo'] : '';
@@ -73,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt_insert = mysqli_prepare($conn, $sql_insert);
             mysqli_stmt_bind_param(
                 $stmt_insert, 
-                "sssssss", 
+                "ssssss", // 6 parâmetros (ajustado)
                 $email, 
                 $hashed_password, 
                 $username,
@@ -83,14 +102,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             
             if (mysqli_stmt_execute($stmt_insert)) {
-                $user_id = mysqli_insert_id($conn);
-                
-                $_SESSION['id_utilizador'] = $user_id;
-                $_SESSION['nome_utilizador'] = $username;
-                $_SESSION['perfil'] = 'cliente';
-                $_SESSION['email'] = $email;
-                
-                header("Location: index.php");
+                // Registro bem-sucedido, redirecionar para a página de login
+                header("Location: login.php?success=1");
                 exit();
             } else {
                 die("Erro ao registrar: " . mysqli_error($conn));
@@ -127,8 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </a>
         </div>
         <div class="nav-links">
-            <a href="#rotas" class="nav-link">Rotas</a>
-            <a href="#horarios" class="nav-link">Horários</a>
+            <a href="index.php" class="nav-link">Início</a>
             <a href="login.php" class="nav-link">Login</a>
         </div>
     </nav>

@@ -29,6 +29,7 @@ if (!isset($_SESSION['id_utilizador']) || $_SESSION['perfil'] !== 'cliente') {
         <div class="nav-links">
             <a href="#rotas" class="nav-link">Rotas</a>
             <a href="#horarios" class="nav-link">Horários</a>
+            <a href="carteira.php" class="nav-link">Carteira</a>
             <a href="perfil.php" class="nav-link">Perfil</a>
             <a href="logout.php" class="nav-link">Logout</a>
         </div>
