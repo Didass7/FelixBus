@@ -2,13 +2,6 @@
 session_start();
 
 require_once '../basedados/basedados.h'; // Inclui o arquivo diretamente
-
-if (!isset($_SESSION['id_utilizador']) || $_SESSION['perfil'] !== 'cliente') {
-    // Redireciona para a página de login se não for cliente
-    header("Location: login.php");
-    exit();
-}
-
 ?>
 <!DOCTYPE html>
 <html lang="pt-PT">
@@ -29,24 +22,21 @@ if (!isset($_SESSION['id_utilizador']) || $_SESSION['perfil'] !== 'cliente') {
         <div class="nav-links">
             <a href="#rotas" class="nav-link">Rotas</a>
             <a href="#horarios" class="nav-link">Horários</a>
-            <a href="perfil.php" class="nav-link">Perfil</a>
-            <a href="logout.php" class="nav-link">Logout</a>
+            <?php if (isset($_SESSION['id_utilizador'])): ?>
+                <a href="logout.php" class="nav-link">Logout</a>
+            <?php else: ?>
+                <a href="login.php" class="nav-link">Login</a>
+            <?php endif; ?>
         </div>
     </nav>
 
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
-            <h1 class="hero-title">Viagens de Luxo Reimaginadas</h1>
-            <p class="hero-subtitle">Conforto excepcional a preços acessíveis</p>
-            
-            <!-- Search Form -->
-            <form class="search-form">
-                <input type="text" class="form-input" placeholder="Origem">
-                <input type="text" class="form-input" placeholder="Destino">
-                <input type="date" class="form-input">
-                <button class="btn-primary">Pesquisar Viagens</button>
-            </form>
+            <h1 class="hero-title">Bem-Vindo ao seu perfil,
+                <span class="user-name"><?php echo !empty($_SESSION                ['nome_utilizador']) ? htmlspecialchars($_SESSION['nome_utilizador']) : ''; ?>
+                </span>
+            </h1>
         </div>
     </section>
     <!-- Footer -->
