@@ -21,7 +21,17 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'cliente' && 
     <!-- Navigation -->
     <nav class="navbar">
         <div class="logo">
-            <a href="pagina_inicial_cliente.php">
+            <a href="<?php 
+                if ($_SESSION['perfil'] === 'cliente') {
+                    echo 'pagina_inicial_cliente.php';
+                } elseif ($_SESSION['perfil'] === 'funcionário') {
+                    echo 'pagina_inicial_funcionario.php';
+                } elseif ($_SESSION['perfil'] === 'administrador') {
+                    echo 'pagina_inicial_admin.php';
+                } else {
+                    echo '#'; // Link padrão caso o perfil não seja reconhecido
+                }
+            ?>">
                 <img src="logo.png" alt="FelixBus Logo">
             </a>
         </div>

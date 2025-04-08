@@ -21,7 +21,7 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'funcionário
     <!-- Navigation -->
     <nav class="navbar">
         <div class="logo">
-            <a href="pagina_inicial_cliente.php">
+            <a href="pagina_inicial_funcionario.php">
                 <img src="logo.png" alt="FelixBus Logo">
             </a>
         </div>
