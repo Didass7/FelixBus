@@ -60,7 +60,7 @@ body {
 }
 
 .hero-content {
-    max-width: 900px;
+    max-width: 800px;
 }
 
 .hero-title {
@@ -176,59 +176,4 @@ body {
     .search-form {
         grid-template-columns: 1fr;
     }
-}
-
-/* User Name */
-.user-name {
-    color: white; /* Define a cor branca */
-    font-weight: bold; /* Opcional: deixa o nome em negrito */
-}
-
-/* User Info Container */
-.user-info-container ul {
-    list-style: none;
-    padding: 0;
-}
-
-.user-info-container ul li {
-    margin-bottom: 1rem;
-    font-size: 1.2rem;
-}
-
-.user-info-container ul li label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: bold;
-}
-
-.user-info-container ul li input {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 1rem;
-}
-
-button {
-    padding: 0.5rem 1rem;
-    margin-top: 1rem;
-    border: none;
-    border-radius: 5px;
-    font-size: 1rem;
-    cursor: pointer;
-}
-
-#edit-button {
-    background-color: #007bff;
-    color: white;
-}
-
-#cancel-button {
-    background-color: #dc3545;
-    color: white;
-}
-
-button[type="submit"] {
-    background-color: #28a745;
-    color: white;
 }

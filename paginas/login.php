@@ -8,10 +8,10 @@ if (isset($_SESSION['id_utilizador'])) {
     // Redirecionar para a página inicial ou painel do usuário
     switch ($_SESSION['perfil']) {
         case 'administrador':
-            header("Location: admin.php");
+            header("Location: pagina_inicial_admin.php");
             break;
         case 'funcionário':
-            header("Location: funcionario.php");
+            header("Location: pagina_inicial_funcionario.php");
             break;
         case "cliente":
             header("Location: pagina_inicial_cliente.php");
@@ -53,14 +53,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['id_utilizador'] = $user['id_utilizador'];
                 $_SESSION['nome_utilizador'] = $user['nome_utilizador'];
                 $_SESSION['perfil'] = $user['perfil'];
+                $_SESSION['nome_completo'] = $user['nome_completo'];
+                $_SESSION['email'] = $user['email'];
+                $_SESSION['telefone'] = $user['telefone'];
+                $_SESSION['morada'] = $user['morada'];
+                $_SESSION['data_registo'] = $user['data_registo'];
 
                 // Redirecionar conforme perfil
                 switch ($user['perfil']) {
                     case 'administrador':
-                        header("Location: admin.php");
+                        header("Location: pagina_inicial_admin.php");
                         break;
                     case 'funcionário':
-                        header("Location: funcionario.php");
+                        header("Location: pagina_inicial_funcionario.php");
                         break;
                     default:
                         header("Location: pagina_inicial_cliente.php");
