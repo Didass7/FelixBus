@@ -103,6 +103,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if (mysqli_stmt_execute($stmt_insert)) {
                 // Registro bem-sucedido, redirecionar para a página de login
+                $id_utilizador = mysqli_insert_id($conn);
+                
+                // Create a wallet for the new user
+                $sql_create_wallet = "INSERT INTO carteiras (id_utilizador, tipo, saldo) VALUES (?, 'cliente', 0.00)";
+                $stmt_wallet = mysqli_prepare($conn, $sql_create_wallet);
+                mysqli_stmt_bind_param($stmt_wallet, "i", $id_utilizador);
+                mysqli_stmt_execute($stmt_wallet);
+                
                 header("Location: login.php?success=1");
                 exit();
             } else {

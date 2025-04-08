@@ -1,0 +1,210 @@
+@import url('https://fonts.googleapis.com/css2?family=Jost&display=swap');
+
+:root {
+    --dark-bg: #1a1a21;
+    --gold-accent: rgb(228, 188, 79);
+    --footer-bg: #101014;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Jost', sans-serif;
+}
+
+body {
+    background-color: var(--dark-bg);
+    color: white;
+    line-height: 1.6;
+}
+
+/* Navigation styles from your existing CSS */
+.navbar {
+    background-color: var(--dark-bg);
+    padding: 15px 10%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo img {
+    width: 120px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 2rem;
+}
+
+.nav-link {
+    color: white;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.nav-link:hover {
+    color: var(--gold-accent);
+}
+
+/* Wallet specific styles */
+.wallet-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.balance-section {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.balance-card {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2rem;
+    border-radius: 10px;
+    margin-top: 1rem;
+}
+
+.balance-amount {
+    font-size: 3rem;
+    color: var(--gold-accent);
+    margin-top: 1rem;
+}
+
+.operations-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.operation-card {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2rem;
+    border-radius: 10px;
+}
+
+.operation-form {
+    margin-top: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+button {
+    width: 100%;
+    padding: 1rem;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+.btn-deposit {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.btn-withdraw {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.transactions-section {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2rem;
+    border-radius: 10px;
+}
+
+.transactions-table {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+th, td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+th {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.positive {
+    color: var(--success-color);
+}
+
+.negative {
+    color: var(--danger-color);
+}
+
+/* Footer styles from your existing CSS */
+.footer {
+    background-color: var(--footer-bg);
+    padding: 2rem 10%;
+    margin-top: 3rem;
+    text-align: center;
+}
+
+.social-links, .footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 1rem;
+}
+
+.social-link, .footer-link {
+    color: white;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.social-link:hover, .footer-link:hover {
+    color: var(--gold-accent);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .operations-section {
+        grid-template-columns: 1fr;
+    }
+
+    .balance-amount {
+        font-size: 2.5rem;
+    }
+
+    th, td {
+        padding: 0.75rem;
+    }
+}
