@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once '../basedados/basedados.h';
+include '../basedados/basedados.h';
 
 // Verificar se o usuário já está logado
 if (isset($_SESSION['id_utilizador'])) {

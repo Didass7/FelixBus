@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-require_once '../basedados/basedados.h'; // Inclui o arquivo diretamente
+include '../basedados/basedados.h'; // Inclui o arquivo diretamente
 
 if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'cliente' && $_SESSION['perfil'] !== 'funcionário' && $_SESSION['perfil'] !== 'administrador')) {
     header("Location: login.php");

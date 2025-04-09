@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once '../basedados/basedados.h';
+include '../basedados/basedados.h';
 
 if (!isset($_SESSION['id_utilizador'])) {
     header("Location: login.php");

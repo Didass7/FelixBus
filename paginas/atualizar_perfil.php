@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once '../basedados/basedados.h';
+include '../basedados/basedados.h';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_utilizador = $_SESSION['id_utilizador'];

@@ -1,11 +1,55 @@
 <?php
 session_start();
 
-require_once '../basedados/basedados.h'; // Inclui o arquivo diretamente
+include '../basedados/basedados.h'; // Inclui o arquivo diretamente
 
 if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'cliente')) {
     header("Location: login.php");
     exit();
+}
+
+// Verificar se os parâmetros de pesquisa foram enviados
+if (isset($_GET['origem']) && isset($_GET['destino'])) {
+    $origem = trim($_GET['origem']);
+    $destino = trim($_GET['destino']);
+
+    // Conectar ao banco de dados
+    if (!$conn) {
+        die("Erro ao conectar ao banco de dados: " . mysqli_connect_error());
+    }
+
+    // Consulta para buscar rotas com base na origem e destino
+    $sql = "SELECT r.id_rota, r.origem, r.destino, h.hora_partida, h.hora_chegada, h.preco 
+            FROM rotas r
+            JOIN horarios h ON r.id_rota = h.id_rota
+            WHERE r.origem LIKE ? AND r.destino LIKE ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    $origem_param = '%' . $origem . '%';
+    $destino_param = '%' . $destino . '%';
+    mysqli_stmt_bind_param($stmt, "ss", $origem_param, $destino_param);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+
+    // Exibir os resultados
+    if (mysqli_num_rows($result) > 0) {
+        echo "<h2>Resultados da Pesquisa:</h2>";
+        echo "<table>";
+        echo "<tr><th>Origem</th><th>Destino</th><th>Hora de Partida</th><th>Hora de Chegada</th><th>Preço</th></tr>";
+        while ($row = mysqli_fetch_assoc($result)) {
+            echo "<tr>";
+            echo "<td>" . htmlspecialchars($row['origem']) . "</td>";
+            echo "<td>" . htmlspecialchars($row['destino']) . "</td>";
+            echo "<td>" . htmlspecialchars($row['hora_partida']) . "</td>";
+            echo "<td>" . htmlspecialchars($row['hora_chegada']) . "</td>";
+            echo "<td>€" . htmlspecialchars($row['preco']) . "</td>";
+            echo "</tr>";
+        }
+        echo "</table>";
+    } else {
+        echo "<p>Nenhuma rota encontrada para os critérios informados.</p>";
+    }
+
+    mysqli_close($conn);
 }
 
 ?>
@@ -41,11 +85,10 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'cliente')) {
             <p class="hero-subtitle">Conforto excepcional a preços acessíveis</p>
             
             <!-- Search Form -->
-            <form class="search-form">
-                <input type="text" class="form-input" placeholder="Origem">
-                <input type="text" class="form-input" placeholder="Destino">
-                <input type="date" class="form-input">
-                <button class="btn-primary">Pesquisar Viagens</button>
+            <form class="search-form" method="GET" action="pagina_inicial_cliente.php">
+                <input type="text" class="form-input" name="origem" placeholder="Origem" required>
+                <input type="text" class="form-input" name="destino" placeholder="Destino" required>
+                <button class="btn-primary" type="submit">Pesquisar Viagens</button>
             </form>
         </div>
     </section>
