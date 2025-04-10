@@ -26,8 +26,8 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'funcionário
             </a>
         </div>
         <div class="nav-links">
-            <a href="#rotas" class="nav-link">Rotas</a>
-            <a href="#horarios" class="nav-link">Horários</a>
+            <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
+            <a href="gerir_alertas.php" class="nav-link">Gerir Alertas</a>
             <a href="carteira.php" class="nav-link">Carteira</a>
             <a href="perfil.php" class="nav-link">Perfil</a>
             <a href="logout.php" class="nav-link">Logout</a>
@@ -38,8 +38,22 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'funcionário
     <section class="hero">
         <div class="hero-content">
             <h1 class="hero-title">Área do Admin - FelixBus</h1>
-            <p class="hero-subtitle">Conforto excepcional a preços acessíveis</p>
-            
+            <p class="hero-subtitle">Painel de Administração</p>
+
+            <div class="admin-actions">
+                <a href="gerir_alertas.php" class="admin-action-card">
+                    <h3>Gerir Alertas e Promoções</h3>
+                    <p>Crie e gerencie alertas e promoções para exibir no site</p>
+                </a>
+                <a href="consultar_rotas.php" class="admin-action-card">
+                    <h3>Consultar Rotas e Horários</h3>
+                    <p>Visualize todas as rotas e horários disponíveis</p>
+                </a>
+                <a href="carteira.php" class="admin-action-card">
+                    <h3>Gerenciar Carteira</h3>
+                    <p>Acesse e gerencie a carteira da empresa</p>
+                </a>
+            </div>
         </div>
     </section>
     <!-- Footer -->
@@ -49,13 +63,13 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'funcionário
             <a href="#" class="social-link">TW</a>
             <a href="#" class="social-link">IG</a>
         </div>
-        
+
         <div class="footer-links">
             <a href="#" class="footer-link">Sobre Nós</a>
             <a href="#" class="footer-link">Contactos</a>
             <a href="#" class="footer-link">Termos</a>
         </div>
-        
+
         <p>&copy; 2024 FelixBus. Todos os direitos reservados.</p>
     </footer>
 </body>
