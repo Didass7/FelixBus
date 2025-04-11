@@ -38,22 +38,20 @@ while ($row = mysqli_fetch_assoc($result_destinos)) {
 }
 
 // Buscar resultados se houver pesquisa
-if (!empty($origem) || !empty($destino)) {
-    $sql = "SELECT r.id_rota, r.origem, r.destino, h.id_horario, h.hora_partida, h.hora_chegada, h.preco, h.lugares_disponiveis 
-            FROM rotas r
-            JOIN horarios h ON r.id_rota = h.id_rota
-            WHERE (? = '' OR r.origem LIKE CONCAT('%', ?, '%'))
-            AND (? = '' OR r.destino LIKE CONCAT('%', ?, '%'))
-            ORDER BY h.hora_partida ASC";
-            
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "ssss", $origem, $origem, $destino, $destino);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    
-    while ($row = mysqli_fetch_assoc($result)) {
-        $resultados[] = $row;
-    }
+$sql = "SELECT r.id_rota, r.origem, r.destino, h.id_horario, h.hora_partida, h.hora_chegada, h.preco, h.lugares_disponiveis 
+        FROM rotas r
+        JOIN horarios h ON r.id_rota = h.id_rota
+        WHERE (? = '' OR r.origem LIKE CONCAT('%', ?, '%'))
+        AND (? = '' OR r.destino LIKE CONCAT('%', ?, '%'))
+        ORDER BY h.hora_partida ASC";
+        
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, "ssss", $origem, $origem, $destino, $destino);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+
+while ($row = mysqli_fetch_assoc($result)) {
+    $resultados[] = $row;
 }
 ?>
 
@@ -192,16 +190,10 @@ if (!empty($origem) || !empty($destino)) {
                         </tbody>
                     </table>
                 </div>
-            <?php elseif(isset($_GET['origem']) || isset($_GET['destino'])): ?>
+            <?php else: ?>
                 <div class="no-results">
                     <h2>Nenhum resultado encontrado</h2>
                     <p>Tente outra combinação de origem e destino.</p>
-                </div>
-            <?php else: ?>
-                <div class="search-info">
-                    <h2>Como pesquisar</h2>
-                    <p>Selecione uma origem e/ou destino para ver as rotas disponíveis.</p>
-                    <p>Você pode deixar um dos campos em branco para ver todas as rotas a partir de uma origem ou para um destino específico.</p>
                 </div>
             <?php endif; ?>
         </div>
@@ -225,5 +217,6 @@ if (!empty($origem) || !empty($destino)) {
     </footer>
 </body>
 </html>
+
 
 
