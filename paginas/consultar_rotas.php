@@ -2,42 +2,58 @@
 session_start();
 include '../basedados/basedados.h';
 
+// Inicializar variáveis
 $origem = isset($_GET['origem']) ? trim($_GET['origem']) : '';
 $destino = isset($_GET['destino']) ? trim($_GET['destino']) : '';
 $resultados = [];
 
+// Verificar a conexão com a base de dados
+if (!$conn) {
+    die("Erro na conexão com a base de dados: " . mysqli_connect_error());
+}
+
+// Buscar todas as origens e destinos distintos para os dropdowns
+$sql_origens = "SELECT DISTINCT origem FROM rotas WHERE origem IS NOT NULL ORDER BY origem";
+$result_origens = mysqli_query($conn, $sql_origens);
+
+if (!$result_origens) {
+    die("Erro ao buscar origens: " . mysqli_error($conn));
+}
+
+$origens = [];
+while ($row = mysqli_fetch_assoc($result_origens)) {
+    $origens[] = $row['origem'];
+}
+
+$sql_destinos = "SELECT DISTINCT destino FROM rotas WHERE destino IS NOT NULL ORDER BY destino";
+$result_destinos = mysqli_query($conn, $sql_destinos);
+
+if (!$result_destinos) {
+    die("Erro ao buscar destinos: " . mysqli_error($conn));
+}
+
+$destinos = [];
+while ($row = mysqli_fetch_assoc($result_destinos)) {
+    $destinos[] = $row['destino'];
+}
+
+// Buscar resultados se houver pesquisa
 if (!empty($origem) || !empty($destino)) {
-    // Consulta para buscar rotas com base na origem e destino
     $sql = "SELECT r.id_rota, r.origem, r.destino, h.id_horario, h.hora_partida, h.hora_chegada, h.preco, h.lugares_disponiveis 
             FROM rotas r
             JOIN horarios h ON r.id_rota = h.id_rota
-            WHERE r.origem LIKE ? AND r.destino LIKE ?
+            WHERE (? = '' OR r.origem LIKE CONCAT('%', ?, '%'))
+            AND (? = '' OR r.destino LIKE CONCAT('%', ?, '%'))
             ORDER BY h.hora_partida ASC";
+            
     $stmt = mysqli_prepare($conn, $sql);
-    $origem_param = '%' . $origem . '%';
-    $destino_param = '%' . $destino . '%';
-    mysqli_stmt_bind_param($stmt, "ss", $origem_param, $destino_param);
+    mysqli_stmt_bind_param($stmt, "ssss", $origem, $origem, $destino, $destino);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
     
     while ($row = mysqli_fetch_assoc($result)) {
         $resultados[] = $row;
     }
-}
-
-// Buscar todas as origens e destinos distintos para os dropdowns
-$sql_origens = "SELECT DISTINCT origem FROM rotas ORDER BY origem";
-$result_origens = mysqli_query($conn, $sql_origens);
-$origens = [];
-while ($row = mysqli_fetch_assoc($result_origens)) {
-    $origens[] = $row['origem'];
-}
-
-$sql_destinos = "SELECT DISTINCT destino FROM rotas ORDER BY destino";
-$result_destinos = mysqli_query($conn, $sql_destinos);
-$destinos = [];
-while ($row = mysqli_fetch_assoc($result_destinos)) {
-    $destinos[] = $row['destino'];
 }
 ?>
 
@@ -53,7 +69,25 @@ while ($row = mysqli_fetch_assoc($result_destinos)) {
     <!-- Navigation -->
     <nav class="navbar">
         <div class="logo">
-            <a href="index.php">
+            <a href="<?php 
+                if(isset($_SESSION['id_utilizador'])) {
+                    switch($_SESSION['perfil']) {
+                        case 'administrador':
+                            echo 'pagina_inicial_admin.php';
+                            break;
+                        case 'funcionário':
+                            echo 'pagina_inicial_funcionario.php';
+                            break;
+                        case 'cliente':
+                            echo 'pagina_inicial_cliente.php';
+                            break;
+                        default:
+                            echo 'index.php';
+                    }
+                } else {
+                    echo 'index.php';
+                }
+            ?>">
                 <img src="logo.png" alt="FelixBus Logo">
             </a>
         </div>
@@ -89,7 +123,8 @@ while ($row = mysqli_fetch_assoc($result_destinos)) {
                     <select class="form-input" name="origem" id="origem">
                         <option value="">Todas as origens</option>
                         <?php foreach($origens as $cidade): ?>
-                            <option value="<?php echo htmlspecialchars($cidade); ?>" <?php echo ($cidade == $origem) ? 'selected' : ''; ?>>
+                            <option value="<?php echo htmlspecialchars($cidade); ?>" 
+                                    <?php echo ($cidade === $origem) ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($cidade); ?>
                             </option>
                         <?php endforeach; ?>
@@ -100,7 +135,8 @@ while ($row = mysqli_fetch_assoc($result_destinos)) {
                     <select class="form-input" name="destino" id="destino">
                         <option value="">Todos os destinos</option>
                         <?php foreach($destinos as $cidade): ?>
-                            <option value="<?php echo htmlspecialchars($cidade); ?>" <?php echo ($cidade == $destino) ? 'selected' : ''; ?>>
+                            <option value="<?php echo htmlspecialchars($cidade); ?>" 
+                                    <?php echo ($cidade === $destino) ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($cidade); ?>
                             </option>
                         <?php endforeach; ?>
@@ -189,3 +225,5 @@ while ($row = mysqli_fetch_assoc($result_destinos)) {
     </footer>
 </body>
 </html>
+
+

@@ -7,10 +7,10 @@ if (isset($_SESSION['id_utilizador'])) {
     // Redirecionar para a página inicial ou painel do usuário
     switch ($_SESSION['perfil']) {
         case 'administrador':
-            header("Location: admin.php");
+            header("Location: pagina_inicial_admin.php");
             break;
         case 'funcionário':
-            header("Location: funcionario.php");
+            header("Location: pagina_inicial_funcionario.php");
             break;
         case "cliente":
             header("Location: pagina_inicial_cliente.php");
@@ -220,11 +220,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <a href="#" class="social-link">TW</a>
             <a href="#" class="social-link">IG</a>
         </div>
+        
         <div class="footer-links">
-            <a href="#" class="footer-link">Sobre Nós</a>
-            <a href="#" class="footer-link">Contactos</a>
-            <a href="#" class="footer-link">Termos</a>
+            <a href="empresa.php" class="footer-link">Sobre Nós</a>
+            <a href="empresa.php#contactos" class="footer-link">Contactos</a>
+            <a href="consultar_rotas.php" class="footer-link">Rotas e Horários</a>
         </div>
+        
         <p>&copy; 2024 FelixBus. Todos os direitos reservados.</p>
     </footer>
 </body>

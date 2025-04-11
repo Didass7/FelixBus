@@ -63,13 +63,13 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'funcionário
             <a href="#" class="social-link">TW</a>
             <a href="#" class="social-link">IG</a>
         </div>
-
+        
         <div class="footer-links">
-            <a href="#" class="footer-link">Sobre Nós</a>
-            <a href="#" class="footer-link">Contactos</a>
-            <a href="#" class="footer-link">Termos</a>
+            <a href="empresa.php" class="footer-link">Sobre Nós</a>
+            <a href="empresa.php#contactos" class="footer-link">Contactos</a>
+            <a href="consultar_rotas.php" class="footer-link">Rotas e Horários</a>
         </div>
-
+        
         <p>&copy; 2024 FelixBus. Todos os direitos reservados.</p>
     </footer>
 </body>

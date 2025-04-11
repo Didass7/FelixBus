@@ -72,6 +72,13 @@ body {
     flex: 0 0 60%;
     max-width: 60%;
     order: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Alinha os itens à esquerda */
+}
+
+.hero-text {
+    width: 100%;
 }
 
 /* Hero Alerts (Right Side) */
@@ -143,18 +150,24 @@ body {
 
 /* Login Button */
 .login-button {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    display: flex;
     gap: 1rem;
     background: rgba(255, 255, 255, 0.05);
     padding: 1.2rem;
     border-radius: 12px;
     backdrop-filter: blur(12px);
     border: 1px solid rgba(228, 188, 79, 0.3);
-    margin: 1.5rem auto;
+    margin: 1.5rem 0;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     transition: transform 0.3s, box-shadow 0.3s;
-    max-width: 90%;
+    align-self: flex-start;
+}
+
+/* Estilo para os botões dentro do login-button */
+.login-button .btn-primary {
+    min-width: 300px; /* Aumentado de 120px para 160px */
+    padding: 0.8rem 2rem; /* Aumentado o padding horizontal de 1.2rem para 2rem */
+    text-align: center; /* Garante que o texto fique centralizado */
 }
 
 /* Login Subtitle */

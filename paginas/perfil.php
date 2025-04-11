@@ -91,8 +91,10 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'cliente' && 
                                 <input type="text" name="morada" id="morada" value="<?php echo htmlspecialchars($_SESSION['morada'] ?? ''); ?>">
                             </li>
                         </ul>
-                        <button type="submit">Salvar</button>
-                        <button type="button" id="cancel-button">Cancelar</button>
+                        <div class="button-group">
+                            <button type="submit">Salvar</button>
+                            <button type="button" id="cancel-button">Cancelar</button>
+                        </div>
                     </form>
                 </div>
             </section>
@@ -108,11 +110,13 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'cliente' && 
         editButton.addEventListener('click', () => {
             userInfoDisplay.style.display = 'none'; // Esconde as informações básicas
             editForm.style.display = 'block'; // Mostra o formulário de edição
+            editButton.style.display = 'none'; // Esconde o botão de editar apenas quando o formulário está visível
         });
 
         cancelButton.addEventListener('click', () => {
             editForm.style.display = 'none'; // Esconde o formulário de edição
             userInfoDisplay.style.display = 'block'; // Mostra as informações básicas
+            editButton.style.display = 'block'; // Mostra o botão de editar novamente
         });
     </script>
 
@@ -125,9 +129,9 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'cliente' && 
         </div>
         
         <div class="footer-links">
-            <a href="#" class="footer-link">Sobre Nós</a>
-            <a href="#" class="footer-link">Contactos</a>
-            <a href="#" class="footer-link">Termos</a>
+            <a href="empresa.php" class="footer-link">Sobre Nós</a>
+            <a href="empresa.php#contactos" class="footer-link">Contactos</a>
+            <a href="consultar_rotas.php" class="footer-link">Rotas e Horários</a>
         </div>
         
         <p>&copy; 2024 FelixBus. Todos os direitos reservados.</p>

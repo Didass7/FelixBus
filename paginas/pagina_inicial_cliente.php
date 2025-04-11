@@ -101,9 +101,9 @@ if (isset($_GET['origem']) && isset($_GET['destino'])) {
         </div>
         
         <div class="footer-links">
-            <a href="#" class="footer-link">Sobre Nós</a>
-            <a href="#" class="footer-link">Contactos</a>
-            <a href="#" class="footer-link">Termos</a>
+            <a href="empresa.php" class="footer-link">Sobre Nós</a>
+            <a href="empresa.php#contactos" class="footer-link">Contactos</a>
+            <a href="consultar_rotas.php" class="footer-link">Rotas e Horários</a>
         </div>
         
         <p>&copy; 2024 FelixBus. Todos os direitos reservados.</p>

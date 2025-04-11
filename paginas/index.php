@@ -1,13 +1,11 @@
 <?php
 session_start();
-
-include '../basedados/basedados.h'; // Inclui o arquivo diretamente
+include '../basedados/basedados.h'; // Inclui o ficheiro de conexão à base de dados
 
 // Buscar alertas ativos
 $sql_alertas = "SELECT * FROM alertas WHERE ativo = 1 AND data_inicio <= NOW() AND data_fim >= NOW() ORDER BY data_criacao DESC";
 $result_alertas = mysqli_query($conn, $sql_alertas);
 ?>
-
 
 <!DOCTYPE html>
 <html lang="pt-PT">
@@ -18,7 +16,7 @@ $result_alertas = mysqli_query($conn, $sql_alertas);
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Navigation -->
+    <!-- Navegação -->
     <nav class="navbar">
         <div class="logo">
             <a href="index.php">
@@ -33,31 +31,38 @@ $result_alertas = mysqli_query($conn, $sql_alertas);
         </div>
     </nav>
 
-    <!-- Hero Section -->
+    <!-- Secção Principal -->
     <section class="hero">
         <div class="hero-container">
-            <!-- Hero Content (Left Side) -->
+            <!-- Conteúdo Principal -->
             <div class="hero-content">
-                <h1 class="hero-title">Viagens de Luxo Reimaginadas</h1>
-                <p class="hero-subtitle">Conforto excepcional a preços acessíveis</p>
-                <p class="login-subtitle">Crie uma conta ou faça Login para usufruir dos nossos serviços!</p>
-
-                <!-- Login Form -->
-                <form class="login-button">
+                <div class="hero-text">
+                    <h1 class="hero-title">Viagens de Luxo Reimaginadas</h1>
+                    <p class="hero-subtitle">Conforto excepcional a preços acessíveis</p>
+                    <p class="login-subtitle">Crie uma conta ou faça Login para usufruir dos nossos serviços!</p>
+                </div>
+                
+                <!-- Botões de Login e Registo -->
+                <div class="login-button">
                     <button class="btn-primary" type="button" onclick="window.location.href='login.php'">Login</button>
                     <button class="btn-primary" type="button" onclick="window.location.href='register.php'">Registar</button>
-                </form>
+                </div>
             </div>
 
-            <!-- Alerts Section (Right Side) -->
-            <?php if(mysqli_num_rows($result_alertas) > 0): ?>
+            <!-- Secção de Alertas -->
+            <?php if (mysqli_num_rows($result_alertas) > 0): ?>
             <div class="hero-alerts">
                 <h2 class="alerts-title">Alertas e Promoções</h2>
                 <div class="alerts-container">
-                    <?php while($alerta = mysqli_fetch_assoc($result_alertas)): ?>
+
+                    <!-- Loop para iterar sobre a tabela de alertas -->
+                    <?php while ($alerta = mysqli_fetch_assoc($result_alertas)): ?>
                     <div class="alert-card">
+
+                        <!-- Conteúdo do Alerta -->
                         <h3><?php echo htmlspecialchars($alerta['titulo']); ?></h3>
                         <p><?php echo htmlspecialchars($alerta['conteudo']); ?></p>
+                        
                         <div class="alert-date">
                             <small>Válido até: <?php echo date('d/m/Y', strtotime($alerta['data_fim'])); ?></small>
                         </div>
@@ -69,7 +74,7 @@ $result_alertas = mysqli_query($conn, $sql_alertas);
         </div>
     </section>
 
-    <!-- Footer -->
+    <!-- Rodapé -->
     <footer class="footer">
         <div class="social-links">
             <a href="#" class="social-link">FB</a>

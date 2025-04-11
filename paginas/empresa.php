@@ -14,7 +14,25 @@ include '../basedados/basedados.h';
     <!-- Navigation -->
     <nav class="navbar">
         <div class="logo">
-            <a href="index.php">
+            <a href="<?php 
+                if(isset($_SESSION['id_utilizador'])) {
+                    switch($_SESSION['perfil']) {
+                        case 'administrador':
+                            echo 'pagina_inicial_admin.php';
+                            break;
+                        case 'funcionário':
+                            echo 'pagina_inicial_funcionario.php';
+                            break;
+                        case 'cliente':
+                            echo 'pagina_inicial_cliente.php';
+                            break;
+                        default:
+                            echo 'index.php';
+                    }
+                } else {
+                    echo 'index.php';
+                }
+            ?>">
                 <img src="logo.png" alt="FelixBus Logo">
             </a>
         </div>
@@ -51,7 +69,7 @@ include '../basedados/basedados.h';
             <div class="about-content">
                 <div class="about-text">
                     <h2 class="section-title">Nossa História</h2>
-                    <p>A FelixBus foi fundada em 2010 com a missão de revolucionar o transporte rodoviário de passageiros em Portugal e na Europa. Começamos com apenas 3 autocarros e hoje contamos com uma frota moderna de mais de 100 veículos que conectam as principais cidades europeias.</p>
+                    <p>A FelixBus foi fundada em 2025 com a missão de revolucionar o transporte rodoviário de passageiros na Europa. Começamos com apenas 3 autocarros e hoje contamos com uma frota moderna de mais de 100 veículos que conectam as principais cidades europeias.</p>
                     <p>Nossa filosofia é oferecer viagens confortáveis a preços acessíveis, sem comprometer a qualidade do serviço. Investimos constantemente em tecnologia e treinamento para garantir a melhor experiência aos nossos passageiros.</p>
                 </div>
                 <div class="about-image">
@@ -63,9 +81,9 @@ include '../basedados/basedados.h';
             <div class="info-cards">
                 <div class="info-card" id="localizacao">
                     <h3>Localização</h3>
-                    <p>Rua Principal, 123, Lisboa</p>
+                    <p>Av. do Empresário, Castelo Branco</p>
                     <p>Portugal</p>
-                    <p>Código Postal: 1000-100</p>
+                    <p>Código Postal: 6000-767</p>
                 </div>
                 <div class="info-card">
                     <h3>Horário de Funcionamento</h3>
@@ -75,7 +93,7 @@ include '../basedados/basedados.h';
                 </div>
                 <div class="info-card" id="contactos">
                     <h3>Contactos</h3>
-                    <p>Telefone: +351 123 456 789</p>
+                    <p>Telefone: +351 999 999 999</p>
                     <p>Email: info@felixbus.pt</p>
                     <p>Suporte: suporte@felixbus.pt</p>
                 </div>
