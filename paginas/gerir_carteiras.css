@@ -1,0 +1,156 @@
+@import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --dark-bg: #1a1a21;
+    --dark-bg-lighter: #24242e;
+    --gold-accent: rgb(228, 188, 79);
+    --gold-accent-hover: rgb(245, 215, 130);
+    --footer-bg: #101014;
+    --text-light: #ffffff;
+    --text-muted: rgba(255, 255, 255, 0.7);
+    --card-bg: rgba(255, 255, 255, 0.08);
+    --card-hover-bg: rgba(255, 255, 255, 0.12);
+    --success-color: #4CAF50;
+    --error-color: #f44336;
+    --transition-speed: 0.3s;
+    --border-radius: 12px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Jost', sans-serif;
+}
+
+body {
+    background-color: var(--dark-bg);
+    color: var(--text-light);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+    flex: 1;
+}
+
+h1 {
+    text-align: center;
+    color: var(--gold-accent);
+    margin-bottom: 2rem;
+    font-size: 2.5rem;
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.success {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: var(--success-color);
+    border: 1px solid var(--success-color);
+}
+
+.error {
+    background-color: rgba(244, 67, 54, 0.1);
+    color: var(--error-color);
+    border: 1px solid var(--error-color);
+}
+
+.carteiras-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.carteira-card {
+    background: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    transition: all var(--transition-speed);
+}
+
+.carteira-card:hover {
+    background: var(--card-hover-bg);
+    transform: translateY(-5px);
+}
+
+.carteira-card h3 {
+    color: var(--gold-accent);
+    margin-bottom: 1rem;
+}
+
+.carteira-card p {
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.operacoes {
+    margin-top: 1rem;
+}
+
+.operacao-form {
+    margin-bottom: 1rem;
+}
+
+.form-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+input[type="number"] {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid var(--gold-accent);
+    border-radius: var(--border-radius);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-light);
+}
+
+button {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all var(--transition-speed);
+}
+
+.btn-deposito {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.btn-levantamento {
+    background-color: var(--error-color);
+    color: white;
+}
+
+button:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 1rem;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    .carteiras-grid {
+        grid-template-columns: 1fr;
+    }
+}
