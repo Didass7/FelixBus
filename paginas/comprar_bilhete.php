@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             mysqli_stmt_execute($stmt);
 
             mysqli_commit($conn);
-            header("Location: meus_bilhetes.php?success=1");
+            header("Location: minhas_viagens.php?success=1");
             exit();
         } else {
             $mensagem = "Saldo insuficiente. Por favor, carregue sua carteira.";
@@ -95,9 +95,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <title>Comprar Bilhete - FelixBus</title>
-    <link rel="stylesheet" href="consultar_rotas.css">
+    <link rel="stylesheet" href="comprar_bilhete.css">
 </head>
 <body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="logo">
+            <a href="pagina_inicial_cliente.php">
+                <img src="logo.png" alt="FelixBus Logo">
+            </a>
+        </div>
+        <div class="nav-links">
+            <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
+            <a href="empresa.php" class="nav-link">Sobre Nós</a>
+            <a href="carteira.php" class="nav-link">Carteira</a>
+            <a href="perfil.php" class="nav-link">Perfil</a>
+            <a href="logout.php" class="nav-link">Logout</a>
+        </div>
+    </nav>
+
     <div class="container">
         <h2>Confirmar Compra de Bilhete</h2>
         
@@ -120,5 +136,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <a href="consultar_rotas.php" class="btn-secondary">Cancelar</a>
         </form>
     </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="social-links">
+            <a href="#" class="social-link">FB</a>
+            <a href="#" class="social-link">TW</a>
+            <a href="#" class="social-link">IG</a>
+        </div>
+        
+        <div class="footer-links">
+            <a href="empresa.php" class="footer-link">Sobre Nós</a>
+            <a href="empresa.php#contactos" class="footer-link">Contactos</a>
+            <a href="consultar_rotas.php" class="footer-link">Rotas e Horários</a>
+        </div>
+        
+        <p>&copy; 2024 FelixBus. Todos os direitos reservados.</p>
+    </footer>
 </body>
 </html>
+
