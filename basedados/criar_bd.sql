@@ -95,7 +95,7 @@ CREATE TABLE bilhetes (
     FOREIGN KEY (id_utilizador) REFERENCES utilizadores(id_utilizador)
 );
 
---Inserir utilizadores
+-- Inserir utilizadores
 INSERT INTO utilizadores (nome_utilizador, hash_password, email, nome_completo, telefone, morada, perfil) VALUES
 ('cliente', md5('cliente'), 'cliente@gmail.com', 'cliente', '999888777', 'Rua 1', 'cliente');
 
@@ -107,62 +107,58 @@ INSERT INTO utilizadores
 (nome_utilizador, hash_password, email, nome_completo, telefone, morada, perfil) VALUES 
 ('admin', MD5('admin'), 'admin@gmail.com', 'Administrador', '933333333', 'Rua 3', 'administrador');
 
--- Primeiro inserir as rotas usando o admin correto (id=7)
-INSERT INTO rotas (id_rota, origem, destino, criado_por) VALUES
-(1, 'Lisboa', 'Porto', 7),
-(2, 'Porto', 'Lisboa', 7),
-(3, 'Lisboa', 'Coimbra', 7),
-(4, 'Coimbra', 'Lisboa', 7),
-(5, 'Porto', 'Braga', 7),
-(6, 'Braga', 'Porto', 7),
-(7, 'Coimbra', 'Porto', 7),
-(8, 'Porto', 'Coimbra', 7),
-(9, 'Lisboa', 'Faro', 7),
-(10, 'Faro', 'Lisboa', 7),
-(11, 'Coimbra', 'Braga', 7),
-(12, 'Braga', 'Coimbra', 7),
-(13, 'Lisboa', 'Madrid', 7),
-(14, 'Madrid', 'Lisboa', 7),
-(15, 'Porto', 'Madrid', 7),
-(16, 'Madrid', 'Porto', 7),
-(17, 'Madrid', 'Barcelona', 7),
-(18, 'Barcelona', 'Madrid', 7),
-(19, 'Lisboa', 'Barcelona', 7),
-(20, 'Barcelona', 'Lisboa', 7),
-(21, 'Madrid', 'Paris', 7),
-(22, 'Paris', 'Madrid', 7),
-(23, 'Lisboa', 'Paris', 7),
-(24, 'Paris', 'Lisboa', 7),
-(25, 'Paris', 'Bruxelas', 7),
-(26, 'Bruxelas', 'Paris', 7),
-(27, 'Lisboa', 'Bruxelas', 7),
-(28, 'Bruxelas', 'Lisboa', 7),
-(29, 'Porto', 'Paris', 7),
-(30, 'Paris', 'Porto', 7),
-(31, 'Lisboa', 'Londres', 7),
-(32, 'Londres', 'Lisboa', 7),
-(33, 'Porto', 'Londres', 7),
-(34, 'Londres', 'Porto', 7),
-(35, 'Madrid', 'Londres', 7),
-(36, 'Londres', 'Madrid', 7),
-(37, 'Barcelona', 'Londres', 7),
-(38, 'Londres', 'Barcelona', 7),
-(39, 'Paris', 'Londres', 7),
-(40, 'Londres', 'Paris', 7),
-(41, 'Madrid', 'Bruxelas', 7),
-(42, 'Bruxelas', 'Madrid', 7),
-(43, 'Barcelona', 'Paris', 7),
-(44, 'Paris', 'Barcelona', 7),
-(45, 'Porto', 'Bruxelas', 7),
-(46, 'Bruxelas', 'Porto', 7),
-(47, 'Faro', 'Madrid', 7),
-(48, 'Madrid', 'Faro', 7),
-(49, 'Coimbra', 'Madrid', 7),
-(50, 'Madrid', 'Coimbra', 7);
-
-
--- Garantir que o AUTO_INCREMENT está correto
-ALTER TABLE rotas AUTO_INCREMENT = 51;
+-- Primeiro inserir as rotas
+INSERT INTO rotas (id_rota, origem, destino, criado_por) VALUES 
+(1, 'Lisboa', 'Porto', 3),
+(2, 'Porto', 'Lisboa', 3),
+(3, 'Lisboa', 'Coimbra', 3),
+(4, 'Coimbra', 'Lisboa', 3),
+(5, 'Porto', 'Braga', 3),
+(6, 'Braga', 'Porto', 3),
+(7, 'Coimbra', 'Porto', 3),
+(8, 'Porto', 'Coimbra', 3),
+(9, 'Lisboa', 'Faro', 3),
+(10, 'Faro', 'Lisboa', 3),
+(11, 'Coimbra', 'Braga', 3),
+(12, 'Braga', 'Coimbra', 3),
+(13, 'Lisboa', 'Madrid', 3),
+(14, 'Madrid', 'Lisboa', 3),
+(15, 'Porto', 'Madrid', 3),
+(16, 'Madrid', 'Porto', 3),
+(17, 'Madrid', 'Barcelona', 3),
+(18, 'Barcelona', 'Madrid', 3),
+(19, 'Lisboa', 'Barcelona', 3),
+(20, 'Barcelona', 'Lisboa', 3),
+(21, 'Madrid', 'Paris', 3),
+(22, 'Paris', 'Madrid', 3),
+(23, 'Lisboa', 'Paris', 3),
+(24, 'Paris', 'Lisboa', 3),
+(25, 'Paris', 'Bruxelas', 3),
+(26, 'Bruxelas', 'Paris', 3),
+(27, 'Lisboa', 'Bruxelas', 3),
+(28, 'Bruxelas', 'Lisboa', 3),
+(29, 'Porto', 'Paris', 3),
+(30, 'Paris', 'Porto', 3),
+(31, 'Lisboa', 'Londres', 3),
+(32, 'Londres', 'Lisboa', 3),
+(33, 'Porto', 'Londres', 3),
+(34, 'Londres', 'Porto', 3),
+(35, 'Madrid', 'Londres', 3),
+(36, 'Londres', 'Madrid', 3),
+(37, 'Barcelona', 'Londres', 3),
+(38, 'Londres', 'Barcelona', 3),
+(39, 'Paris', 'Londres', 3),
+(40, 'Londres', 'Paris', 3),
+(41, 'Madrid', 'Bruxelas', 3),
+(42, 'Bruxelas', 'Madrid', 3),
+(43, 'Barcelona', 'Paris', 3),
+(44, 'Paris', 'Barcelona', 3),
+(45, 'Porto', 'Bruxelas', 3),
+(46, 'Bruxelas', 'Porto', 3),
+(47, 'Faro', 'Madrid', 3),
+(48, 'Madrid', 'Faro', 3),
+(49, 'Coimbra', 'Madrid', 3),
+(50, 'Madrid', 'Coimbra', 3);
 
 -- Inserir horários para as rotas
 INSERT INTO horarios (id_rota, hora_partida, hora_chegada, capacidade_autocarro, lugares_disponiveis, preco) VALUES
