@@ -45,13 +45,13 @@ body {
     transition: color 0.3s;
 }
 
-.nav-link:hover {
+.nav-link:hover, .nav-link.active {
     color: var(--gold-accent);
 }
 
 /* Container principal */
 .container {
-    max-width: 800px;
+    max-width: 1200px;
     margin: 2rem auto;
     padding: 2rem;
 }
@@ -63,42 +63,75 @@ h2 {
     margin-bottom: 2rem;
 }
 
-/* Detalhes do bilhete */
-.ticket-details {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 2rem;
-    border-radius: 10px;
-    margin: 2rem 0;
+/* Mensagem de sucesso */
+.success-message {
+    background: rgba(75, 181, 67, 0.2);
+    border: 1px solid #4bb543;
     color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 2rem;
 }
 
-.ticket-details p {
-    margin: 1rem 0;
+/* Grid de viagens */
+.trips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+/* Card de viagem */
+.trip-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.3s;
+}
+
+.trip-card:hover {
+    transform: translateY(-5px);
+}
+
+.trip-header {
+    background: var(--gold-accent);
+    padding: 1rem;
+    color: var(--dark-bg);
+}
+
+.trip-header h3 {
+    margin: 0;
     font-size: 1.2rem;
+    text-align: center;
 }
 
-.ticket-details strong {
+.trip-body {
+    padding: 1.5rem;
+}
+
+.trip-body p {
+    margin: 0.5rem 0;
+}
+
+.trip-body strong {
     color: var(--gold-accent);
     margin-right: 10px;
 }
 
-/* Alerta */
-.alert {
-    padding: 1rem;
-    margin: 1rem 0;
-    border-radius: 8px;
-    background: rgba(255, 107, 107, 0.2);
-    border: 1px solid #ff6b6b;
-    color: white;
+.trip-actions {
+    margin-top: 1.5rem;
     text-align: center;
 }
 
-/* Formulário de compra */
-.purchase-form {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 2rem;
+/* Sem viagens */
+.no-trips {
+    text-align: center;
+    padding: 3rem;
+}
+
+.no-trips p {
+    margin-bottom: 1.5rem;
+    font-size: 1.2rem;
 }
 
 .btn-primary {
@@ -112,24 +145,29 @@ h2 {
     transition: transform 0.3s, opacity 0.3s;
     text-decoration: none;
     font-weight: bold;
+    display: inline-block;
 }
 
 .btn-secondary {
     background: rgba(255, 255, 255, 0.1);
     color: white;
-    padding: 12px 24px;
+    padding: 10px 20px;
     border: none;
     border-radius: 5px;
-    font-size: 1.1rem;
+    font-size: 1rem;
     cursor: pointer;
-    transition: transform 0.3s, opacity 0.3s;
+    transition: background 0.3s;
     text-decoration: none;
+    display: inline-block;
 }
 
-.btn-primary:hover,
-.btn-secondary:hover {
+.btn-primary:hover {
     transform: translateY(-2px);
     opacity: 0.9;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
 }
 
 /* Footer */
