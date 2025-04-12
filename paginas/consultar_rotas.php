@@ -38,12 +38,16 @@ while ($row = mysqli_fetch_assoc($result_destinos)) {
 }
 
 // Buscar resultados se houver pesquisa
-$sql = "SELECT r.id_rota, r.origem, r.destino, h.id_horario, h.hora_partida, h.hora_chegada, h.preco, h.lugares_disponiveis 
+$sql = "SELECT r.id_rota, r.origem, r.destino, h.id_horario, 
+        DATE_FORMAT(NOW(), '%Y-%m-%d') AS data_viagem,
+        TIME(h.hora_partida) AS hora_partida,
+        TIME(h.hora_chegada) AS hora_chegada,
+        h.preco, h.lugares_disponiveis 
         FROM rotas r
         JOIN horarios h ON r.id_rota = h.id_rota
         WHERE (? = '' OR r.origem LIKE CONCAT('%', ?, '%'))
         AND (? = '' OR r.destino LIKE CONCAT('%', ?, '%'))
-        ORDER BY h.hora_partida ASC";
+        ORDER BY TIME(h.hora_partida) ASC";
         
 $stmt = mysqli_prepare($conn, $sql);
 mysqli_stmt_bind_param($stmt, "ssss", $origem, $origem, $destino, $destino);
@@ -51,7 +55,14 @@ mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 
 while ($row = mysqli_fetch_assoc($result)) {
-    $resultados[] = $row;
+    // Criar data completa combinando a data atual com o horário da rota
+    $row['hora_partida'] = date('Y-m-d H:i:s', strtotime($row['data_viagem'] . ' ' . $row['hora_partida']));
+    $row['hora_chegada'] = date('Y-m-d H:i:s', strtotime($row['data_viagem'] . ' ' . $row['hora_chegada']));
+    
+    // Só adicionar rotas futuras
+    if (strtotime($row['hora_partida']) > time()) {
+        $resultados[] = $row;
+    }
 }
 ?>
 
@@ -68,19 +79,13 @@ while ($row = mysqli_fetch_assoc($result)) {
     <nav class="navbar">
         <div class="logo">
             <a href="<?php 
-                if(isset($_SESSION['id_utilizador'])) {
-                    switch($_SESSION['perfil']) {
-                        case 'administrador':
-                            echo 'pagina_inicial_admin.php';
-                            break;
-                        case 'funcionário':
-                            echo 'pagina_inicial_funcionario.php';
-                            break;
-                        case 'cliente':
-                            echo 'pagina_inicial_cliente.php';
-                            break;
-                        default:
-                            echo 'index.php';
+                if (isset($_SESSION['perfil'])) {
+                    if ($_SESSION['perfil'] === 'cliente') {
+                        echo 'pagina_inicial_cliente.php';
+                    } elseif ($_SESSION['perfil'] === 'funcionário') {
+                        echo 'pagina_inicial_funcionario.php';
+                    } elseif ($_SESSION['perfil'] === 'administrador') {
+                        echo 'pagina_inicial_admin.php';
                     }
                 } else {
                     echo 'index.php';
@@ -90,18 +95,29 @@ while ($row = mysqli_fetch_assoc($result)) {
             </a>
         </div>
         <div class="nav-links">
-            <a href="consultar_rotas.php" class="nav-link active">Rotas e Horários</a>
-            <a href="empresa.php" class="nav-link">Sobre Nós</a>
-            <?php if(isset($_SESSION['id_utilizador'])): ?>
-                <?php if($_SESSION['perfil'] == 'administrador'): ?>
-                    <a href="pagina_inicial_admin.php" class="nav-link">Área Admin</a>
-                <?php elseif($_SESSION['perfil'] == 'funcionário'): ?>
-                    <a href="pagina_inicial_funcionario.php" class="nav-link">Área Funcionário</a>
-                <?php else: ?>
-                    <a href="pagina_inicial_cliente.php" class="nav-link">Área Cliente</a>
+            <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
+            <?php if (isset($_SESSION['id_utilizador'])): ?>
+                <?php if ($_SESSION['perfil'] === 'cliente'): ?>
+                    <a href="minhas_viagens.php" class="nav-link">Minhas Viagens</a>
+                    <a href="carteira.php" class="nav-link">Carteira</a>
+                    <a href="perfil.php" class="nav-link">Perfil</a>
+                    <a href="logout.php" class="nav-link">Logout</a>
+                <?php elseif ($_SESSION['perfil'] === 'funcionário'): ?>
+                    <a href="gerir_carteiras.php" class="nav-link">Gerir Carteiras</a>
+                    <a href="gerir_bilhetes.php" class="nav-link">Gerir Bilhetes</a>
+                    <a href="perfil.php" class="nav-link">Perfil</a>
+                    <a href="logout.php" class="nav-link">Logout</a>
+                <?php elseif ($_SESSION['perfil'] === 'administrador'): ?>
+                    <a href="gerir_rotas.php" class="nav-link">Gerir Rotas</a>
+                    <a href="gerir_utilizadores.php" class="nav-link">Gerir Utilizadores</a>
+                    <a href="gerir_alertas.php" class="nav-link">Gerir Alertas</a>
+                    <a href="gerir_carteiras.php" class="nav-link">Gerir Carteiras</a>
+                    <a href="gerir_bilhetes.php" class="nav-link">Gerir Bilhetes</a>
+                    <a href="perfil.php" class="nav-link">Perfil</a>
+                    <a href="logout.php" class="nav-link">Logout</a>
                 <?php endif; ?>
-                <a href="logout.php" class="nav-link">Logout</a>
             <?php else: ?>
+                <a href="empresa.php" class="nav-link">Sobre Nós</a>
                 <a href="register.php" class="nav-link">Registar</a>
                 <a href="login.php" class="nav-link">Login</a>
             <?php endif; ?>

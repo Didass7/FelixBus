@@ -34,6 +34,7 @@ body {
 
 .container {
     max-width: 1200px;
+    width: 100%;
     margin: 2rem auto;
     padding: 0 2rem;
     flex: 1;
@@ -44,6 +45,7 @@ h1 {
     color: var(--gold-accent);
     margin-bottom: 2rem;
     font-size: 2.5rem;
+    font-weight: 600;
 }
 
 .alert {
@@ -51,6 +53,7 @@ h1 {
     border-radius: var(--border-radius);
     margin-bottom: 1rem;
     text-align: center;
+    font-weight: 500;
 }
 
 .success {
@@ -70,6 +73,7 @@ h1 {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 2rem;
     margin-top: 2rem;
+    width: 100%;
 }
 
 .carteira-card {
@@ -77,25 +81,29 @@ h1 {
     padding: 1.5rem;
     border-radius: var(--border-radius);
     transition: all var(--transition-speed);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .carteira-card:hover {
     background: var(--card-hover-bg);
     transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
 .carteira-card h3 {
     color: var(--gold-accent);
     margin-bottom: 1rem;
+    font-weight: 600;
 }
 
 .carteira-card p {
     color: var(--text-muted);
     margin-bottom: 0.5rem;
+    font-size: 1rem;
 }
 
 .operacoes {
-    margin-top: 1rem;
+    margin-top: 1.5rem;
 }
 
 .operacao-form {
@@ -105,6 +113,7 @@ h1 {
 .form-group {
     display: flex;
     gap: 0.5rem;
+    align-items: center;
 }
 
 input[type="number"] {
@@ -114,6 +123,16 @@ input[type="number"] {
     border-radius: var(--border-radius);
     background: rgba(255, 255, 255, 0.05);
     color: var(--text-light);
+    outline: none;
+    transition: border-color var(--transition-speed);
+}
+
+input[type="number"]:focus {
+    border-color: var(--gold-accent-hover);
+}
+
+input[type="number"]::placeholder {
+    color: var(--text-muted);
 }
 
 button {
@@ -123,6 +142,7 @@ button {
     cursor: pointer;
     font-weight: 500;
     transition: all var(--transition-speed);
+    min-width: 100px;
 }
 
 .btn-deposito {
@@ -138,12 +158,69 @@ button {
 button:hover {
     opacity: 0.9;
     transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+/* Navigation */
+.navbar {
+    background-color: var(--dark-bg);
+    padding: 15px 10%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo img {
+    width: 120px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 2rem;
+}
+
+.nav-link {
+    color: white;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.nav-link:hover {
+    color: var(--gold-accent);
+}
+
+/* Responsive Navigation */
+@media (max-width: 768px) {
+    .navbar {
+        padding: 15px 5%;
+    }
+
+    .nav-links {
+        gap: 1rem;
+    }
+
+    .nav-link {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .nav-links {
+        display: none; /* Você pode implementar um menu hamburguer aqui se desejar */
+    }
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {
         padding: 0 1rem;
+        margin: 1rem auto;
     }
 
     h1 {
@@ -153,4 +230,80 @@ button:hover {
     .carteiras-grid {
         grid-template-columns: 1fr;
     }
+
+    .form-group {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    button {
+        width: 100%;
+    }
 }
+
+/* Carteira da Empresa */
+.empresa-carteira {
+    margin-bottom: 3rem;
+    padding: 0 1rem;
+}
+
+.carteira-empresa-card {
+    background: linear-gradient(135deg, var(--dark-bg-lighter), var(--card-bg));
+    border: 2px solid var(--gold-accent);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.carteira-empresa-card h2 {
+    color: var(--gold-accent);
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.saldo-valor {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.4rem;
+}
+
+.saldo-label {
+    color: var(--text-muted);
+}
+
+.saldo-amount {
+    color: var(--gold-accent);
+    font-weight: 700;
+    font-size: 2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .empresa-carteira {
+        margin-bottom: 2rem;
+    }
+
+    .carteira-empresa-card {
+        padding: 1.5rem;
+    }
+
+    .carteira-empresa-card h2 {
+        font-size: 1.5rem;
+    }
+
+    .saldo-valor {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .saldo-amount {
+        font-size: 1.8rem;
+    }
+}
+
+
+

@@ -116,11 +116,13 @@ $result_alertas = mysqli_query($conn, $sql_alertas);
             </a>
         </div>
         <div class="nav-links">
-            <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
-            <a href="gerir_alertas.php" class="nav-link active">Gerir Alertas</a>
-            <a href="carteira.php" class="nav-link">Carteira</a>
-            <a href="perfil.php" class="nav-link">Perfil</a>
-            <a href="logout.php" class="nav-link">Logout</a>
+        <a href="gerir_rotas.php" class="nav-link">Gerir Rotas</a>
+                    <a href="gerir_utilizadores.php" class="nav-link">Gerir Utilizadores</a>
+                    <a href="gerir_alertas.php" class="nav-link">Gerir Alertas</a>
+                    <a href="gerir_carteiras.php" class="nav-link">Gerir Carteiras</a>
+                    <a href="gerir_bilhetes.php" class="nav-link">Gerir Bilhetes</a>
+                    <a href="perfil.php" class="nav-link">Perfil</a>
+                    <a href="logout.php" class="nav-link">Logout</a>
         </div>
     </nav>
 

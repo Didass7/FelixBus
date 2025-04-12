@@ -44,6 +44,11 @@ body {
     z-index: 100;
 }
 
+.logo {
+    display: flex;
+    align-items: center;
+}
+
 .logo img {
     width: 120px;
     transition: transform var(--transition-speed);
@@ -79,12 +84,27 @@ body {
     transition: width var(--transition-speed);
 }
 
+.nav-link:hover::after {
+    width: 100%;
+}
+
 .nav-link:hover {
     color: var(--gold-accent);
 }
 
-.nav-link:hover::after {
-    width: 100%;
+/* Responsive Navigation */
+@media (max-width: 768px) {
+    .navbar {
+        padding: 15px 5%;
+    }
+
+    .nav-links {
+        gap: 1rem;
+    }
+
+    .nav-link {
+        font-size: 1rem;
+    }
 }
 
 /* Hero Section */

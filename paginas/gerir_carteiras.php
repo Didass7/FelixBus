@@ -10,6 +10,14 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'funcionário
 $mensagem = '';
 $erro = '';
 
+// Buscar saldo da empresa
+$sql_empresa = "SELECT saldo FROM carteiras WHERE tipo = 'empresa' LIMIT 1";
+$result_empresa = mysqli_query($conn, $sql_empresa);
+$saldo_empresa = 0;
+if ($empresa = mysqli_fetch_assoc($result_empresa)) {
+    $saldo_empresa = $empresa['saldo'];
+}
+
 // Processar operações de carteira
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_cliente = $_POST['id_cliente'];
@@ -81,16 +89,40 @@ $result_clientes = mysqli_query($conn, $sql_clientes);
             </a>
         </div>
         <div class="nav-links">
-            <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
-            <a href="gerir_carteiras.php" class="nav-link active">Gerir Carteiras</a>
-            <a href="gerir_bilhetes.php" class="nav-link">Gerir Bilhetes</a>
-            <a href="carteira.php" class="nav-link">Minha Carteira</a>
-            <a href="perfil.php" class="nav-link">Perfil</a>
-            <a href="logout.php" class="nav-link">Logout</a>
+        <?php if (isset($_SESSION['id_utilizador'])): ?>
+                <?php if ($_SESSION['perfil'] === 'funcionário'): ?>
+                    <a href="gerir_carteiras.php" class="nav-link">Gerir Carteiras</a>
+                    <a href="gerir_bilhetes.php" class="nav-link">Gerir Bilhetes</a>
+                    <a href="perfil.php" class="nav-link">Perfil</a>
+                    <a href="logout.php" class="nav-link">Logout</a>
+                <?php elseif ($_SESSION['perfil'] === 'administrador'): ?>
+                    <a href="gerir_rotas.php" class="nav-link">Gerir Rotas</a>
+                    <a href="gerir_utilizadores.php" class="nav-link">Gerir Utilizadores</a>
+                    <a href="gerir_alertas.php" class="nav-link">Gerir Alertas</a>
+                    <a href="gerir_carteiras.php" class="nav-link">Gerir Carteiras</a>
+                    <a href="gerir_bilhetes.php" class="nav-link">Gerir Bilhetes</a>
+                    <a href="perfil.php" class="nav-link">Perfil</a>
+                    <a href="logout.php" class="nav-link">Logout</a>
+                <?php endif; ?>
+            <?php else: ?>
+                <a href="empresa.php" class="nav-link">Sobre Nós</a>
+                <a href="register.php" class="nav-link">Registar</a>
+                <a href="login.php" class="nav-link">Login</a>
+            <?php endif; ?>
         </div>
     </nav>
 
     <main class="container">
+        <div class="empresa-carteira">
+            <div class="carteira-empresa-card">
+                <h2>Carteira da Empresa</h2>
+                <div class="saldo-valor">
+                    <span class="saldo-label">Saldo Total:</span>
+                    <span class="saldo-amount"><?php echo number_format($saldo_empresa, 2); ?>€</span>
+                </div>
+            </div>
+        </div>
+
         <h1>Gestão de Carteiras</h1>
 
         <?php if ($mensagem): ?>
@@ -141,3 +173,4 @@ $result_clientes = mysqli_query($conn, $sql_clientes);
     </footer>
 </body>
 </html>
+

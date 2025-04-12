@@ -7,6 +7,12 @@ if (!isset($_SESSION['id_utilizador'])) {
     exit();
 }
 
+// Redirecionar funcionários e administradores
+if ($_SESSION['perfil'] === 'funcionário' || $_SESSION['perfil'] === 'administrador') {
+    header("Location: consultar_rotas.php");
+    exit();
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_utilizador = $_SESSION['id_utilizador'];
     $operacao = $_POST['operacao'];
@@ -97,7 +103,6 @@ $transacoes = mysqli_stmt_get_result($stmt);
     <link rel="stylesheet" href="carteira.css">
 </head>
 <body>
-    <!-- Navegação -->
     <nav class="navbar">
         <div class="logo">
             <a href="<?php 
@@ -116,7 +121,7 @@ $transacoes = mysqli_stmt_get_result($stmt);
         </div>
         <div class="nav-links">
             <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
-            <a href="empresa.php" class="nav-link">Sobre Nós</a>
+            <a href="minhas_viagens.php" class="nav-link">Minhas Viagens</a>
             <a href="carteira.php" class="nav-link">Carteira</a>
             <a href="perfil.php" class="nav-link">Perfil</a>
             <a href="logout.php" class="nav-link">Logout</a>

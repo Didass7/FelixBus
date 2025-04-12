@@ -27,6 +27,8 @@ if (!isset($_SESSION['id_utilizador']) || $_SESSION['perfil'] !== 'administrador
             <a href="gerir_rotas.php" class="nav-link">Gerir Rotas</a>
             <a href="gerir_utilizadores.php" class="nav-link">Gerir Utilizadores</a>
             <a href="gerir_alertas.php" class="nav-link">Gerir Alertas</a>
+            <a href="gerir_carteiras.php" class="nav-link">Gerir Carteiras</a>
+            <a href="gerir_bilhetes.php" class="nav-link">Gerir Bilhetes</a>
             <a href="perfil.php" class="nav-link">Perfil</a>
             <a href="logout.php" class="nav-link">Logout</a>
         </div>
@@ -56,6 +58,20 @@ if (!isset($_SESSION['id_utilizador']) || $_SESSION['perfil'] !== 'administrador
                     <div class="card-content">
                         <h3>Gestão de Alertas</h3>
                         <p>Gerencie alertas, informações e promoções do sistema</p>
+                    </div>
+                </a>
+
+                <a href="gerir_carteiras.php" class="admin-action-card">
+                    <div class="card-content">
+                        <h3>Gestão de Carteiras</h3>
+                        <p>Gerencie o saldo das carteiras dos clientes</p>
+                    </div>
+                </a>
+
+                <a href="gerir_bilhetes.php" class="admin-action-card">
+                    <div class="card-content">
+                        <h3>Gestão de Bilhetes</h3>
+                        <p>Compre e gerencie bilhetes para clientes</p>
                     </div>
                 </a>
             </div>

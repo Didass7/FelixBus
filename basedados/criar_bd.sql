@@ -88,6 +88,8 @@ CREATE TABLE bilhetes (
     codigo_bilhete CHAR(36) PRIMARY KEY DEFAULT (UUID()) COMMENT 'Código único de validação',
     id_horario INT NOT NULL,
     id_utilizador INT NOT NULL,
+    data_viagem DATE NOT NULL COMMENT 'Data específica da viagem',
+    hora_viagem TIME NOT NULL COMMENT 'Hora específica da viagem',
     data_compra DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     preco_pago DECIMAL(10,2) NOT NULL COMMENT 'Valor no momento da compra',
     valido BOOLEAN NOT NULL DEFAULT 1 COMMENT 'Se o bilhete está ativo',

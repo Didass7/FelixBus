@@ -29,6 +29,8 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    width: 100%;
+    overflow-x: hidden; /* Previne scroll horizontal indesejado */
 }
 
 /* Navigation */
@@ -38,23 +40,33 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    width: 100%;
+    position: relative; /* Garante que a navbar fique alinhada corretamente */
+}
+
+.logo {
+    display: flex;
+    align-items: center;
 }
 
 .logo img {
     width: 120px;
+    height: auto;
 }
 
 .nav-links {
     display: flex;
     gap: 2rem;
+    align-items: center;
 }
 
 .nav-link {
-    color: var(--text-light);
+    color: white;
+    font-size: 1.2rem;
+    text-transform: uppercase;
     text-decoration: none;
-    font-size: 1.1rem;
-    transition: color var(--transition-speed);
+    transition: color 0.3s;
+    white-space: nowrap; /* Previne quebra de texto */
 }
 
 .nav-link:hover {
@@ -77,10 +89,11 @@ body {
 }
 
 .dashboard-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    display: flex; /* Mudado de grid para flex */
+    justify-content: center; /* Centraliza os cards horizontalmente */
     gap: 2rem;
     margin-top: 2rem;
+    flex-wrap: wrap; /* Permite que os cards quebrem em telas menores */
 }
 
 .dashboard-card {
@@ -91,6 +104,9 @@ body {
     color: var(--text-light);
     transition: all var(--transition-speed);
     border: 1px solid transparent;
+    flex: 1; /* Permite que os cards cresçam igualmente */
+    min-width: 300px; /* Garante um tamanho mínimo para os cards */
+    max-width: 350px; /* Limita o tamanho máximo dos cards */
 }
 
 .dashboard-card:hover {
@@ -173,6 +189,7 @@ body {
         flex-wrap: wrap;
         justify-content: center;
         gap: 1rem;
+        width: 100%; /* Garante que os links ocupem toda a largura em telas menores */
     }
 
     .dashboard {
@@ -183,8 +200,14 @@ body {
         font-size: 2rem;
     }
 
+    .dashboard-cards {
+        flex-direction: column; /* Em telas menores, volta a ser vertical */
+        align-items: center; /* Centraliza os cards */
+    }
+
     .dashboard-card {
-        padding: 1.5rem;
+        width: 100%; /* Ocupa toda a largura disponível */
+        max-width: 100%; /* Remove a limitação de largura máxima */
     }
 }
 

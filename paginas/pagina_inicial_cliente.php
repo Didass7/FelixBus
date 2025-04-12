@@ -65,7 +65,6 @@ if (isset($_GET['origem']) || isset($_GET['destino'])) {
     <link rel="stylesheet" href="pagina_inicial_cliente.css">
 </head>
 <body>
-    <!-- Navigation -->
     <nav class="navbar">
         <div class="logo">
             <a href="pagina_inicial_cliente.php">

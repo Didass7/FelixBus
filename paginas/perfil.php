@@ -14,7 +14,7 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'cliente' && 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FelixBus - Viagens Premium</title>
+    <title>FelixBus - Perfil</title>
     <link rel="stylesheet" href="perfil.css">
 </head>
 <body>
@@ -37,10 +37,31 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'cliente' && 
         </div>
         <div class="nav-links">
             <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
-            <a href="empresa.php" class="nav-link">Sobre Nós</a>
-            <a href="carteira.php" class="nav-link">Carteira</a>
-            <a href="perfil.php" class="nav-link">Perfil</a>
-            <a href="logout.php" class="nav-link">Logout</a>
+            <?php if (isset($_SESSION['id_utilizador'])): ?>
+                <?php if ($_SESSION['perfil'] === 'cliente'): ?>
+                    <a href="minhas_viagens.php" class="nav-link">Minhas Viagens</a>
+                    <a href="carteira.php" class="nav-link">Carteira</a>
+                    <a href="perfil.php" class="nav-link">Perfil</a>
+                    <a href="logout.php" class="nav-link">Logout</a>
+                <?php elseif ($_SESSION['perfil'] === 'funcionário'): ?>
+                    <a href="gerir_carteiras.php" class="nav-link">Gerir Carteiras</a>
+                    <a href="gerir_bilhetes.php" class="nav-link">Gerir Bilhetes</a>
+                    <a href="perfil.php" class="nav-link">Perfil</a>
+                    <a href="logout.php" class="nav-link">Logout</a>
+                <?php elseif ($_SESSION['perfil'] === 'administrador'): ?>
+                    <a href="gerir_rotas.php" class="nav-link">Gerir Rotas</a>
+                    <a href="gerir_utilizadores.php" class="nav-link">Gerir Utilizadores</a>
+                    <a href="gerir_alertas.php" class="nav-link">Gerir Alertas</a>
+                    <a href="gerir_carteiras.php" class="nav-link">Gerir Carteiras</a>
+                    <a href="gerir_bilhetes.php" class="nav-link">Gerir Bilhetes</a>
+                    <a href="perfil.php" class="nav-link">Perfil</a>
+                    <a href="logout.php" class="nav-link">Logout</a>
+                <?php endif; ?>
+            <?php else: ?>
+                <a href="empresa.php" class="nav-link">Sobre Nós</a>
+                <a href="register.php" class="nav-link">Registar</a>
+                <a href="login.php" class="nav-link">Login</a>
+            <?php endif; ?>
         </div>
     </nav>
 

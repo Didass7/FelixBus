@@ -40,7 +40,6 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .logo img {
@@ -53,26 +52,15 @@ body {
 }
 
 .nav-link {
-    color: var(--text-light);
+    color: white;
+    font-size: 1.2rem;
+    text-transform: uppercase;
     text-decoration: none;
-    font-size: 1.1rem;
-    transition: color var(--transition-speed);
-    position: relative;
+    transition: color 0.3s;
 }
 
-.nav-link:hover,
-.nav-link.active {
+.nav-link:hover {
     color: var(--gold-accent);
-}
-
-.nav-link.active::after {
-    content: '';
-    position: absolute;
-    bottom: -5px;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background-color: var(--gold-accent);
 }
 
 /* Main Container */

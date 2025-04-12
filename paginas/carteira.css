@@ -21,7 +21,7 @@ body {
     line-height: 1.6;
 }
 
-/* Navigation styles from your existing CSS */
+/* Navigation */
 .navbar {
     background-color: var(--dark-bg);
     padding: 15px 10%;
