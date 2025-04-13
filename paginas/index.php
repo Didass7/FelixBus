@@ -1,10 +1,17 @@
 <?php
 session_start();
-include '../basedados/basedados.h'; // Inclui o ficheiro de conexão à base de dados
+include '../basedados/basedados.h';
 
 // Buscar alertas ativos
 $sql_alertas = "SELECT * FROM alertas WHERE ativo = 1 AND data_inicio <= NOW() AND data_fim >= NOW() ORDER BY data_criacao DESC";
 $result_alertas = mysqli_query($conn, $sql_alertas);
+
+// Verificar se existe mensagem na sessão
+$mensagem = '';
+if (isset($_SESSION['mensagem'])) {
+    $mensagem = $_SESSION['mensagem'];
+    unset($_SESSION['mensagem']); // Limpa a mensagem da sessão
+}
 ?>
 
 <!DOCTYPE html>
@@ -19,15 +26,48 @@ $result_alertas = mysqli_query($conn, $sql_alertas);
     <!-- Navegação -->
     <nav class="navbar">
         <div class="logo">
-            <a href="index.php">
+            <a href="<?php 
+                if (isset($_SESSION['perfil'])) {
+                    if ($_SESSION['perfil'] === 'cliente') {
+                        echo 'pagina_inicial_cliente.php';
+                    } elseif ($_SESSION['perfil'] === 'funcionário') {
+                        echo 'pagina_inicial_funcionario.php';
+                    } elseif ($_SESSION['perfil'] === 'administrador') {
+                        echo 'pagina_inicial_admin.php';
+                    }
+                } else {
+                    echo 'index.php';
+                }
+            ?>">
                 <img src="logo.png" alt="FelixBus Logo">
             </a>
         </div>
         <div class="nav-links">
-            <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
-            <a href="empresa.php" class="nav-link">Sobre Nós</a>
-            <a href="register.php" class="nav-link">Registar</a>
-            <a href="login.php" class="nav-link">Login</a>
+        <?php if (isset($_SESSION['id_utilizador'])): ?>
+                <?php if ($_SESSION['perfil'] === 'cliente'): ?>
+                    <a href="minhas_viagens.php" class="nav-link">Minhas Viagens</a>
+                    <a href="carteira.php" class="nav-link">Carteira</a>
+                    <a href="perfil.php" class="nav-link">Perfil</a>
+                    <a href="logout.php" class="nav-link">Logout</a>
+                <?php elseif ($_SESSION['perfil'] === 'funcionário'): ?>
+                    <a href="gerir_carteiras.php" class="nav-link">Gerir Carteiras</a>
+                    <a href="gerir_bilhetes.php" class="nav-link">Gerir Bilhetes</a>
+                    <a href="perfil.php" class="nav-link">Perfil</a>
+                    <a href="logout.php" class="nav-link">Logout</a>
+                <?php elseif ($_SESSION['perfil'] === 'administrador'): ?>
+                    <a href="gerir_rotas.php" class="nav-link">Gerir Rotas</a>
+                    <a href="gerir_utilizadores.php" class="nav-link">Gerir Utilizadores</a>
+                    <a href="gerir_alertas.php" class="nav-link">Gerir Alertas</a>
+                    <a href="gerir_carteiras.php" class="nav-link">Gerir Carteiras</a>
+                    <a href="gerir_bilhetes.php" class="nav-link">Gerir Bilhetes</a>
+                    <a href="perfil.php" class="nav-link">Perfil</a>
+                    <a href="logout.php" class="nav-link">Logout</a>
+                <?php endif; ?>
+            <?php else: ?>
+                <a href="empresa.php" class="nav-link">Sobre Nós</a>
+                <a href="register.php" class="nav-link">Registar</a>
+                <a href="login.php" class="nav-link">Login</a>
+            <?php endif; ?>
         </div>
     </nav>
 

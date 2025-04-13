@@ -60,7 +60,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 
                 if (mysqli_stmt_execute($stmt)) {
-                    $mensagem = "Utilizador atualizado com sucesso!";
+                    $_SESSION['mensagem'] = "Utilizador atualizado com sucesso!";
+                    header("Location: gerir_utilizadores.php#lista");
+                    exit();
                 } else {
                     $erro = "Erro ao atualizar utilizador: " . mysqli_error($conn);
                 }
@@ -199,8 +201,9 @@ $result = mysqli_query($conn, $sql);
                 </div>
 
                 <div class="form-group">
-                    <label for="morada">Morada</label>
-                    <textarea id="morada" name="morada"><?php echo $utilizador_edicao ? htmlspecialchars($utilizador_edicao['morada']) : ''; ?></textarea>
+                    <label for="morada">Morada:</label>
+                    <input type="text" id="morada" name="morada" 
+                           value="<?php echo $utilizador_edicao ? htmlspecialchars($utilizador_edicao['morada']) : ''; ?>" required>
                 </div>
 
                 <div class="form-group">
@@ -222,7 +225,7 @@ $result = mysqli_query($conn, $sql);
         </section>
 
         <!-- Lista de Utilizadores -->
-        <section class="lista-utilizadores">
+        <section id="lista" class="lista-utilizadores">
             <h2>Visualizar Utilizadores</h2>
             <div class="table-responsive">
                 <table>
@@ -269,6 +272,10 @@ $result = mysqli_query($conn, $sql);
     </footer>
 </body>
 </html>
+
+
+
+
 
 
 
