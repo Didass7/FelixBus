@@ -36,7 +36,6 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'cliente' && 
             </a>
         </div>
         <div class="nav-links">
-            <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
             <?php if (isset($_SESSION['id_utilizador'])): ?>
                 <?php if ($_SESSION['perfil'] === 'cliente'): ?>
                     <a href="minhas_viagens.php" class="nav-link">Minhas Viagens</a>

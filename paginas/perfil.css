@@ -43,10 +43,18 @@ body {
     text-transform: uppercase;
     text-decoration: none;
     transition: color 0.3s;
+    white-space: nowrap;  /* Adicionado para prevenir quebra de linha */
 }
 
 .nav-link:hover {
     color: var(--gold-accent);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .nav-links {
+        display: none;
+    }
 }
 
 /* Hero Section */

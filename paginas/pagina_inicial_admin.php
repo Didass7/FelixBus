@@ -74,6 +74,13 @@ if (!isset($_SESSION['id_utilizador']) || $_SESSION['perfil'] !== 'administrador
                         <p>Compre e gerencie bilhetes para clientes</p>
                     </div>
                 </a>
+
+                <a href="perfil.php" class="admin-action-card">
+                    <div class="card-content">
+                        <h3>Edição de Perfil</h3>
+                        <p>Edite o seu próprio perfil</p>
+                    </div>
+                </a>
             </div>
         </div>
     </section>
