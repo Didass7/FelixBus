@@ -91,6 +91,7 @@ $result_clientes = mysqli_query($conn, $sql_clientes);
         <div class="nav-links">
         <?php if (isset($_SESSION['id_utilizador'])): ?>
                 <?php if ($_SESSION['perfil'] === 'funcionário'): ?>
+                    <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
                     <a href="gerir_carteiras.php" class="nav-link">Gerir Carteiras</a>
                     <a href="gerir_bilhetes.php" class="nav-link">Gerir Bilhetes</a>
                     <a href="perfil.php" class="nav-link">Perfil</a>

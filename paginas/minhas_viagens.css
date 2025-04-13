@@ -110,7 +110,34 @@ h2 {
 }
 
 .trip-body p {
-    margin: 0.5rem 0;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    line-height: 1.4;
+}
+
+.trip-body p strong {
+    color: var(--gold-accent);
+    margin-right: 0.5rem;
+}
+
+/* Estilo específico para o código do bilhete */
+.ticket-code {
+    background: rgba(228, 188, 79, 0.1);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(228, 188, 79, 0.2);
+    text-align: center;
+    font-size: 1.2rem;
+    margin-bottom: 1.5rem !important;
+}
+
+.ticket-code strong {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--gold-accent);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .trip-body strong {

@@ -10,6 +10,27 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'funcionário
 $mensagem = '';
 $erro = '';
 
+// Função para gerar código de bilhete único
+function gerarCodigoBilhete($conn) {
+    do {
+        // Gerar código aleatório de 8 caracteres (letras maiúsculas e números)
+        $codigo = '';
+        $caracteres = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        for ($i = 0; $i < 8; $i++) {
+            $codigo .= $caracteres[rand(0, strlen($caracteres) - 1)];
+        }
+        
+        // Verificar se o código já existe
+        $sql = "SELECT 1 FROM bilhetes WHERE codigo_bilhete = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "s", $codigo);
+        mysqli_stmt_execute($stmt);
+        $resultado = mysqli_stmt_get_result($stmt);
+    } while (mysqli_num_rows($resultado) > 0);
+    
+    return $codigo;
+}
+
 // Processar compra de bilhete
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validar inputs
@@ -118,10 +139,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         // Registrar bilhetes
                         $codigos_bilhetes = [];
                         for ($i = 0; $i < $quantidade; $i++) {
-                            $sql_bilhete = "INSERT INTO bilhetes (id_utilizador, id_horario, data_viagem, hora_viagem, preco_pago) 
-                                            VALUES (?, ?, ?, ?, ?)";
+                            $codigo_bilhete = gerarCodigoBilhete($conn);
+                            
+                            $sql_bilhete = "INSERT INTO bilhetes (codigo_bilhete, id_utilizador, id_horario, data_viagem, hora_viagem, preco_pago) 
+                                            VALUES (?, ?, ?, ?, ?, ?)";
                             $stmt = mysqli_prepare($conn, $sql_bilhete);
-                            mysqli_stmt_bind_param($stmt, "iissd", 
+                            mysqli_stmt_bind_param($stmt, "siissd", 
+                                $codigo_bilhete,
                                 $id_cliente, 
                                 $id_horario, 
                                 $data_viagem, 
@@ -130,13 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             );
                             mysqli_stmt_execute($stmt);
                             
-                            // Obter o código do bilhete gerado
-                            $codigo_bilhete = mysqli_insert_id($conn);
-                            
-                            // Adicionar à mensagem de sucesso
-                            $codigos_bilhetes[] = mysqli_fetch_assoc(mysqli_query($conn, 
-                                "SELECT codigo_bilhete FROM bilhetes WHERE id_utilizador = $id_cliente ORDER BY data_compra DESC LIMIT 1"
-                            ))['codigo_bilhete'];
+                            $codigos_bilhetes[] = $codigo_bilhete;
                         }
 
                         mysqli_commit($conn);
@@ -147,7 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $valor_total,
                             $novo_saldo,
                             implode("\n", array_map(function($codigo) { 
-                                return "- " . substr($codigo, 0, 8) . "..."; 
+                                return "- " . $codigo; 
                             }, $codigos_bilhetes))
                         );
                     } catch (Exception $e) {
@@ -196,13 +214,27 @@ $result_clientes = mysqli_query($conn, $sql_clientes);
             </a>
         </div>
         <div class="nav-links">
-        <a href="gerir_rotas.php" class="nav-link">Gerir Rotas</a>
+        <?php if (isset($_SESSION['id_utilizador'])): ?>
+                <?php if ($_SESSION['perfil'] === 'funcionário'): ?>
+                    <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
+                    <a href="gerir_carteiras.php" class="nav-link">Gerir Carteiras</a>
+                    <a href="gerir_bilhetes.php" class="nav-link">Gerir Bilhetes</a>
+                    <a href="perfil.php" class="nav-link">Perfil</a>
+                    <a href="logout.php" class="nav-link">Logout</a>
+                <?php elseif ($_SESSION['perfil'] === 'administrador'): ?>
+                    <a href="gerir_rotas.php" class="nav-link">Gerir Rotas</a>
                     <a href="gerir_utilizadores.php" class="nav-link">Gerir Utilizadores</a>
                     <a href="gerir_alertas.php" class="nav-link">Gerir Alertas</a>
                     <a href="gerir_carteiras.php" class="nav-link">Gerir Carteiras</a>
                     <a href="gerir_bilhetes.php" class="nav-link">Gerir Bilhetes</a>
                     <a href="perfil.php" class="nav-link">Perfil</a>
                     <a href="logout.php" class="nav-link">Logout</a>
+                <?php endif; ?>
+            <?php else: ?>
+                <a href="empresa.php" class="nav-link">Sobre Nós</a>
+                <a href="register.php" class="nav-link">Registar</a>
+                <a href="login.php" class="nav-link">Login</a>
+            <?php endif; ?>
         </div>
     </nav>
 
@@ -296,6 +328,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('data_viagem').setAttribute('max', maxDate.toISOString().split('T')[0]);
 });
 </script>
+
 
 
 

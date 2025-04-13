@@ -85,7 +85,7 @@ CREATE TABLE transacoes (
 
 -- Tabela de Bilhetes
 CREATE TABLE bilhetes (
-    codigo_bilhete CHAR(36) PRIMARY KEY DEFAULT (UUID()) COMMENT 'Código único de validação',
+    codigo_bilhete CHAR(8) PRIMARY KEY COMMENT 'Código único de validação',
     id_horario INT NOT NULL,
     id_utilizador INT NOT NULL,
     data_viagem DATE NOT NULL COMMENT 'Data específica da viagem',

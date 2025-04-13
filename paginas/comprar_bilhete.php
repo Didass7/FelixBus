@@ -23,6 +23,25 @@ mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 $horario = mysqli_fetch_assoc($result);
 
+// Adicionar a função de gerar código de bilhete no início do arquivo
+function gerarCodigoBilhete($conn) {
+    do {
+        $codigo = '';
+        $caracteres = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        for ($i = 0; $i < 8; $i++) {
+            $codigo .= $caracteres[rand(0, strlen($caracteres) - 1)];
+        }
+        
+        $sql = "SELECT 1 FROM bilhetes WHERE codigo_bilhete = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "s", $codigo);
+        mysqli_stmt_execute($stmt);
+        $resultado = mysqli_stmt_get_result($stmt);
+    } while (mysqli_num_rows($resultado) > 0);
+    
+    return $codigo;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['data_viagem'])) {
     $data_viagem = $_POST['data_viagem'];
     
@@ -75,13 +94,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['data_viagem'])) {
                 mysqli_stmt_execute($stmt);
 
                 // 6. Criar o bilhete
-                $sql_bilhete = "INSERT INTO bilhetes (id_horario, id_utilizador, data_viagem, preco_pago) 
-                                VALUES (?, ?, ?, ?)";
+                $codigo_bilhete = gerarCodigoBilhete($conn);
+                $sql_bilhete = "INSERT INTO bilhetes (codigo_bilhete, id_horario, id_utilizador, data_viagem, preco_pago) 
+                                VALUES (?, ?, ?, ?, ?)";
                 $stmt = mysqli_prepare($conn, $sql_bilhete);
-                mysqli_stmt_bind_param($stmt, "iiss", 
+                mysqli_stmt_bind_param($stmt, "siiss", 
+                    $codigo_bilhete,
                     $id_horario, 
                     $id_utilizador, 
-                    $data_viagem,  // Esta é a data selecionada pelo usuário
+                    $data_viagem,
                     $horario['preco']
                 );
                 mysqli_stmt_execute($stmt);

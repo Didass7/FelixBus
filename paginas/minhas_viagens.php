@@ -111,6 +111,7 @@ $viagens = mysqli_fetch_all($result, MYSQLI_ASSOC);
                             <h3><?php echo htmlspecialchars($viagem['origem']); ?> → <?php echo htmlspecialchars($viagem['destino']); ?></h3>
                         </div>
                         <div class="trip-body">
+                            <p class="ticket-code"><strong>Código do Bilhete:</strong> <?php echo htmlspecialchars($viagem['codigo_bilhete']); ?></p>
                             <p><strong>Data:</strong> <?php echo date('d/m/Y', strtotime($viagem['data_viagem'])); ?></p>
                             <p><strong>Partida:</strong> <?php echo date('H:i', strtotime($viagem['hora_partida_time'])); ?></p>
                             <p><strong>Chegada:</strong> <?php echo date('H:i', strtotime($viagem['hora_chegada_time'])); ?></p>
