@@ -279,3 +279,16 @@ body {
         font-size: 0.8rem;
     }
 }
+
+.results-table td {
+    padding: 10px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Estilo específico para a coluna de dias disponíveis */
+.results-table td:nth-child(6) {
+    max-width: 200px;
+    white-space: normal;
+    line-height: 1.3;
+}

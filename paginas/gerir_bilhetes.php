@@ -2,25 +2,30 @@
 session_start();
 include '../basedados/basedados.h';
 
+// Verificar permissões
 if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'funcionário' && $_SESSION['perfil'] !== 'administrador')) {
     header("Location: login.php");
     exit();
 }
 
+// Inicializar mensagens
 $mensagem = '';
 $erro = '';
+
+if (isset($_SESSION['mensagem'])) {
+    $mensagem = $_SESSION['mensagem'];
+    unset($_SESSION['mensagem']); // Limpar a mensagem após uso
+}
 
 // Função para gerar código de bilhete único
 function gerarCodigoBilhete($conn) {
     do {
-        // Gerar código aleatório de 8 caracteres (letras maiúsculas e números)
         $codigo = '';
         $caracteres = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         for ($i = 0; $i < 8; $i++) {
             $codigo .= $caracteres[rand(0, strlen($caracteres) - 1)];
         }
         
-        // Verificar se o código já existe
         $sql = "SELECT 1 FROM bilhetes WHERE codigo_bilhete = ?";
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, "s", $codigo);
@@ -66,111 +71,104 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $erro = "Erro: Só é possível comprar bilhetes até 30 dias no futuro.";
         }
         else {
-            // Verificar lugares disponíveis
-            $sql_lugares = "SELECT lugares_disponiveis FROM horarios WHERE id_horario = ?";
-            $stmt = mysqli_prepare($conn, $sql_lugares);
+            // Buscar informações do horário
+            $sql_horario = "SELECT h.*, r.origem, r.destino 
+                           FROM horarios h 
+                           INNER JOIN rotas r ON h.id_rota = r.id_rota 
+                           WHERE h.id_horario = ?";
+            $stmt = mysqli_prepare($conn, $sql_horario);
             mysqli_stmt_bind_param($stmt, "i", $id_horario);
             mysqli_stmt_execute($stmt);
-            $result_lugares = mysqli_stmt_get_result($stmt);
-            $lugares = mysqli_fetch_assoc($result_lugares);
+            $horario_info = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
 
-            if ($lugares['lugares_disponiveis'] < $quantidade) {
-                $erro = "Erro: Não há lugares suficientes disponíveis. Lugares restantes: " . $lugares['lugares_disponiveis'];
-            }
-            else {
-                // Verificar saldo do cliente
-                $sql_carteira = "SELECT c.id_carteira, c.saldo, u.nome_completo 
-                               FROM carteiras c 
-                               JOIN utilizadores u ON c.id_utilizador = u.id_utilizador 
-                               WHERE c.id_utilizador = ?";
-                $stmt = mysqli_prepare($conn, $sql_carteira);
-                mysqli_stmt_bind_param($stmt, "i", $id_cliente);
-                mysqli_stmt_execute($stmt);
-                $carteira = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
-
-                // Buscar preço do horário
-                $sql_preco = "SELECT preco FROM horarios WHERE id_horario = ?";
-                $stmt = mysqli_prepare($conn, $sql_preco);
-                mysqli_stmt_bind_param($stmt, "i", $id_horario);
-                mysqli_stmt_execute($stmt);
-                $horario = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
-
-                $valor_total = $horario['preco'] * $quantidade;
-
-                if (!$carteira) {
-                    $erro = "Erro: Cliente não possui carteira registrada.";
-                }
-                elseif ($carteira['saldo'] < $valor_total) {
-                    $erro = sprintf(
-                        "Erro: Saldo insuficiente para %s. Saldo atual: %.2f€. Valor total: %.2f€. Faltam: %.2f€",
-                        $carteira['nome_completo'],
-                        $carteira['saldo'],
-                        $valor_total,
-                        $valor_total - $carteira['saldo']
-                    );
-                }
-                else {
+            if (!$horario_info) {
+                $erro = "Erro: Horário não encontrado.";
+            } else {
+                // Verificar lugares disponíveis
+                if ($horario_info['lugares_disponiveis'] < $quantidade) {
+                    $erro = "Erro: Não há lugares suficientes disponíveis. Lugares restantes: " . $horario_info['lugares_disponiveis'];
+                } else {
                     mysqli_begin_transaction($conn);
-                    
                     try {
+                        // Buscar informações da carteira do cliente
+                        $sql_carteira = "SELECT id_carteira, saldo FROM carteiras WHERE id_utilizador = ?";
+                        $stmt = mysqli_prepare($conn, $sql_carteira);
+                        mysqli_stmt_bind_param($stmt, "i", $id_cliente);
+                        mysqli_stmt_execute($stmt);
+                        $carteira_cliente = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+
+                        // Buscar carteira da empresa
+                        $sql_empresa = "SELECT id_carteira FROM carteiras WHERE tipo = 'empresa' LIMIT 1";
+                        $result_empresa = mysqli_query($conn, $sql_empresa);
+                        $carteira_empresa = mysqli_fetch_assoc($result_empresa);
+
+                        // Calcular valor total
+                        $valor_total = $horario_info['preco'] * $quantidade;
+
+                        // Verificar se cliente tem saldo suficiente
+                        if ($carteira_cliente['saldo'] < $valor_total) {
+                            throw new Exception("Erro: Cliente não tem saldo suficiente. Saldo atual: " . 
+                                              number_format($carteira_cliente['saldo'], 2) . "€, Valor necessário: " . 
+                                              number_format($valor_total, 2) . "€");
+                        }
+
                         // Atualizar saldo do cliente
-                        $novo_saldo = $carteira['saldo'] - $valor_total;
+                        $novo_saldo = $carteira_cliente['saldo'] - $valor_total;
                         $sql_update = "UPDATE carteiras SET saldo = ? WHERE id_carteira = ?";
                         $stmt = mysqli_prepare($conn, $sql_update);
-                        mysqli_stmt_bind_param($stmt, "di", $novo_saldo, $carteira['id_carteira']);
+                        mysqli_stmt_bind_param($stmt, "di", $novo_saldo, $carteira_cliente['id_carteira']);
                         mysqli_stmt_execute($stmt);
 
-                        // Atualizar lugares disponíveis
-                        $sql_update_lugares = "UPDATE horarios SET lugares_disponiveis = lugares_disponiveis - ? WHERE id_horario = ?";
-                        $stmt = mysqli_prepare($conn, $sql_update_lugares);
-                        mysqli_stmt_bind_param($stmt, "ii", $quantidade, $id_horario);
+                        // Atualizar saldo da empresa
+                        $sql_update = "UPDATE carteiras SET saldo = saldo + ? WHERE id_carteira = ?";
+                        $stmt = mysqli_prepare($conn, $sql_update);
+                        mysqli_stmt_bind_param($stmt, "di", $valor_total, $carteira_empresa['id_carteira']);
                         mysqli_stmt_execute($stmt);
 
-                        // Buscar informações do horário selecionado
-                        $sql_horario_info = "SELECT hora_partida, hora_chegada, preco FROM horarios WHERE id_horario = ?";
-                        $stmt = mysqli_prepare($conn, $sql_horario_info);
-                        mysqli_stmt_bind_param($stmt, "i", $id_horario);
+                        // Registrar a transação
+                        $sql_trans = "INSERT INTO transacoes (id_carteira_origem, id_carteira_destino, valor, tipo, descricao) 
+                                      VALUES (?, ?, ?, 'bilhete', 'Compra de bilhete(s)')";
+                        $stmt = mysqli_prepare($conn, $sql_trans);
+                        mysqli_stmt_bind_param($stmt, "iid", 
+                            $carteira_cliente['id_carteira'], 
+                            $carteira_empresa['id_carteira'], 
+                            $valor_total
+                        );
                         mysqli_stmt_execute($stmt);
-                        $horario_info = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
 
-                        // Extrair hora da viagem do horário selecionado
-                        $hora_viagem = date('H:i:s', strtotime($horario_info['hora_partida']));
-
-                        // Registrar bilhetes
-                        $codigos_bilhetes = [];
+                        // Criar os bilhetes
                         for ($i = 0; $i < $quantidade; $i++) {
                             $codigo_bilhete = gerarCodigoBilhete($conn);
-                            
-                            $sql_bilhete = "INSERT INTO bilhetes (codigo_bilhete, id_utilizador, id_horario, data_viagem, hora_viagem, preco_pago) 
-                                            VALUES (?, ?, ?, ?, ?, ?)";
+                            $sql_bilhete = "INSERT INTO bilhetes (codigo_bilhete, id_horario, id_utilizador, data_viagem, preco_pago) 
+                                           VALUES (?, ?, ?, ?, ?)";
                             $stmt = mysqli_prepare($conn, $sql_bilhete);
-                            mysqli_stmt_bind_param($stmt, "siissd", 
+                            mysqli_stmt_bind_param($stmt, "siids", // Mudamos 'f' para 'd'
                                 $codigo_bilhete,
-                                $id_cliente, 
-                                $id_horario, 
-                                $data_viagem, 
-                                $hora_viagem,
+                                $id_horario,
+                                $id_cliente,
+                                $data_viagem,
                                 $horario_info['preco']
                             );
                             mysqli_stmt_execute($stmt);
-                            
-                            $codigos_bilhetes[] = $codigo_bilhete;
                         }
 
+                        // Atualizar lugares disponíveis
+                        $sql_update = "UPDATE horarios SET lugares_disponiveis = lugares_disponiveis - ? WHERE id_horario = ?";
+                        $stmt = mysqli_prepare($conn, $sql_update);
+                        mysqli_stmt_bind_param($stmt, "ii", $quantidade, $id_horario);
+                        mysqli_stmt_execute($stmt);
+
+                        // Commit da transação
                         mysqli_commit($conn);
-                        $mensagem = sprintf(
-                            "Sucesso! %d bilhete(s) comprado(s) para %s.\nTotal pago: %.2f€\nNovo saldo: %.2f€\n\nCódigos dos bilhetes:\n%s",
-                            $quantidade,
-                            $carteira['nome_completo'],
-                            $valor_total,
-                            $novo_saldo,
-                            implode("\n", array_map(function($codigo) { 
-                                return "- " . $codigo; 
-                            }, $codigos_bilhetes))
-                        );
+                        
+                        // Definir mensagem de sucesso e redirecionar
+                        $_SESSION['mensagem'] = "Compra realizada com sucesso! Foram comprados " . $quantidade . " bilhete(s).";
+                        header("Location: " . $_SERVER['PHP_SELF']);
+                        exit();
+
                     } catch (Exception $e) {
                         mysqli_rollback($conn);
-                        $erro = "Erro ao processar a compra: " . $e->getMessage() . ". Por favor, tente novamente.";
+                        $erro = "Erro na transação: " . $e->getMessage();
                     }
                 }
             }
@@ -205,6 +203,29 @@ $result_clientes = mysqli_query($conn, $sql_clientes);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestão de Bilhetes - FelixBus</title>
     <link rel="stylesheet" href="gerir_bilhetes.css">
+    <style>
+        /* Estilos inline para garantir que funcionem */
+        .mensagem-container {
+            margin: 20px;
+            padding: 10px;
+        }
+        .mensagem-sucesso {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .mensagem-erro {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar">
@@ -238,16 +259,23 @@ $result_clientes = mysqli_query($conn, $sql_clientes);
         </div>
     </nav>
 
+    <!-- Adicionar logo após a navegação -->
+    <div class="mensagem-container">
+        <?php if (!empty($mensagem)): ?>
+            <div class="mensagem-sucesso">
+                <?php echo htmlspecialchars($mensagem); ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($erro)): ?>
+            <div class="mensagem-erro">
+                <?php echo htmlspecialchars($erro); ?>
+            </div>
+        <?php endif; ?>
+    </div>
+
     <main class="container">
         <h1>Gestão de Bilhetes</h1>
-
-        <?php if ($mensagem): ?>
-            <div class="alert success"><?php echo $mensagem; ?></div>
-        <?php endif; ?>
-
-        <?php if ($erro): ?>
-            <div class="alert error"><?php echo $erro; ?></div>
-        <?php endif; ?>
 
         <section class="ticket-form">
             <h2>Comprar Bilhetes</h2>
@@ -328,9 +356,3 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('data_viagem').setAttribute('max', maxDate.toISOString().split('T')[0]);
 });
 </script>
-
-
-
-
-
-

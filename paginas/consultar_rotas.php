@@ -38,31 +38,57 @@ while ($row = mysqli_fetch_assoc($result_destinos)) {
 }
 
 // Buscar resultados se houver pesquisa
-$sql = "SELECT r.id_rota, r.origem, r.destino, h.id_horario, 
-        DATE_FORMAT(NOW(), '%Y-%m-%d') AS data_viagem,
-        TIME(h.hora_partida) AS hora_partida,
-        TIME(h.hora_chegada) AS hora_chegada,
-        h.preco, h.lugares_disponiveis 
-        FROM rotas r
-        JOIN horarios h ON r.id_rota = h.id_rota
-        WHERE (? = '' OR r.origem LIKE CONCAT('%', ?, '%'))
-        AND (? = '' OR r.destino LIKE CONCAT('%', ?, '%'))
-        ORDER BY TIME(h.hora_partida) ASC";
-        
-$stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, "ssss", $origem, $origem, $destino, $destino);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-
-while ($row = mysqli_fetch_assoc($result)) {
-    // Criar data completa combinando a data atual com o horário da rota
-    $row['hora_partida'] = date('Y-m-d H:i:s', strtotime($row['data_viagem'] . ' ' . $row['hora_partida']));
-    $row['hora_chegada'] = date('Y-m-d H:i:s', strtotime($row['data_viagem'] . ' ' . $row['hora_chegada']));
+if (isset($_GET['pesquisar'])) {
+    $sql = "SELECT r.id_rota, r.origem, r.destino, h.id_horario, 
+            h.hora_partida, h.hora_chegada, h.preco, h.lugares_disponiveis
+            FROM rotas r
+            JOIN horarios h ON r.id_rota = h.id_rota";
     
-    // Só adicionar rotas futuras
-    if (strtotime($row['hora_partida']) > time()) {
-        $resultados[] = $row;
+    // Inicializar arrays e variáveis
+    $params = [];
+    $types = "";
+    
+    if (!empty($origem) || !empty($destino)) {
+        $sql .= " WHERE 1=1";
+        
+        if (!empty($origem)) {
+            $sql .= " AND r.origem = ?";
+            $params[] = $origem;
+            $types .= "s";
+        }
+        
+        if (!empty($destino)) {
+            $sql .= " AND r.destino = ?";
+            $params[] = $destino;
+            $types .= "s";
+        }
     }
+    
+    $sql .= " ORDER BY h.hora_partida ASC";
+    
+    // Debug - Imprimir a consulta SQL
+    echo "<!-- SQL Query: " . $sql . " -->";
+    
+    $stmt = mysqli_prepare($conn, $sql);
+    
+    if (!empty($params)) {
+        mysqli_stmt_bind_param($stmt, $types, ...$params);
+    }
+    
+    if (!mysqli_stmt_execute($stmt)) {
+        die("Erro na execução da consulta: " . mysqli_error($conn));
+    }
+    
+    $result = mysqli_stmt_get_result($stmt);
+    
+    if (!$result) {
+        die("Erro ao obter resultados: " . mysqli_error($conn));
+    }
+    
+    $resultados = mysqli_fetch_all($result, MYSQLI_ASSOC);
+    
+    // Debug - Imprimir número de resultados
+    echo "<!-- Número de resultados: " . count($resultados) . " -->";
 }
 ?>
 
@@ -156,7 +182,7 @@ while ($row = mysqli_fetch_assoc($result)) {
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <button class="btn-primary" type="submit">Pesquisar</button>
+                <button class="btn-primary" name="pesquisar" type="submit">Pesquisar</button>
             </form>
         </div>
     </section>
@@ -172,7 +198,6 @@ while ($row = mysqli_fetch_assoc($result)) {
                             <tr>
                                 <th>Origem</th>
                                 <th>Destino</th>
-                                <th>Data Partida</th>
                                 <th>Hora Partida</th>
                                 <th>Hora Chegada</th>
                                 <th>Preço</th>
@@ -187,7 +212,6 @@ while ($row = mysqli_fetch_assoc($result)) {
                                 <tr>
                                     <td><?php echo htmlspecialchars($rota['origem']); ?></td>
                                     <td><?php echo htmlspecialchars($rota['destino']); ?></td>
-                                    <td><?php echo date('d/m/Y', strtotime($rota['hora_partida'])); ?></td>
                                     <td><?php echo date('H:i', strtotime($rota['hora_partida'])); ?></td>
                                     <td><?php echo date('H:i', strtotime($rota['hora_chegada'])); ?></td>
                                     <td><?php echo number_format($rota['preco'], 2, ',', '.') . ' €'; ?></td>
@@ -195,10 +219,6 @@ while ($row = mysqli_fetch_assoc($result)) {
                                     <?php if(isset($_SESSION['id_utilizador']) && $_SESSION['perfil'] == 'cliente'): ?>
                                     <td>
                                         <a href="comprar_bilhete.php?id_horario=<?php echo $rota['id_horario']; ?>" class="btn-action">Comprar</a>
-                                    </td>
-                                    <?php elseif(isset($_SESSION['id_utilizador'])): ?>
-                                    <td>
-                                        <span class="info-text">Faça login como cliente para comprar</span>
                                     </td>
                                     <?php endif; ?>
                                 </tr>

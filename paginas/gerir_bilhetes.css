@@ -80,22 +80,33 @@ h1 {
 
 /* Alert Messages */
 .alert {
-    padding: 1rem;
-    border-radius: var(--border-radius);
-    margin-bottom: 2rem;
-    text-align: center;
+    padding: 15px;
+    margin: 20px 0;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    font-size: 16px;
 }
 
-.alert.success {
-    background: rgba(0, 200, 81, 0.1);
-    border: 1px solid var(--success-color);
-    color: var(--success-color);
+.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
 }
 
-.alert.error {
-    background: rgba(255, 68, 68, 0.1);
-    border: 1px solid var(--error-color);
-    color: var(--error-color);
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+/* Animação para fazer a mensagem mais visível */
+.alert {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* Ticket Form Section */

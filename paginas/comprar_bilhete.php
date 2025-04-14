@@ -15,13 +15,18 @@ $mensagem = '';
 // Buscar informações do horário
 $sql_horario = "SELECT h.*, r.origem, r.destino 
                 FROM horarios h 
-                JOIN rotas r ON h.id_rota = r.id_rota 
+                INNER JOIN rotas r ON h.id_rota = r.id_rota 
                 WHERE h.id_horario = ?";
 $stmt = mysqli_prepare($conn, $sql_horario);
 mysqli_stmt_bind_param($stmt, "i", $id_horario);
 mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-$horario = mysqli_fetch_assoc($result);
+$horario = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+
+// Verificar se o horário existe
+if (!$horario) {
+    header("Location: consultar_rotas.php?erro=horario_invalido");
+    exit();
+}
 
 // Adicionar a função de gerar código de bilhete no início do arquivo
 function gerarCodigoBilhete($conn) {
@@ -45,36 +50,50 @@ function gerarCodigoBilhete($conn) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['data_viagem'])) {
     $data_viagem = $_POST['data_viagem'];
     
-    // Validar a data
-    $data_atual = date('Y-m-d');
-    $data_limite = date('Y-m-d', strtotime('+30 days'));
-    
-    if ($data_viagem < $data_atual) {
-        $mensagem = "Não é possível comprar bilhetes para datas passadas.";
-    } elseif ($data_viagem > $data_limite) {
-        $mensagem = "Só é possível comprar bilhetes até 30 dias no futuro.";
-    } else {
-        mysqli_begin_transaction($conn);
-        try {
-            // 1. Verificar saldo do cliente
-            $sql_carteira = "SELECT id_carteira, saldo FROM carteiras WHERE id_utilizador = ?";
-            $stmt = mysqli_prepare($conn, $sql_carteira);
-            mysqli_stmt_bind_param($stmt, "i", $id_utilizador);
-            mysqli_stmt_execute($stmt);
-            $carteira_cliente = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+    try {
+        // Validar a data
+        $data_atual = date('Y-m-d');
+        $data_limite = date('Y-m-d', strtotime('+30 days'));
+        
+        if ($data_viagem < $data_atual) {
+            $mensagem = "Não é possível selecionar uma data passada.";
+        } elseif ($data_viagem > $data_limite) {
+            $mensagem = "Só é possível comprar bilhetes para os próximos 30 dias.";
+        } else {
+            mysqli_begin_transaction($conn);
+            try {
+                // Verificar se há lugares disponíveis
+                if ($horario['lugares_disponiveis'] <= 0) {
+                    throw new Exception("Não há lugares disponíveis para este horário.");
+                }
 
-            // 2. Buscar carteira da empresa
-            $sql_empresa = "SELECT id_carteira FROM carteiras WHERE tipo = 'empresa' LIMIT 1";
-            $result_empresa = mysqli_query($conn, $sql_empresa);
-            $carteira_empresa = mysqli_fetch_assoc($result_empresa);
+                // 1. Verificar saldo do cliente
+                $sql_carteira = "SELECT id_carteira, saldo FROM carteiras WHERE id_utilizador = ?";
+                $stmt = mysqli_prepare($conn, $sql_carteira);
+                mysqli_stmt_bind_param($stmt, "i", $id_utilizador);
+                mysqli_stmt_execute($stmt);
+                $carteira_cliente = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
 
-            if ($carteira_cliente['saldo'] >= $horario['preco']) {
+                // 2. Buscar carteira da empresa
+                $sql_empresa = "SELECT id_carteira FROM carteiras WHERE tipo = 'empresa' LIMIT 1";
+                $result_empresa = mysqli_query($conn, $sql_empresa);
+                $carteira_empresa = mysqli_fetch_assoc($result_empresa);
+
+                if ($carteira_cliente['saldo'] < $horario['preco']) {
+                    throw new Exception("Saldo insuficiente. Por favor, carregue sua carteira.");
+                }
+
                 // 3. Atualizar saldo do cliente
                 $novo_saldo = $carteira_cliente['saldo'] - $horario['preco'];
                 $sql_update = "UPDATE carteiras SET saldo = ? WHERE id_carteira = ?";
                 $stmt = mysqli_prepare($conn, $sql_update);
+                if (!$stmt) {
+                    throw new Exception("Erro ao preparar atualização: " . mysqli_error($conn));
+                }
                 mysqli_stmt_bind_param($stmt, "di", $novo_saldo, $carteira_cliente['id_carteira']);
-                mysqli_stmt_execute($stmt);
+                if (!mysqli_stmt_execute($stmt)) {
+                    throw new Exception("Erro ao atualizar saldo do cliente.");
+                }
 
                 // 4. Atualizar saldo da empresa
                 $sql_update = "UPDATE carteiras SET saldo = saldo + ? WHERE id_carteira = ?";
@@ -116,15 +135,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['data_viagem'])) {
                 mysqli_commit($conn);
                 header("Location: minhas_viagens.php?success=1");
                 exit();
-            } else {
-                $mensagem = "Saldo insuficiente. Por favor, carregue sua carteira.";
+            } catch (Exception $e) {
                 mysqli_rollback($conn);
+                $mensagem = $e->getMessage();
             }
-        } catch (Exception $e) {
-            mysqli_rollback($conn);
-            $mensagem = "Erro ao processar a compra. Tente novamente.";
         }
+    } catch (Exception $e) {
+        $mensagem = "Erro ao processar a compra: " . $e->getMessage();
     }
+}
+
+// Garantir que a mensagem seja exibida
+if (!empty($mensagem)) {
+    $_SESSION['mensagem'] = $mensagem;
 }
 ?>
 
@@ -154,8 +177,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['data_viagem'])) {
     <div class="container">
         <h2>Confirmar Compra de Bilhete</h2>
         
-        <?php if ($mensagem): ?>
-            <div class="alert"><?php echo $mensagem; ?></div>
+        <?php if (isset($_SESSION['mensagem'])): ?>
+            <div class="alert">
+                <?php 
+                    echo htmlspecialchars($_SESSION['mensagem']); 
+                    unset($_SESSION['mensagem']);
+                ?>
+            </div>
         <?php endif; ?>
 
         <form method="POST" class="purchase-form">
@@ -164,19 +192,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['data_viagem'])) {
                 <p><strong>Destino:</strong> <?php echo htmlspecialchars($horario['destino']); ?></p>
                 <p>
                     <strong>Data:</strong>
-                    <input type="date" name="data_viagem" required 
+                    <input type="date" name="data_viagem" id="data_viagem" required 
                            min="<?php echo date('Y-m-d'); ?>" 
                            max="<?php echo date('Y-m-d', strtotime('+30 days')); ?>">
                 </p>
                 <p><strong>Hora Partida:</strong> <?php echo date('H:i', strtotime($horario['hora_partida'])); ?></p>
                 <p><strong>Hora Chegada:</strong> <?php echo date('H:i', strtotime($horario['hora_chegada'])); ?></p>
                 <p><strong>Preço:</strong> <?php echo number_format($horario['preco'], 2, ',', '.'); ?> €</p>
+                <p><strong>Lugares Disponíveis:</strong> <?php echo $horario['lugares_disponiveis']; ?></p>
             </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn-primary">Confirmar Compra</button>
-                <a href="consultar_rotas.php" class="btn-secondary">Cancelar</a>
-            </div>
+            <button type="submit" class="btn-primary">Confirmar Compra</button>
         </form>
     </div>
 
@@ -199,14 +224,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['data_viagem'])) {
 </body>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Impedir seleção de datas passadas
-    var today = new Date().toISOString().split('T')[0];
-    document.querySelector('input[name="data_viagem"]').setAttribute('min', today);
+    const inputData = document.getElementById('data_viagem');
     
-    // Limitar reservas até 30 dias no futuro
-    var maxDate = new Date();
-    maxDate.setDate(maxDate.getDate() + 30);
-    document.querySelector('input[name="data_viagem"]').setAttribute('max', maxDate.toISOString().split('T')[0]);
+    // Definir as datas mínima e máxima
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const dataMaxima = new Date();
+    dataMaxima.setDate(dataMaxima.getDate() + 30);
 });
 </script>
 </html>

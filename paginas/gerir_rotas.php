@@ -1,20 +1,431 @@
 <?php
 session_start();
-include '../../basedados/basedados.h';
+include '../basedados/basedados.h';
 
 if (!isset($_SESSION['id_utilizador']) || $_SESSION['perfil'] !== 'administrador') {
-    header("Location: ../login.php");
+    header("Location: login.php");
     exit();
 }
 
+$mensagem = '';
+$erro = '';
+
+// Processar ações do formulário
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $origem = $_POST['origem'];
-    $destino = $_POST['destino'];
-    $id_admin = $_SESSION['id_utilizador'];
+    if (isset($_POST['acao'])) {
+        switch ($_POST['acao']) {
+            case 'criar':
+                $origem = trim($_POST['origem']);
+                $destino = trim($_POST['destino']);
+                $hora_partida = trim($_POST['hora_partida']);
+                $hora_chegada = trim($_POST['hora_chegada']);
+                $preco = floatval($_POST['preco']);
+                $capacidade = intval($_POST['capacidade']);
+                $data_inicio = trim($_POST['data_inicio']);
+                $data_fim = !empty($_POST['data_fim']) ? trim($_POST['data_fim']) : null;
+                $id_admin = $_SESSION['id_utilizador'];
+                
+                if (empty($origem) || empty($destino) || empty($hora_partida) || 
+                    empty($hora_chegada) || empty($preco) || empty($capacidade) || 
+                    empty($data_inicio)) {
+                    $erro = "Preencha todos os campos obrigatórios.";
+                } else {
+                    mysqli_begin_transaction($conn);
+                    try {
+                        // Inserir rota
+                        $sql_rota = "INSERT INTO rotas (origem, destino, criado_por) VALUES (?, ?, ?)";
+                        $stmt_rota = mysqli_prepare($conn, $sql_rota);
+                        mysqli_stmt_bind_param($stmt_rota, "ssi", $origem, $destino, $id_admin);
+                        mysqli_stmt_execute($stmt_rota);
+                        $id_rota = mysqli_insert_id($conn);
+
+                        // Inserir horário
+                        if ($data_fim === null) {
+                            $sql_horario = "INSERT INTO horarios (id_rota, hora_partida, hora_chegada, 
+                                                                capacidade_autocarro, lugares_disponiveis, 
+                                                                preco, data_inicio) 
+                                           VALUES (?, ?, ?, ?, ?, ?, ?)";
+                            $stmt_horario = mysqli_prepare($conn, $sql_horario);
+                            mysqli_stmt_bind_param($stmt_horario, "issiids", 
+                                $id_rota, 
+                                $hora_partida, 
+                                $hora_chegada, 
+                                $capacidade,
+                                $capacidade,
+                                $preco,
+                                $data_inicio
+                            );
+                        } else {
+                            $sql_horario = "INSERT INTO horarios (id_rota, hora_partida, hora_chegada, 
+                                                                capacidade_autocarro, lugares_disponiveis, 
+                                                                preco, data_inicio, data_fim) 
+                                           VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                            $stmt_horario = mysqli_prepare($conn, $sql_horario);
+                            mysqli_stmt_bind_param($stmt_horario, "issiidss", 
+                                $id_rota, 
+                                $hora_partida, 
+                                $hora_chegada, 
+                                $capacidade,
+                                $capacidade,
+                                $preco,
+                                $data_inicio,
+                                $data_fim
+                            );
+                        }
+                        
+                        mysqli_stmt_execute($stmt_horario);
+
+                        mysqli_commit($conn);
+                        $mensagem = "Rota criada com sucesso!";
+                        header("Location: gerir_rotas.php?success=1");
+                        exit();
+                    } catch (Exception $e) {
+                        mysqli_rollback($conn);
+                        $erro = "Erro ao criar rota: " . $e->getMessage();
+                    }
+                }
+                break;
+
+            case 'editar':
+                // Verificar se todos os campos necessários existem
+                if (!isset($_POST['id_rota']) || !isset($_POST['id_horario'])) {
+                    $erro = "Dados de edição inválidos.";
+                    break;
+                }
+
+                $id_rota = intval($_POST['id_rota']);
+                $id_horario = intval($_POST['id_horario']);
+                $origem = trim($_POST['origem']);
+                $destino = trim($_POST['destino']);
+                $hora_partida = trim($_POST['hora_partida']);
+                $hora_chegada = trim($_POST['hora_chegada']);
+                $preco = floatval($_POST['preco']);
+                $capacidade = intval($_POST['capacidade']);
+                $data_inicio = trim($_POST['data_inicio']);
+                $data_fim = !empty($_POST['data_fim']) ? trim($_POST['data_fim']) : null;
+                
+                if (empty($origem) || empty($destino) || empty($hora_partida) || 
+                    empty($hora_chegada) || empty($preco) || empty($capacidade) || 
+                    empty($data_inicio)) {
+                    $erro = "Preencha todos os campos obrigatórios.";
+                } else {
+                    mysqli_begin_transaction($conn);
+                    try {
+                        // Atualizar rota
+                        $sql_rota = "UPDATE rotas SET origem = ?, destino = ? WHERE id_rota = ?";
+                        $stmt_rota = mysqli_prepare($conn, $sql_rota);
+                        mysqli_stmt_bind_param($stmt_rota, "ssi", $origem, $destino, $id_rota);
+                        mysqli_stmt_execute($stmt_rota);
+
+                        // Atualizar horário
+                        if ($data_fim === null) {
+                            $sql_horario = "UPDATE horarios SET 
+                                           hora_partida = ?,
+                                           hora_chegada = ?,
+                                           capacidade_autocarro = ?,
+                                           lugares_disponiveis = ?,
+                                           preco = ?,
+                                           data_inicio = ?,
+                                           data_fim = NULL
+                                           WHERE id_horario = ?";
+                            
+                            $stmt_horario = mysqli_prepare($conn, $sql_horario);
+                            mysqli_stmt_bind_param($stmt_horario, "ssiidsi", 
+                                $hora_partida, 
+                                $hora_chegada, 
+                                $capacidade,
+                                $capacidade,
+                                $preco,
+                                $data_inicio,
+                                $id_horario
+                            );
+                        } else {
+                            $sql_horario = "UPDATE horarios SET 
+                                           hora_partida = ?,
+                                           hora_chegada = ?,
+                                           capacidade_autocarro = ?,
+                                           lugares_disponiveis = ?,
+                                           preco = ?,
+                                           data_inicio = ?,
+                                           data_fim = ?
+                                           WHERE id_horario = ?";
+                            
+                            $stmt_horario = mysqli_prepare($conn, $sql_horario);
+                            mysqli_stmt_bind_param($stmt_horario, "ssiidssi", 
+                                $hora_partida, 
+                                $hora_chegada, 
+                                $capacidade,
+                                $capacidade,
+                                $preco,
+                                $data_inicio,
+                                $data_fim,
+                                $id_horario
+                            );
+                        }
+                        
+                        mysqli_stmt_execute($stmt_horario);
+
+                        mysqli_commit($conn);
+                        $mensagem = "Rota e horários atualizados com sucesso!";
+                        header("Location: gerir_rotas.php?success=1");
+                        exit();
+                    } catch (Exception $e) {
+                        mysqli_rollback($conn);
+                        $erro = "Erro ao atualizar rota e horários: " . $e->getMessage();
+                    }
+                }
+                break;
+
+            case 'excluir':
+                $id_rota = $_POST['id_rota'];
+                
+                // Verificar se existem horários associados
+                $sql_check = "SELECT COUNT(*) FROM horarios WHERE id_rota = ?";
+                $stmt_check = mysqli_prepare($conn, $sql_check);
+                mysqli_stmt_bind_param($stmt_check, "i", $id_rota);
+                mysqli_stmt_execute($stmt_check);
+                mysqli_stmt_bind_result($stmt_check, $count);
+                mysqli_stmt_fetch($stmt_check);
+                mysqli_stmt_close($stmt_check);
+
+                if ($count > 0) {
+                    $erro = "Não é possível excluir esta rota pois existem horários associados.";
+                } else {
+                    $sql = "DELETE FROM rotas WHERE id_rota = ?";
+                    $stmt = mysqli_prepare($conn, $sql);
+                    mysqli_stmt_bind_param($stmt, "i", $id_rota);
+                    
+                    if (mysqli_stmt_execute($stmt)) {
+                        $mensagem = "Rota excluída com sucesso!";
+                    } else {
+                        $erro = "Erro ao excluir rota: " . mysqli_error($conn);
+                    }
+                }
+                break;
+        }
+    }
+}
+
+// Buscar rota para edição
+$rota_edicao = null;
+$horarios_edicao = [];
+if (isset($_GET['editar']) && is_numeric($_GET['editar'])) {
+    $id_rota = $_GET['editar'];
     
-    $sql = "INSERT INTO rotas (origem, destino, criado_por) VALUES (?, ?, ?)";
+    // Buscar dados da rota
+    $sql = "SELECT r.*, h.* FROM rotas r 
+            LEFT JOIN horarios h ON r.id_rota = h.id_rota 
+            WHERE r.id_rota = ?";
     $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "ssi", $origem, $destino, $id_admin);
+    mysqli_stmt_bind_param($stmt, "i", $id_rota);
     mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    
+    if ($row = mysqli_fetch_assoc($result)) {
+        $rota_edicao = $row;
+        do {
+            if ($row['id_horario']) {
+                $horarios_edicao[] = $row;
+            }
+        } while ($row = mysqli_fetch_assoc($result));
+    }
+}
+
+// Buscar todas as rotas com seus horários
+$sql = "SELECT r.*, u.nome_completo as nome_admin, 
+        GROUP_CONCAT(
+            CONCAT(
+                TIME_FORMAT(h.hora_partida, '%H:%i'), 
+                ' - ',
+                TIME_FORMAT(h.hora_chegada, '%H:%i'),
+                ' (',
+                DATE_FORMAT(h.data_inicio, '%d/%m/%Y'),
+                CASE 
+                    WHEN h.data_fim IS NOT NULL THEN CONCAT(' - ', DATE_FORMAT(h.data_fim, '%d/%m/%Y'))
+                    ELSE ' - Sem data fim'
+                END,
+                ') - ',
+                h.lugares_disponiveis,
+                ' lugares - ',
+                FORMAT(h.preco, 2),
+                '€'
+            ) SEPARATOR '\n'
+        ) as horarios
+        FROM rotas r 
+        JOIN utilizadores u ON r.criado_por = u.id_utilizador 
+        LEFT JOIN horarios h ON r.id_rota = h.id_rota
+        GROUP BY r.id_rota, r.origem, r.destino, u.nome_completo
+        ORDER BY r.origem ASC";
+
+$result_rotas = mysqli_query($conn, $sql);
+
+if (!$result_rotas) {
+    die("Erro na consulta: " . mysqli_error($conn));
 }
 ?>
+
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Rotas - FelixBus</title>
+    <link rel="stylesheet" href="gerir_rotas.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">
+            <a href="pagina_inicial_admin.php">
+                <img src="logo.png" alt="FelixBus Logo">
+            </a>
+        </div>
+        <div class="nav-links">
+            <a href="gerir_utilizadores.php" class="nav-link">Gerir Utilizadores</a>
+            <a href="gerir_alertas.php" class="nav-link">Gerir Alertas</a>
+            <a href="gerir_carteiras.php" class="nav-link">Gerir Carteiras</a>
+            <a href="gerir_bilhetes.php" class="nav-link">Gerir Bilhetes</a>
+            <a href="perfil.php" class="nav-link">Perfil</a>
+            <a href="logout.php" class="nav-link">Logout</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h1>Gestão de Rotas</h1>
+
+        <?php if ($mensagem): ?>
+            <div class="alert alert-success"><?php echo $mensagem; ?></div>
+        <?php endif; ?>
+        <?php if ($erro): ?>
+            <div class="alert alert-error"><?php echo $erro; ?></div>
+        <?php endif; ?>
+
+        <!-- Formulário de Criação/Edição -->
+        <section class="form-section">
+            <h2><?php echo $rota_edicao ? 'Editar Rota' : 'Criar Nova Rota'; ?></h2>
+            <form method="POST" class="form-section">
+                <div class="form-grid">
+                    <input type="hidden" name="acao" value="<?php echo isset($rota_edicao) ? 'editar' : 'criar'; ?>">
+                    <?php if (isset($rota_edicao)): ?>
+                        <input type="hidden" name="id_rota" value="<?php echo $rota_edicao['id_rota']; ?>">
+                        <input type="hidden" name="id_horario" value="<?php echo $rota_edicao['id_horario']; ?>">
+                    <?php endif; ?>
+                    
+                    <div class="form-group">
+                        <label class="required">Origem</label>
+                        <input type="text" name="origem" required 
+                               value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['origem']) : ''; ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="required">Destino</label>
+                        <input type="text" name="destino" required 
+                               value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['destino']) : ''; ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="required">Hora de Partida</label>
+                        <input type="time" name="hora_partida" required 
+                               value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['hora_partida']) : ''; ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="required">Hora de Chegada</label>
+                        <input type="time" name="hora_chegada" required 
+                               value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['hora_chegada']) : ''; ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="required">Preço</label>
+                        <input type="number" name="preco" step="0.01" required 
+                               value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['preco']) : ''; ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="required">Capacidade</label>
+                        <input type="number" name="capacidade" required 
+                               value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['capacidade_autocarro']) : ''; ?>">
+                    </div>
+
+                    <div class="date-range">
+                        <div class="form-group">
+                            <label class="required">Data de Início</label>
+                            <input type="date" name="data_inicio" required 
+                                   value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['data_inicio']) : ''; ?>">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Data de Fim</label>
+                            <input type="date" name="data_fim" 
+                                   value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['data_fim']) : ''; ?>">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-submit">
+                            <?php echo isset($rota_edicao) ? 'Atualizar Rota' : 'Criar Rota'; ?>
+                        </button>
+                        <a href="gerir_rotas.php" class="btn btn-cancel">Cancelar</a>
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <!-- Lista de Rotas -->
+        <section class="lista-rotas">
+            <h2>Rotas Existentes</h2>
+            <div class="table-responsive">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Origem</th>
+                            <th>Destino</th>
+                            <th>Horários</th>
+                            <th>Criado por</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php while ($rota = mysqli_fetch_assoc($result_rotas)): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($rota['origem']); ?></td>
+                                <td><?php echo htmlspecialchars($rota['destino']); ?></td>
+                                <td><?php echo nl2br(htmlspecialchars($rota['horarios'])); ?></td>
+                                <td><?php echo htmlspecialchars($rota['nome_admin']); ?></td>
+                                <td>
+                                    <a href="?editar=<?php echo $rota['id_rota']; ?>" class="btn-action">Editar</a>
+                                    <a href="?excluir=<?php echo $rota['id_rota']; ?>" 
+                                       class="btn-action btn-delete" 
+                                       onclick="return confirm('Tem certeza que deseja excluir esta rota?')">Excluir</a>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2024 FelixBus. Todos os direitos reservados.</p>
+    </footer>
+</body>
+?>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Função para formatar a data no formato YYYY-MM-DD
+    function formatDate(date) {
+        return date.toISOString().split('T')[0];
+    }
+
+    // Pegar o input de data de início
+    const dataInicioInput = document.querySelector('input[name="data_inicio"]');
+    
+    // Sempre definir a data atual como padrão
+    const hoje = new Date();
+    dataInicioInput.value = formatDate(hoje);
+
+    // Impedir seleção de datas passadas
+    dataInicioInput.setAttribute('min', formatDate(hoje));
+});
+</script>
