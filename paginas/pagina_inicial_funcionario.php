@@ -2,7 +2,7 @@
 session_start();
 include '../basedados/basedados.h';
 
-if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'funcionário' && $_SESSION['perfil'] !== 'administrador')) {
+if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'funcionário')) {
     header("Location: login.php");
     exit();
 }

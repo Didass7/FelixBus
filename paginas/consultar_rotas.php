@@ -5,6 +5,7 @@ include '../basedados/basedados.h';
 // Inicializar variáveis
 $origem = isset($_GET['origem']) ? trim($_GET['origem']) : '';
 $destino = isset($_GET['destino']) ? trim($_GET['destino']) : '';
+$data_viagem = isset($_GET['data_viagem']) ? $_GET['data_viagem'] : date('Y-m-d');
 $resultados = [];
 
 // Verificar a conexão com a base de dados
@@ -40,17 +41,19 @@ while ($row = mysqli_fetch_assoc($result_destinos)) {
 // Buscar resultados se houver pesquisa
 if (isset($_GET['pesquisar'])) {
     $sql = "SELECT r.id_rota, r.origem, r.destino, h.id_horario, 
-            h.hora_partida, h.hora_chegada, h.preco, h.lugares_disponiveis
+            h.hora_partida, h.hora_chegada, h.preco, h.lugares_disponiveis,
+            COALESCE(vd.lugares_disponiveis, h.lugares_disponiveis) as lugares_disponiveis_data
             FROM rotas r
-            JOIN horarios h ON r.id_rota = h.id_rota";
+            JOIN horarios h ON r.id_rota = h.id_rota
+            LEFT JOIN viagens_diarias vd ON h.id_horario = vd.id_horario 
+                AND vd.data_viagem = ?
+            WHERE 1=1";
     
     // Inicializar arrays e variáveis
-    $params = [];
-    $types = "";
+    $params = [$data_viagem];
+    $types = "s";
     
     if (!empty($origem) || !empty($destino)) {
-        $sql .= " WHERE 1=1";
-        
         if (!empty($origem)) {
             $sql .= " AND r.origem = ?";
             $params[] = $origem;
@@ -66,14 +69,13 @@ if (isset($_GET['pesquisar'])) {
     
     $sql .= " ORDER BY h.hora_partida ASC";
     
-    // Debug - Imprimir a consulta SQL
-    echo "<!-- SQL Query: " . $sql . " -->";
-    
     $stmt = mysqli_prepare($conn, $sql);
     
-    if (!empty($params)) {
-        mysqli_stmt_bind_param($stmt, $types, ...$params);
+    if (!$stmt) {
+        die("Erro na preparação da consulta: " . mysqli_error($conn));
     }
+    
+    mysqli_stmt_bind_param($stmt, $types, ...$params);
     
     if (!mysqli_stmt_execute($stmt)) {
         die("Erro na execução da consulta: " . mysqli_error($conn));
@@ -86,9 +88,6 @@ if (isset($_GET['pesquisar'])) {
     }
     
     $resultados = mysqli_fetch_all($result, MYSQLI_ASSOC);
-    
-    // Debug - Imprimir número de resultados
-    echo "<!-- Número de resultados: " . count($resultados) . " -->";
 }
 ?>
 
@@ -121,7 +120,6 @@ if (isset($_GET['pesquisar'])) {
             </a>
         </div>
         <div class="nav-links">
-            <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
             <?php if (isset($_SESSION['id_utilizador'])): ?>
                 <?php if ($_SESSION['perfil'] === 'cliente'): ?>
                     <a href="minhas_viagens.php" class="nav-link">Minhas Viagens</a>
@@ -182,6 +180,14 @@ if (isset($_GET['pesquisar'])) {
                         <?php endforeach; ?>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label for="data_viagem">Data da Viagem</label>
+                    <input type="date" class="form-input" name="data_viagem" id="data_viagem" 
+                           value="<?php echo htmlspecialchars($data_viagem); ?>" 
+                           min="<?php echo date('Y-m-d'); ?>" 
+                           max="<?php echo date('Y-m-d', strtotime('+30 days')); ?>" 
+                           required>
+                </div>
                 <button class="btn-primary" name="pesquisar" type="submit">Pesquisar</button>
             </form>
         </div>
@@ -215,10 +221,15 @@ if (isset($_GET['pesquisar'])) {
                                     <td><?php echo date('H:i', strtotime($rota['hora_partida'])); ?></td>
                                     <td><?php echo date('H:i', strtotime($rota['hora_chegada'])); ?></td>
                                     <td><?php echo number_format($rota['preco'], 2, ',', '.') . ' €'; ?></td>
-                                    <td><?php echo $rota['lugares_disponiveis']; ?></td>
+                                    <td><?php echo $rota['lugares_disponiveis_data']; ?></td>
                                     <?php if(isset($_SESSION['id_utilizador']) && $_SESSION['perfil'] == 'cliente'): ?>
                                     <td>
-                                        <a href="comprar_bilhete.php?id_horario=<?php echo $rota['id_horario']; ?>" class="btn-action">Comprar</a>
+                                        <?php if($rota['lugares_disponiveis_data'] > 0): ?>
+                                            <a href="comprar_bilhete.php?id_horario=<?php echo $rota['id_horario']; ?>&data_viagem=<?php echo urlencode($data_viagem); ?>" 
+                                               class="btn-action">Comprar</a>
+                                        <?php else: ?>
+                                            <span class="esgotado">Esgotado</span>
+                                        <?php endif; ?>
                                     </td>
                                     <?php endif; ?>
                                 </tr>

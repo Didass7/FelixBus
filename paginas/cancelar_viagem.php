@@ -39,23 +39,22 @@ try {
     $result = mysqli_stmt_get_result($stmt);
 
     if ($bilhete = mysqli_fetch_assoc($result)) {
+        // Converter a data e hora da viagem para timestamp
         $data_hora_partida = $bilhete['data_viagem'] . ' ' . $bilhete['hora_partida_time'];
         $tempo_partida = strtotime($data_hora_partida);
         $tempo_atual = time();
         
-        if ($tempo_partida > $tempo_atual) {
-            // 1. Atualizar lugares disponíveis
-            $sql_lugares = "UPDATE horarios 
-                          SET lugares_disponiveis = lugares_disponiveis + 1 
-                          WHERE id_horario = ?";
-            $stmt = mysqli_prepare($conn, $sql_lugares);
-            mysqli_stmt_bind_param($stmt, "i", $bilhete['id_horario']);
-            mysqli_stmt_execute($stmt);
+        // Adicionar margem de 1 hora antes da partida
+        $tempo_limite = $tempo_partida - (60 * 60); // 1 hora em segundos
 
-            // Verificar se a atualização dos lugares foi bem-sucedida
-            if (mysqli_affected_rows($conn) <= 0) {
-                throw new Exception("Erro ao atualizar lugares disponíveis");
-            }
+        if ($tempo_atual < $tempo_limite) {
+            // 1. Atualizar lugares disponíveis na viagem específica
+            $sql_lugares = "UPDATE viagens_diarias 
+                          SET lugares_disponiveis = lugares_disponiveis + 1 
+                          WHERE id_horario = ? AND data_viagem = ?";
+            $stmt = mysqli_prepare($conn, $sql_lugares);
+            mysqli_stmt_bind_param($stmt, "is", $bilhete['id_horario'], $bilhete['data_viagem']);
+            mysqli_stmt_execute($stmt);
 
             // 2. Reembolsar o valor na carteira do cliente
             $sql_carteira = "UPDATE carteiras 
@@ -65,43 +64,30 @@ try {
             mysqli_stmt_bind_param($stmt, "di", $bilhete['preco_pago'], $id_utilizador);
             mysqli_stmt_execute($stmt);
 
-            if (mysqli_affected_rows($conn) <= 0) {
-                throw new Exception("Erro ao reembolsar valor");
-            }
-
             // 3. Deletar o bilhete
             $sql_deletar = "DELETE FROM bilhetes WHERE codigo_bilhete = ?";
             $stmt = mysqli_prepare($conn, $sql_deletar);
             mysqli_stmt_bind_param($stmt, "s", $codigo_bilhete);
             mysqli_stmt_execute($stmt);
 
-            if (mysqli_affected_rows($conn) <= 0) {
-                throw new Exception("Erro ao deletar bilhete");
-            }
-
-            // Commit da transação
             mysqli_commit($conn);
-            
-            // Redirecionar com mensagem de sucesso
             header("Location: minhas_viagens.php?cancelamento=sucesso");
             exit();
         } else {
-            // A viagem já partiu
             mysqli_rollback($conn);
-            header("Location: minhas_viagens.php?erro=partida");
+            header("Location: minhas_viagens.php?erro=limite_tempo");
             exit();
         }
     } else {
-        // Bilhete não encontrado
         mysqli_rollback($conn);
         header("Location: minhas_viagens.php?erro=nao_encontrado");
         exit();
     }
 } catch (Exception $e) {
-    // Em caso de erro, desfaz todas as alterações
     mysqli_rollback($conn);
     error_log("Erro ao cancelar bilhete: " . $e->getMessage());
     header("Location: minhas_viagens.php?erro=sistema");
     exit();
 }
+
 ?>

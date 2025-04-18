@@ -11,7 +11,7 @@ if (!isset($_SESSION['id_utilizador']) || $_SESSION['perfil'] != 'cliente') {
 $id_utilizador = $_SESSION['id_utilizador'];
 
 // Buscar viagens do usuário
-$sql = "SELECT b.codigo_bilhete, b.data_viagem, b.preco_pago,
+$sql = "SELECT b.codigo_bilhete, b.data_viagem, b.preco_pago, b.numero_lugar,
         h.hora_partida,
         h.hora_chegada,
         TIME(h.hora_partida) as hora_partida_time,
@@ -82,6 +82,9 @@ $viagens = mysqli_fetch_all($result, MYSQLI_ASSOC);
                 case 'partida':
                     echo "Não é possível cancelar esta viagem pois já partiu.";
                     break;
+                case 'limite_tempo':
+                    echo "Não é possível cancelar a viagem com menos de 1 hora de antecedência.";
+                    break;
                 case 'sistema':
                     echo "Ocorreu um erro no sistema. Por favor, tente novamente.";
                     break;
@@ -115,6 +118,7 @@ $viagens = mysqli_fetch_all($result, MYSQLI_ASSOC);
                             <p><strong>Data:</strong> <?php echo date('d/m/Y', strtotime($viagem['data_viagem'])); ?></p>
                             <p><strong>Partida:</strong> <?php echo date('H:i', strtotime($viagem['hora_partida_time'])); ?></p>
                             <p><strong>Chegada:</strong> <?php echo date('H:i', strtotime($viagem['hora_chegada_time'])); ?></p>
+                            <p><strong>Lugar:</strong> <?php echo $viagem['numero_lugar']; ?></p>
                             <p><strong>Preço:</strong> <?php echo number_format($viagem['preco_pago'], 2, ',', '.'); ?> €</p>
                             <?php 
                             $data_hora_partida = date('Y-m-d H:i:s', strtotime($viagem['data_viagem'] . ' ' . $viagem['hora_partida_time']));

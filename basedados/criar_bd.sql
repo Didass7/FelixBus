@@ -95,8 +95,19 @@ CREATE TABLE bilhetes (
     data_compra DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     preco_pago DECIMAL(10,2) NOT NULL COMMENT 'Valor no momento da compra',
     valido BOOLEAN NOT NULL DEFAULT 1 COMMENT 'Se o bilhete está ativo',
+    numero_lugar INT NOT NULL
     FOREIGN KEY (id_horario) REFERENCES horarios(id_horario),
     FOREIGN KEY (id_utilizador) REFERENCES utilizadores(id_utilizador)
+);
+
+-- Tabela para gerenciar capacidade das viagens por data
+CREATE TABLE viagens_diarias (
+    id_viagem_diaria INT AUTO_INCREMENT PRIMARY KEY,
+    id_horario INT NOT NULL,
+    data_viagem DATE NOT NULL,
+    lugares_disponiveis INT NOT NULL,
+    FOREIGN KEY (id_horario) REFERENCES horarios(id_horario),
+    UNIQUE KEY viagem_data_unica (id_horario, data_viagem)
 );
 
 -- Inserir utilizadores

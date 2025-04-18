@@ -1,9 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Jost&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap');
 
 :root {
     --dark-bg: #1a1a21;
+    --dark-bg-lighter: #24242e;
     --gold-accent: rgb(228, 188, 79);
+    --gold-accent-hover: rgb(245, 215, 130);
     --footer-bg: #101014;
+    --text-light: #ffffff;
+    --text-muted: rgba(255, 255, 255, 0.7);
+    --card-bg: rgba(255, 255, 255, 0.08);
+    --card-hover-bg: rgba(255, 255, 255, 0.12);
+    --error-color: #ff4444;
+    --success-color: #00C851;
 }
 
 * {
@@ -15,17 +23,26 @@
 
 body {
     background-color: var(--dark-bg);
-    color: white;
+    color: var(--text-light);
     line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
-/* Navigation */
+/* Navbar */
 .navbar {
     background-color: var(--dark-bg);
     padding: 15px 10%;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .logo img {
@@ -38,321 +55,172 @@ body {
 }
 
 .nav-link {
-    color: white;
-    font-size: 1.2rem;
-    text-transform: uppercase;
+    color: var(--text-light);
     text-decoration: none;
-    transition: color 0.3s;
+    font-size: 1.1rem;
+    transition: color 0.3s ease;
 }
 
 .nav-link:hover {
     color: var(--gold-accent);
 }
 
-/* Main Content */
+/* Main Container */
 .container {
     max-width: 1200px;
-    width: 100%;
-    margin: 2rem auto;
-    padding: 2rem;
+    margin: 100px auto 40px;
+    padding: 0 20px;
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-    margin-bottom: 2rem; /* Adicionado espaço para o footer */
 }
 
-/* Título principal com maior destaque */
-h2 {
-    font-size: 2.5rem;
-    font-weight: 700;
+/* Compra Bilhete Section */
+.compra-bilhete {
+    background: var(--dark-bg-lighter);
+    border-radius: 15px;
+    padding: 2.5rem;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    margin-top: 2rem;
+}
+
+.compra-bilhete h2 {
     color: var(--gold-accent);
+    font-size: 2rem;
+    margin-bottom: 2rem;
     text-align: center;
+}
+
+/* Detalhes da Viagem */
+.detalhes-viagem {
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 12px;
     margin-bottom: 2.5rem;
-    position: relative;
-    padding-bottom: 1rem;
 }
 
-h2::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 150px;
-    height: 3px;
-    background-color: var(--gold-accent);
-    border-radius: 2px;
-}
-
-/* Responsividade do título */
-@media (max-width: 768px) {
-    h2 {
-        font-size: 2rem;
-    }
-}
-
-@media (max-width: 480px) {
-    h2 {
-        font-size: 1.8rem;
-    }
-}
-
-/* Container com maior destaque */
-.form-container {
-    background: linear-gradient(135deg, var(--dark-bg-lighter), var(--card-bg));
-    padding: 3rem;
-    border-radius: var(--border-radius);
-    border: 2px solid rgba(228, 188, 79, 0.2);
-    box-shadow: var(--box-shadow);
-    max-width: 800px;
-    width: 100%;
-    margin: 0 auto;
-}
-
-/* Informações dentro do container com maior destaque */
-.form-group {
-    margin-bottom: 25px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 10px;
+.detalhes-viagem h3 {
     color: var(--gold-accent);
-    font-size: 1.4rem;
-    font-weight: 600;
-}
-
-.form-control {
-    width: 100%;
-    padding: 12px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
-    color: white;
-    font-size: 1.2rem;
-}
-
-/* Texto informativo */
-.info-text {
-    font-size: 1.3rem;
-    color: white;
+    font-size: 1.5rem;
     margin-bottom: 1.5rem;
-    line-height: 1.6;
 }
 
-/* Estilos simplificados para botões */
-.btn-primary,
-.btn-secondary {
-    width: 100%;
-    padding: 1rem;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
+.detalhes-viagem p {
+    margin-bottom: 1rem;
     font-size: 1.1rem;
-    font-weight: bold;
-    margin-top: 1rem;
+}
+
+.detalhes-viagem strong {
+    color: var(--gold-accent);
+}
+
+/* Buttons */
+form {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
 .btn-primary {
     background: var(--gold-accent);
     color: var(--dark-bg);
+    padding: 1rem 2.5rem;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    min-width: 200px;
+}
+
+.btn-primary:hover {
+    background: var(--gold-accent-hover);
+    transform: translateY(-2px);
 }
 
 .btn-secondary {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-light);
-    text-decoration: none;
-    display: block;
-    text-align: center;
-}
-
-/* Container para botões em formulários */
-.form-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 2rem;
-}
-
-/* Detalhes do Bilhete */
-.ticket-details {
-    margin-bottom: 2rem;
-}
-
-.ticket-details p {
-    font-size: 1.4rem;
-    margin-bottom: 1.2rem;
-    color: white;
-}
-
-.ticket-details strong {
+    background: transparent;
     color: var(--gold-accent);
-    margin-right: 1rem;
+    padding: 1rem 2.5rem;
+    border: 2px solid var(--gold-accent);
+    border-radius: 10px;
+    font-size: 1.1rem;
     font-weight: 600;
-}
-
-/* Input de data dentro dos detalhes do bilhete */
-.ticket-details input[type="date"] {
-    font-size: 1.4rem;
-    padding: 0.5rem;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
-    color: white;
-}
-
-/* Responsividade para os detalhes */
-@media (max-width: 768px) {
-    .ticket-details p {
-        font-size: 1.2rem;
-    }
-
-    .ticket-details input[type="date"] {
-        font-size: 1.2rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .ticket-details p {
-        font-size: 1.1rem;
-    }
-
-    .ticket-details input[type="date"] {
-        font-size: 1.1rem;
-    }
-}
-
-/* Responsividade ajustada */
-@media (max-width: 768px) {
-    h1 {
-        font-size: 2.5rem;
-    }
-
-    .form-container {
-        padding: 2rem;
-    }
-
-    .form-group label {
-        font-size: 1.2rem;
-    }
-
-    .form-control {
-        font-size: 1.1rem;
-    }
-
-    .info-text {
-        font-size: 1.1rem;
-    }
-}
-
-@media (max-width: 480px) {
-    h1 {
-        font-size: 2rem;
-    }
-
-    .form-container {
-        padding: 1.5rem;
-    }
-
-    .form-group label {
-        font-size: 1.1rem;
-    }
-
-    .form-control {
-        font-size: 1rem;
-    }
-
-    .info-text {
-        font-size: 1rem;
-    }
-}
-
-/* Footer */
-.footer {
-    background-color: var(--footer-bg);
-    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    min-width: 200px;
     text-align: center;
-    width: 100%;
-    margin-top: 2rem;
-    position: relative; /* Removido o fixed */
 }
 
-/* Media Queries */
-@media (max-width: 768px) {
-    .container {
-        padding: 1rem;
-        margin: 1rem auto 2rem auto;
-    }
-
-    h1 {
-        font-size: 2rem;
-    }
-
-    .form-container {
-        padding: 1.5rem;
-    }
+.btn-secondary:hover {
+    background: rgba(228, 188, 79, 0.1);
+    transform: translateY(-2px);
 }
 
-@media (max-width: 480px) {
-    .container {
-        padding: 1rem 0.5rem;
-        margin-bottom: 2rem;
-    }
-
-    h1 {
-        font-size: 1.8rem;
-    }
-}
-
-/* Mensagens de Alerta */
-.alert {
-    width: 100%;
-    padding: 1.2rem;
-    margin: 1.5rem 0;
+/* Mensagem de Erro */
+.mensagem {
+    padding: 1rem;
     border-radius: 8px;
-    font-size: 1.2rem;
+    margin-bottom: 2rem;
     text-align: center;
-    position: relative;
-    border: 1px solid;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(220, 53, 69, 0.1);
-    color: #ff6b6b;
-    border-color: rgba(220, 53, 69, 0.3);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    animation: fadeIn 0.3s ease-in-out;
+    font-weight: 500;
 }
 
-.alert::before {
-    content: '⚠️';
-    margin-right: 10px;
-    font-size: 1.3rem;
+.erro {
+    background-color: rgba(255, 68, 68, 0.1);
+    color: var(--error-color);
+    border: 1px solid var(--error-color);
 }
 
-/* Animação de entrada */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Responsividade */
+/* Responsive Design */
 @media (max-width: 768px) {
-    .alert {
-        font-size: 1.1rem;
-        padding: 1rem;
+    .navbar {
+        padding: 15px 5%;
+    }
+
+    .nav-links {
+        display: none;
+    }
+
+    .container {
+        padding: 0 15px;
+        margin-top: 80px;
+    }
+
+    .compra-bilhete {
+        padding: 1.5rem;
+    }
+
+    .detalhes-viagem {
+        padding: 1.5rem;
+    }
+
+    form {
+        flex-direction: column;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+        min-width: unset;
     }
 }
 
 @media (max-width: 480px) {
-    .alert {
+    .compra-bilhete h2 {
+        font-size: 1.5rem;
+    }
+
+    .detalhes-viagem h3 {
+        font-size: 1.3rem;
+    }
+
+    .detalhes-viagem p {
         font-size: 1rem;
-        padding: 0.8rem;
     }
 }

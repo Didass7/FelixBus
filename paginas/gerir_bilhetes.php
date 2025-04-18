@@ -139,15 +139,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         // Criar os bilhetes
                         for ($i = 0; $i < $quantidade; $i++) {
                             $codigo_bilhete = gerarCodigoBilhete($conn);
-                            $sql_bilhete = "INSERT INTO bilhetes (codigo_bilhete, id_horario, id_utilizador, data_viagem, preco_pago) 
-                                           VALUES (?, ?, ?, ?, ?)";
+                            $lugar = gerarLugarDisponivel($conn, $id_horario, $data_viagem);
+                            
+                            if (!$lugar) {
+                                throw new Exception("Não há lugares suficientes disponíveis.");
+                            }
+                            
+                            $sql_bilhete = "INSERT INTO bilhetes (codigo_bilhete, id_horario, id_utilizador, data_viagem, preco_pago, numero_lugar) 
+                                           VALUES (?, ?, ?, ?, ?, ?)";
                             $stmt = mysqli_prepare($conn, $sql_bilhete);
-                            mysqli_stmt_bind_param($stmt, "siids", // Mudamos 'f' para 'd'
+                            mysqli_stmt_bind_param($stmt, "siisdi", 
                                 $codigo_bilhete,
                                 $id_horario,
                                 $id_cliente,
                                 $data_viagem,
-                                $horario_info['preco']
+                                $horario_info['preco'],
+                                $lugar
                             );
                             mysqli_stmt_execute($stmt);
                         }
