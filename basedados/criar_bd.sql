@@ -16,7 +16,7 @@ CREATE TABLE utilizadores (
     morada TEXT,
     perfil ENUM('cliente', 'funcionário', 'administrador') NOT NULL DEFAULT 'cliente',
     data_registo DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    ativo BOOLEAN NOT NULL DEFAULT 1 COMMENT 'Conta ativa ou desativada'
+    validado BOOLEAN NOT NULL DEFAULT 0 COMMENT 'Indica se o usuário foi validado pelo administrador'
 );
 
 -- Tabela de Rotas
@@ -95,7 +95,7 @@ CREATE TABLE bilhetes (
     data_compra DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     preco_pago DECIMAL(10,2) NOT NULL COMMENT 'Valor no momento da compra',
     valido BOOLEAN NOT NULL DEFAULT 1 COMMENT 'Se o bilhete está ativo',
-    numero_lugar INT NOT NULL
+    numero_lugar INT NOT NULL,
     FOREIGN KEY (id_horario) REFERENCES horarios(id_horario),
     FOREIGN KEY (id_utilizador) REFERENCES utilizadores(id_utilizador)
 );
@@ -111,16 +111,16 @@ CREATE TABLE viagens_diarias (
 );
 
 -- Inserir utilizadores
-INSERT INTO utilizadores (nome_utilizador, hash_password, email, nome_completo, telefone, morada, perfil) VALUES
-('cliente', md5('cliente'), 'cliente@gmail.com', 'cliente', '999888777', 'Rua 1', 'cliente');
+INSERT INTO utilizadores (nome_utilizador, hash_password, email, nome_completo, telefone, morada, perfil, validado) VALUES
+('cliente', md5('cliente'), 'cliente@gmail.com', 'cliente', '999888777', 'Rua 1', 'cliente', 1);
 
 INSERT INTO utilizadores 
-(nome_utilizador, hash_password, email, nome_completo, telefone, morada, perfil) VALUES
- ('funcionario', MD5('funcionario'), 'funcionario@gmail.com', 'Funcionário', '999888777', 'Rua 2', 'funcionário');
+(nome_utilizador, hash_password, email, nome_completo, telefone, morada, perfil, validado) VALUES
+('funcionario', MD5('funcionario'), 'funcionario@gmail.com', 'Funcionário', '999888777', 'Rua 2', 'funcionário', 1);
 
- INSERT INTO utilizadores 
-(nome_utilizador, hash_password, email, nome_completo, telefone, morada, perfil) VALUES 
-('admin', MD5('admin'), 'admin@gmail.com', 'Administrador', '933333333', 'Rua 3', 'administrador');
+INSERT INTO utilizadores 
+(nome_utilizador, hash_password, email, nome_completo, telefone, morada, perfil, validado) VALUES 
+('admin', MD5('admin'), 'admin@gmail.com', 'Administrador', '933333333', 'Rua 3', 'administrador', 1);
 
 -- Primeiro inserir as rotas
 INSERT INTO rotas (id_rota, origem, destino, criado_por) VALUES 

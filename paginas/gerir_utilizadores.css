@@ -394,16 +394,345 @@ button[type="submit"].btn-activate:hover {
     background: rgba(255, 255, 255, 0.2);
 }
 
+/* Adicionar ao arquivo CSS existente */
 
+.btn-approve {
+    background-color: var(--success-color);
+    color: white;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 0.5rem;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
 
+.btn-approve:hover {
+    background-color: #45a049;
+    transform: translateY(-2px);
+}
 
+.btn-reject,
+button[type="submit"].btn-reject,
+input[type="submit"].btn-reject {
+    background-color: transparent !important;
+    border: 1px solid var(--error-color) !important;
+    color: var(--error-color) !important;
+    width: auto !important;
+    text-transform: none !important;
+    margin: 0 4px !important;
+    padding: 8px 16px !important;
+    font-size: 14px !important;
+    min-width: 90px !important;
+    font-weight: 500 !important;
+    letter-spacing: normal !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    text-decoration: none !important;
+    text-align: center !important;
+}
 
+.btn-reject:hover,
+button[type="submit"].btn-reject:hover,
+input[type="submit"].btn-reject:hover {
+    background-color: var(--error-color) !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(244, 67, 54, 0.2);
+}
 
+/* Ajustar espaçamento na coluna de ações */
+.actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
 
+.actions form {
+    display: flex;
+    gap: 0.5rem;
+}
 
+/* Botões de ação na tabela */
+.actions {
+    white-space: nowrap;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-start;
+    align-items: center;
+}
 
+.actions form {
+    display: inline-flex;
+    gap: 8px;
+}
 
+/* Estilos base para todos os botões de ação */
+.btn-edit,
+.btn-delete,
+.btn-activate,
+.btn-approve,
+.btn-reject {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 90px;
+    text-decoration: none;
+    text-align: center;
+}
 
+/* Botão Editar */
+.btn-edit {
+    background-color: transparent;
+    border: 1px solid var(--edit-color);
+    color: var(--edit-color);
+}
 
+.btn-edit:hover {
+    background-color: var(--edit-color);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(33, 150, 243, 0.2);
+}
+
+/* Botão Inativar */
+.btn-delete {
+    background-color: transparent;
+    border: 1px solid var(--error-color);
+    color: var(--error-color);
+}
+
+.btn-delete:hover {
+    background-color: var(--error-color);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(244, 67, 54, 0.2);
+}
+
+/* Botão Ativar */
+.btn-activate {
+    background-color: transparent;
+    border: 1px solid var(--success-color);
+    color: var(--success-color);
+}
+
+.btn-activate:hover {
+    background-color: var(--success-color);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(76, 175, 80, 0.2);
+}
+
+/* Botão Validar */
+.btn-approve {
+    background-color: transparent;
+    border: 1px solid var(--success-color);
+    color: var(--success-color);
+}
+
+.btn-approve:hover {
+    background-color: var(--success-color);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(76, 175, 80, 0.2);
+}
+
+/* Botão Rejeitar */
+.btn-reject {
+    background-color: transparent;
+    border: 1px solid var(--error-color);
+    color: var(--error-color);
+}
+
+.btn-reject:hover {
+    background-color: var(--error-color);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(244, 67, 54, 0.2);
+}
+
+/* Melhorias na organização dos botões */
+.actions {
+    white-space: nowrap;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.actions form {
+    display: inline-flex;
+    gap: 8px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .actions {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .actions form {
+        display: flex;
+        width: 100%;
+    }
+
+    .btn-edit,
+    .btn-delete,
+    .btn-activate,
+    .btn-approve,
+    .btn-reject {
+        width: 100%;
+        padding: 6px 12px;
+        font-size: 13px;
+        min-width: 70px;
+    }
+}
+
+/* Melhorias na tabela */
+.table-responsive {
+    overflow-x: auto;
+    margin-top: 1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(228, 188, 79, 0.2);
+}
+
+table {
+    margin-top: 0;
+    border-radius: 0;
+}
+
+th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: var(--dark-bg-lighter);
+}
+
+tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Status de validação */
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-validated {
+    background-color: rgba(76, 175, 80, 0.2);
+    color: var(--success-color);
+}
+
+.status-pending {
+    background-color: rgba(255, 152, 0, 0.2);
+    color: #FFA726;
+}
+
+/* Sobrescrever qualquer estilo anterior para os botões de submit */
+button[type="submit"].btn-approve,
+input[type="submit"].btn-approve,
+.btn-approve {
+    background-color: transparent !important;
+    border: 1px solid var(--success-color) !important;
+    color: var(--success-color) !important;
+    width: auto !important;
+    text-transform: none !important;
+    margin: 0 4px !important;
+    padding: 8px 16px !important;
+    font-size: 14px !important;
+    min-width: 90px !important;
+    font-weight: 500 !important;
+    letter-spacing: normal !important;
+}
+
+button[type="submit"].btn-approve:hover,
+input[type="submit"].btn-approve:hover,
+.btn-approve:hover {
+    background-color: var(--success-color) !important;
+    color: white !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(76, 175, 80, 0.2) !important;
+}
+
+/* Remover margens extras dos forms dentro das ações */
+.actions form {
+    margin: 0;
+}
+
+/* Garantir que os botões dentro do form mantenham o tamanho correto */
+.actions form button[type="submit"] {
+    width: auto;
+    margin: 0 4px;
+}
+
+/* Botão Desvalidar */
+.btn-warning {
+    background-color: transparent;
+    border: 1px solid #FFA726;
+    color: #FFA726;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 90px;
+    text-decoration: none;
+    text-align: center;
+    margin: 0 4px;
+}
+
+.btn-warning:hover {
+    background-color: #FFA726;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 167, 38, 0.2);
+}
+
+/* Sobrescrever qualquer estilo anterior para os botões de submit */
+button[type="submit"].btn-warning,
+input[type="submit"].btn-warning,
+.btn-warning {
+    background-color: transparent !important;
+    border: 1px solid #FFA726 !important;
+    color: #FFA726 !important;
+    width: auto !important;
+    text-transform: none !important;
+    margin: 0 4px !important;
+    padding: 8px 16px !important;
+    font-size: 14px !important;
+    min-width: 90px !important;
+    font-weight: 500 !important;
+    letter-spacing: normal !important;
+}
+
+button[type="submit"].btn-warning:hover,
+input[type="submit"].btn-warning:hover,
+.btn-warning:hover {
+    background-color: #FFA726 !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 167, 38, 0.2);
+}
 
 

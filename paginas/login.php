@@ -44,8 +44,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $result = mysqli_stmt_get_result($stmt);
 
         if ($user = mysqli_fetch_assoc($result)) {
-            // Verificar password MD5 (ajuste conforme sua implementação)
-            if (md5($password) === $user['hash_password']) {
+            // Verificar se o usuário está validado (apenas para clientes)
+            $validado = isset($user['validado']) ? $user['validado'] : 1; // assume validado se a coluna não existir
+            
+            if ($user['perfil'] === 'cliente' && !$validado) {
+                $error = "Sua conta ainda está pendente de aprovação pelo administrador.";
+            }
+            // Se não for cliente ou já estiver validado, continua com a verificação normal
+            elseif (md5($password) === $user['hash_password']) {
                 // Regenerar ID da sessão para evitar roubo de sessão
                 session_regenerate_id(true);
 
@@ -110,7 +116,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <section class="hero">
             <div class="hero-content">
                 <div class="login-container">
-                    <?php if (isset($_GET['success'])): ?>
+                    <?php if (isset($_GET['success']) && isset($_GET['pending'])): ?>
+                        <div class="success-message">
+                            Registro concluído com sucesso! Por favor, aguarde a validação do seu registro por um administrador.
+                            Você receberá acesso assim que sua conta for aprovada.
+                        </div>
+                    <?php elseif (isset($_GET['success'])): ?>
                         <div class="success-message">Registro concluído com sucesso! Faça login para continuar.</div>
                     <?php endif; ?>
 

@@ -111,7 +111,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_stmt_bind_param($stmt_wallet, "i", $id_utilizador);
                 mysqli_stmt_execute($stmt_wallet);
                 
-                header("Location: login.php?success=1");
+                // Adicionar mensagem de aguardar validação
+                header("Location: login.php?success=1&pending=1");
                 exit();
             } else {
                 die("Erro ao registrar: " . mysqli_error($conn));

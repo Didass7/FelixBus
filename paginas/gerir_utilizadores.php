@@ -68,29 +68,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 break;
 
-            case 'inativar':
+            case 'validar':
                 $id = $_POST['id_utilizador'];
-                $sql = "UPDATE utilizadores SET ativo = 0 WHERE id_utilizador = ?";
+                $sql = "UPDATE utilizadores SET validado = 1 WHERE id_utilizador = ?";
                 $stmt = mysqli_prepare($conn, $sql);
                 mysqli_stmt_bind_param($stmt, "i", $id);
                 
                 if (mysqli_stmt_execute($stmt)) {
-                    $mensagem = "Utilizador inativado com sucesso!";
+                    $_SESSION['mensagem'] = "Utilizador validado com sucesso!";
+                    header("Location: gerir_utilizadores.php#lista");
+                    exit();
                 } else {
-                    $erro = "Erro ao inativar utilizador: " . mysqli_error($conn);
+                    $erro = "Erro ao validar utilizador: " . mysqli_error($conn);
                 }
                 break;
 
-            case 'ativar':
+            case 'rejeitar':
                 $id = $_POST['id_utilizador'];
-                $sql = "UPDATE utilizadores SET ativo = 1 WHERE id_utilizador = ?";
+                $sql = "DELETE FROM utilizadores WHERE id_utilizador = ? AND validado = 0";
                 $stmt = mysqli_prepare($conn, $sql);
                 mysqli_stmt_bind_param($stmt, "i", $id);
                 
                 if (mysqli_stmt_execute($stmt)) {
-                    $mensagem = "Utilizador ativado com sucesso!";
+                    $mensagem = "Registro rejeitado com sucesso!";
                 } else {
-                    $erro = "Erro ao ativar utilizador: " . mysqli_error($conn);
+                    $erro = "Erro ao rejeitar registro: " . mysqli_error($conn);
+                }
+                break;
+
+            case 'desvalidar':
+                $id = $_POST['id_utilizador'];
+                $sql = "UPDATE utilizadores SET validado = 0 WHERE id_utilizador = ?";
+                $stmt = mysqli_prepare($conn, $sql);
+                mysqli_stmt_bind_param($stmt, "i", $id);
+                
+                if (mysqli_stmt_execute($stmt)) {
+                    $mensagem = "Utilizador desvalidado com sucesso!";
+                } else {
+                    $erro = "Erro ao desvalidar utilizador: " . mysqli_error($conn);
                 }
                 break;
         }
@@ -112,6 +127,12 @@ if (isset($_GET['editar']) && is_numeric($_GET['editar'])) {
 // Buscar todos os utilizadores para visualização
 $sql = "SELECT * FROM utilizadores ORDER BY data_registo DESC";
 $result = mysqli_query($conn, $sql);
+
+// No início do arquivo, após session_start()
+if (isset($_SESSION['mensagem'])) {
+    $mensagem = $_SESSION['mensagem'];
+    unset($_SESSION['mensagem']);
+}
 ?>
 
 <!DOCTYPE html>
@@ -235,7 +256,7 @@ $result = mysqli_query($conn, $sql);
                             <th>Email</th>
                             <th>Username</th>
                             <th>Perfil</th>
-                            <th>Status</th>
+                            <th>Validado</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
@@ -246,18 +267,39 @@ $result = mysqli_query($conn, $sql);
                                 <td><?php echo htmlspecialchars($user['email']); ?></td>
                                 <td><?php echo htmlspecialchars($user['nome_utilizador']); ?></td>
                                 <td><?php echo htmlspecialchars($user['perfil']); ?></td>
-                                <td><?php echo $user['ativo'] ? 'Ativo' : 'Inativo'; ?></td>
+                                <td><?php echo isset($user['validado']) ? ($user['validado'] ? 'Sim' : 'Não') : 'Não'; ?></td>
                                 <td class="actions">
                                     <a href="?editar=<?php echo $user['id_utilizador']; ?>" class="btn-edit">Editar</a>
-                                    <form method="POST" style="display: inline;">
-                                        <input type="hidden" name="acao" value="<?php echo $user['ativo'] ? 'inativar' : 'ativar'; ?>">
-                                        <input type="hidden" name="id_utilizador" value="<?php echo $user['id_utilizador']; ?>">
-                                        <button type="submit" 
-                                                class="<?php echo $user['ativo'] ? 'btn-delete' : 'btn-activate'; ?>"
-                                                onclick="return confirm('Tem certeza que deseja <?php echo $user['ativo'] ? 'inativar' : 'ativar'; ?> este utilizador?')">
-                                            <?php echo $user['ativo'] ? 'Inativar' : 'Ativar'; ?>
-                                        </button>
-                                    </form>
+                                    
+                                    <?php if ($user['perfil'] === 'cliente'): ?>
+                                        <?php if (!isset($user['validado']) || !$user['validado']): ?>
+                                            <form method="POST" style="display: inline;">
+                                                <input type="hidden" name="id_utilizador" value="<?php echo $user['id_utilizador']; ?>">
+                                                <input type="hidden" name="acao" value="validar">
+                                                <button type="submit" class="btn-approve">Validar</button>
+                                            </form>
+
+                                            <form method="POST" style="display: inline;">
+                                                <input type="hidden" name="id_utilizador" value="<?php echo $user['id_utilizador']; ?>">
+                                                <input type="hidden" name="acao" value="rejeitar">
+                                                <button type="submit" 
+                                                        class="btn-reject"
+                                                        onclick="return confirm('Tem certeza que deseja rejeitar este registro?')">
+                                                    Rejeitar
+                                                </button>
+                                            </form>
+                                        <?php else: ?>
+                                            <form method="POST" style="display: inline;">
+                                                <input type="hidden" name="id_utilizador" value="<?php echo $user['id_utilizador']; ?>">
+                                                <input type="hidden" name="acao" value="desvalidar">
+                                                <button type="submit" 
+                                                        class="btn-warning"
+                                                        onclick="return confirm('Tem certeza que deseja desvalidar este utilizador?')">
+                                                    Desvalidar
+                                                </button>
+                                            </form>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
@@ -272,6 +314,16 @@ $result = mysqli_query($conn, $sql);
     </footer>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
 
 
 

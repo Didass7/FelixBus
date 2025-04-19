@@ -255,11 +255,12 @@ button[type="submit"]:hover {
 }
 
 .success-message {
-    color: #4caf50;
+    color: #4CAF50;
     background: rgba(76, 175, 80, 0.1);
-    padding: 0.8rem;
+    padding: 1rem;
     border-radius: 8px;
     margin-bottom: 1.5rem;
     text-align: center;
     border: 1px solid rgba(76, 175, 80, 0.3);
+    line-height: 1.5;
 }
