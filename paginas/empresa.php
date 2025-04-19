@@ -37,18 +37,24 @@ include '../basedados/basedados.h';
             </a>
         </div>
         <div class="nav-links">
-            <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
-            <a href="empresa.php" class="nav-link active">Sobre Nós</a>
-            <?php if(isset($_SESSION['id_utilizador'])): ?>
-                <?php if($_SESSION['perfil'] == 'administrador'): ?>
-                    <a href="pagina_inicial_admin.php" class="nav-link">Área Admin</a>
-                <?php elseif($_SESSION['perfil'] == 'funcionário'): ?>
-                    <a href="pagina_inicial_funcionario.php" class="nav-link">Área Funcionário</a>
-                <?php else: ?>
-                    <a href="pagina_inicial_cliente.php" class="nav-link">Área Cliente</a>
+        <?php if (isset($_SESSION['id_utilizador'])): ?>
+                <?php if ($_SESSION['perfil'] === 'cliente'): ?>
+                    <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
+                    <a href="minhas_viagens.php" class="nav-link">Minhas Viagens</a>
+                    <a href="carteira.php" class="nav-link">Carteira</a>
+                    <a href="perfil.php" class="nav-link">Perfil</a>
+                    <a href="logout.php" class="nav-link">Logout</a>
+                <?php elseif ($_SESSION['perfil'] === 'funcionário'): ?>
+                    <a href="pagina_inicial_funcionario.php" class="nav-link">Área do Funcionário</a>
+                    <a href="perfil.php" class="nav-link">Perfil</a>
+                    <a href="logout.php" class="nav-link">Logout</a>
+                <?php elseif ($_SESSION['perfil'] === 'administrador'): ?>
+                    <a href="pagina_inicial_admin.php" class="nav-link">Painel de Administração</a>
+                    <a href="perfil.php" class="nav-link">Perfil</a>
+                    <a href="logout.php" class="nav-link">Logout</a>
                 <?php endif; ?>
-                <a href="logout.php" class="nav-link">Logout</a>
             <?php else: ?>
+                <a href="empresa.php" class="nav-link">Sobre Nós</a>
                 <a href="register.php" class="nav-link">Registar</a>
                 <a href="login.php" class="nav-link">Login</a>
             <?php endif; ?>

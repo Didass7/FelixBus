@@ -23,9 +23,7 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'funcionário
             </a>
         </div>
         <div class="nav-links">
-            <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
-            <a href="gerir_carteiras.php" class="nav-link">Gerir Carteiras</a>
-            <a href="gerir_bilhetes.php" class="nav-link">Gerir Bilhetes</a>
+            <a href="pagina_inicial_funcionario.php" class="nav-link">Área do Funcionário</a>
             <a href="perfil.php" class="nav-link">Perfil</a>
             <a href="logout.php" class="nav-link">Logout</a>
         </div>

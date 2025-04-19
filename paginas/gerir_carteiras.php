@@ -91,17 +91,11 @@ $result_clientes = mysqli_query($conn, $sql_clientes);
         <div class="nav-links">
         <?php if (isset($_SESSION['id_utilizador'])): ?>
                 <?php if ($_SESSION['perfil'] === 'funcionário'): ?>
-                    <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
-                    <a href="gerir_carteiras.php" class="nav-link">Gerir Carteiras</a>
-                    <a href="gerir_bilhetes.php" class="nav-link">Gerir Bilhetes</a>
+                    <a href="pagina_inicial_funcionario.php" class="nav-link">Área do Funcionário</a>
                     <a href="perfil.php" class="nav-link">Perfil</a>
                     <a href="logout.php" class="nav-link">Logout</a>
                 <?php elseif ($_SESSION['perfil'] === 'administrador'): ?>
-                    <a href="gerir_rotas.php" class="nav-link">Gerir Rotas</a>
-                    <a href="gerir_utilizadores.php" class="nav-link">Gerir Utilizadores</a>
-                    <a href="gerir_alertas.php" class="nav-link">Gerir Alertas</a>
-                    <a href="gerir_carteiras.php" class="nav-link">Gerir Carteiras</a>
-                    <a href="gerir_bilhetes.php" class="nav-link">Gerir Bilhetes</a>
+                    <a href="pagina_inicial_admin.php" class="nav-link">Painel de Administração</a>
                     <a href="perfil.php" class="nav-link">Perfil</a>
                     <a href="logout.php" class="nav-link">Logout</a>
                 <?php endif; ?>
@@ -164,14 +158,23 @@ $result_clientes = mysqli_query($conn, $sql_clientes);
         </div>
     </main>
 
+    <!-- Rodapé -->
     <footer class="footer">
+        <div class="social-links">
+            <a href="#" class="social-link">FB</a>
+            <a href="#" class="social-link">TW</a>
+            <a href="#" class="social-link">IG</a>
+        </div>
+
         <div class="footer-links">
             <a href="empresa.php" class="footer-link">Sobre Nós</a>
             <a href="empresa.php#contactos" class="footer-link">Contactos</a>
             <a href="consultar_rotas.php" class="footer-link">Rotas e Horários</a>
         </div>
+
         <p>&copy; 2024 FelixBus. Todos os direitos reservados.</p>
     </footer>
 </body>
 </html>
+
 

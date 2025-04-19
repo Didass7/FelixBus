@@ -323,10 +323,7 @@ if (!$result_rotas) {
             </a>
         </div>
         <div class="nav-links">
-            <a href="gerir_utilizadores.php" class="nav-link">Gerir Utilizadores</a>
-            <a href="gerir_alertas.php" class="nav-link">Gerir Alertas</a>
-            <a href="gerir_carteiras.php" class="nav-link">Gerir Carteiras</a>
-            <a href="gerir_bilhetes.php" class="nav-link">Gerir Bilhetes</a>
+            <a href="pagina_inicial_admin.php" class="nav-link">Painel de Administração</a>
             <a href="perfil.php" class="nav-link">Perfil</a>
             <a href="logout.php" class="nav-link">Logout</a>
         </div>

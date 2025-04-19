@@ -8,8 +8,11 @@ if (!isset($_SESSION['id_utilizador'])) {
 }
 
 // Redirecionar funcionários e administradores
-if ($_SESSION['perfil'] === 'funcionário' || $_SESSION['perfil'] === 'administrador') {
-    header("Location: consultar_rotas.php");
+if ($_SESSION['perfil'] === 'funcionário') {
+    header("Location: pagina_inicial_funcionario.php");
+    exit();
+} elseif ($_SESSION['perfil'] === 'administrador') {
+    header("Location: pagina_inicial_admin.php");
     exit();
 }
 
