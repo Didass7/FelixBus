@@ -107,8 +107,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </a>
             </div>
             <div class="nav-links">
-                <a href="index.php" class="nav-link">Início</a>
+                <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
+                <a href="empresa.php" class="nav-link">Sobre Nós</a>
                 <a href="register.php" class="nav-link">Registar</a>
+                <a href="login.php" class="nav-link">Login</a>
+                <a href="index.php" class="nav-link">Início</a>
             </div>
         </nav>
 

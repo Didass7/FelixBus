@@ -1,10 +1,17 @@
 <?php
+/**
+ * Página de Registo de Utilizadores
+ *
+ * Este ficheiro permite que novos utilizadores se registem na plataforma FelixBus.
+ * Após o registo bem-sucedido, é criada uma carteira para o utilizador e este é redirecionado para a página de login.
+ */
+
 session_start();
 include '../basedados/basedados.h';
 
-// Verificar se o usuário já está logado
+// Verificar se o utilizador já está autenticado
 if (isset($_SESSION['id_utilizador'])) {
-    // Redirecionar para a página inicial ou painel do usuário
+    // Redirecionar para a página adequada conforme o perfil do utilizador
     switch ($_SESSION['perfil']) {
         case 'administrador':
             header("Location: pagina_inicial_admin.php");
@@ -21,19 +28,20 @@ if (isset($_SESSION['id_utilizador'])) {
     exit();
 }
 
-$error = isset($_SESSION['register_error']) ? $_SESSION['register_error'] : null;
-$old_username = isset($_SESSION['old_username']) ? $_SESSION['old_username'] : '';
-$old_nome_completo = isset($_SESSION['old_nome_completo']) ? $_SESSION['old_nome_completo'] : '';
-$old_morada = isset($_SESSION['old_morada']) ? $_SESSION['old_morada'] : '';
-$old_telefone = isset($_SESSION['old_telefone']) ? $_SESSION['old_telefone'] : '';
+// Recuperar dados da sessão para repopular o formulário em caso de erro
+$error = $_SESSION['register_error'] ?? null;
+$old_username = $_SESSION['old_username'] ?? '';
+$old_nome_completo = $_SESSION['old_nome_completo'] ?? '';
+$old_morada = $_SESSION['old_morada'] ?? '';
+$old_telefone = $_SESSION['old_telefone'] ?? '';
 
-unset($_SESSION['register_error']);
-unset($_SESSION['old_username']);
-unset($_SESSION['old_nome_completo']);
-unset($_SESSION['old_morada']);
-unset($_SESSION['old_telefone']);
+// Limpar variáveis de sessão após utilização
+unset($_SESSION['register_error'], $_SESSION['old_username'], $_SESSION['old_nome_completo'],
+      $_SESSION['old_morada'], $_SESSION['old_telefone']);
 
+// Processar o formulário quando submetido
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Obter e limpar dados do formulário
     $username = trim($_POST['username']);
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
@@ -41,94 +49,106 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $morada = trim($_POST['morada']);
     $telefone = trim($_POST['telefone']);
 
-    // Validação
-    $error = null;
-
+    // Validar dados do formulário
     if (empty($username)) {
-        $error = "Por favor, insira um nome de utilizador!";
+        $error = "Por favor, introduza um nome de utilizador.";
     } elseif (empty($password)) {
-        $error = "Por favor, insira uma password!";
+        $error = "Por favor, introduza uma palavra-passe.";
     } elseif (strlen($password) < 3) {
-        $error = "A password deve ter pelo menos 3 caracteres!";
+        $error = "A palavra-passe deve ter pelo menos 3 caracteres.";
     } elseif ($password !== $confirm_password) {
-        $error = "As passwords não coincidem!";
+        $error = "As palavras-passe não coincidem.";
     } elseif (empty($nome_completo)) {
-        $error = "Por favor, insira o nome completo!";
+        $error = "Por favor, introduza o nome completo.";
     } elseif (empty($morada)) {
-        $error = "Por favor, insira a morada!";
+        $error = "Por favor, introduza a morada.";
     } elseif (empty($telefone)) {
-        $error = "Por favor, insira o número de telefone!";
+        $error = "Por favor, introduza o número de telefone.";
     }
 
+    // Se não houver erros, prosseguir com o registo
     if (!$error) {
+        // Verificar conexão com a base de dados
         if (!$conn) {
-            die("Erro ao conectar ao banco de dados: " . mysqli_connect_error());
+            die("Erro na ligação à base de dados: " . mysqli_connect_error());
         }
-        
-        // Verificar se nome de utilizador já existe
+
+        // Verificar se o nome de utilizador já existe
         $sql_check = "SELECT id_utilizador FROM utilizadores WHERE nome_utilizador = ?";
         $stmt_check = mysqli_prepare($conn, $sql_check);
         mysqli_stmt_bind_param($stmt_check, "s", $username);
         mysqli_stmt_execute($stmt_check);
         mysqli_stmt_store_result($stmt_check);
-        
+
         if (mysqli_stmt_num_rows($stmt_check) > 0) {
-            $error = "Este nome de utilizador já está registrado!";
+            $error = "Este nome de utilizador já está registado.";
         } else {
-            $hashed_password = md5($password);
-            $email = $username . '@example.com';
-            
-            $sql_insert = "INSERT INTO utilizadores (
-                            email, 
-                            hash_password, 
-                            perfil, 
-                            nome_utilizador, 
-                            data_registo,
-                            nome_completo,
-                            telefone,
-                            morada
-                          ) VALUES (?, ?, 'cliente', ?, NOW(), ?, ?, ?)";
-            
-            $stmt_insert = mysqli_prepare($conn, $sql_insert);
-            mysqli_stmt_bind_param(
-                $stmt_insert, 
-                "ssssss", // 6 parâmetros (ajustado)
-                $email, 
-                $hashed_password, 
-                $username,
-                $nome_completo,
-                $telefone,
-                $morada
-            );
-            
-            if (mysqli_stmt_execute($stmt_insert)) {
-                // Registro bem-sucedido, redirecionar para a página de login
-                $id_utilizador = mysqli_insert_id($conn);
-                
-                // Create a wallet for the new user
-                $sql_create_wallet = "INSERT INTO carteiras (id_utilizador, tipo, saldo) VALUES (?, 'cliente', 0.00)";
-                $stmt_wallet = mysqli_prepare($conn, $sql_create_wallet);
-                mysqli_stmt_bind_param($stmt_wallet, "i", $id_utilizador);
-                mysqli_stmt_execute($stmt_wallet);
-                
-                // Adicionar mensagem de aguardar validação
-                header("Location: login.php?success=1&pending=1");
-                exit();
-            } else {
-                die("Erro ao registrar: " . mysqli_error($conn));
+            try {
+                // Iniciar transação para garantir integridade dos dados
+                mysqli_begin_transaction($conn);
+
+                // Preparar dados para inserção
+                $hashed_password = md5($password); // Nota: MD5 não é seguro para produção
+                $email = "{$username}@example.com"; // Email temporário baseado no nome de utilizador
+
+                // Inserir novo utilizador
+                $sql_insert = "INSERT INTO utilizadores (
+                                email, hash_password, perfil, nome_utilizador,
+                                data_registo, nome_completo, telefone, morada
+                              ) VALUES (?, ?, 'cliente', ?, NOW(), ?, ?, ?)";
+
+                $stmt_insert = mysqli_prepare($conn, $sql_insert);
+                mysqli_stmt_bind_param(
+                    $stmt_insert,
+                    "ssssss",
+                    $email,
+                    $hashed_password,
+                    $username,
+                    $nome_completo,
+                    $telefone,
+                    $morada
+                );
+
+                if (mysqli_stmt_execute($stmt_insert)) {
+                    // Obter ID do novo utilizador
+                    $id_utilizador = mysqli_insert_id($conn);
+
+                    // Criar carteira para o novo utilizador
+                    $sql_create_wallet = "INSERT INTO carteiras (id_utilizador, tipo, saldo) VALUES (?, 'cliente', 0.00)";
+                    $stmt_wallet = mysqli_prepare($conn, $sql_create_wallet);
+                    mysqli_stmt_bind_param($stmt_wallet, "i", $id_utilizador);
+                    mysqli_stmt_execute($stmt_wallet);
+
+                    // Confirmar transação
+                    mysqli_commit($conn);
+
+                    // Redirecionar para página de login com mensagem de sucesso
+                    header("Location: login.php?success=1&pending=1");
+                    exit();
+                } else {
+                    throw new Exception("Erro ao registar utilizador: " . mysqli_error($conn));
+                }
+            } catch (Exception $e) {
+                // Reverter transação em caso de erro
+                mysqli_rollback($conn);
+                $error = $e->getMessage();
             }
         }
+
+        // Fechar conexão com a base de dados
         mysqli_close($conn);
     }
-    
-    // Persistir dados para repopular formulário
-    $_SESSION['register_error'] = $error;
-    $_SESSION['old_username'] = $username;
-    $_SESSION['old_nome_completo'] = $nome_completo;
-    $_SESSION['old_morada'] = $morada;
-    $_SESSION['old_telefone'] = $telefone;
-    header("Location: register.php");
-    exit();
+
+    // Se houver erro, guardar dados para repopular formulário
+    if ($error) {
+        $_SESSION['register_error'] = $error;
+        $_SESSION['old_username'] = $username;
+        $_SESSION['old_nome_completo'] = $nome_completo;
+        $_SESSION['old_morada'] = $morada;
+        $_SESSION['old_telefone'] = $telefone;
+        header("Location: register.php");
+        exit();
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -136,12 +156,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FelixBus - Register</title>
+    <title>FelixBus - Registo</title>
     <link rel="stylesheet" href="register.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <!-- Navigation -->
+    <!-- Barra de Navegação -->
     <nav class="navbar">
         <div class="logo">
             <a href="index.php">
@@ -149,85 +169,105 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </a>
         </div>
         <div class="nav-links">
-            <a href="index.php" class="nav-link">Início</a>
+            <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
+            <a href="empresa.php" class="nav-link">Sobre Nós</a>
+            <a href="register.php" class="nav-link">Registar</a>
             <a href="login.php" class="nav-link">Login</a>
+            <a href="index.php" class="nav-link">Início</a>
         </div>
     </nav>
 
-    <!-- Hero Section -->
+    <!-- Secção Principal -->
     <section class="hero">
         <div class="hero-content">
             <div class="login-container">
+                <!-- Mensagem de erro, se existir -->
                 <?php if (isset($error)): ?>
-                    <div class="error-message"><?= $error ?></div>
+                    <div class="error-message"><?= htmlspecialchars($error) ?></div>
                 <?php endif; ?>
 
-                <h2>Registo</h2>
+                <h2>Registo de Nova Conta</h2>
+
+                <!-- Formulário de Registo -->
                 <form method="POST" action="register.php">
                     <!-- Nome de Utilizador -->
                     <div class="input-container">
                         <i class="fa fa-user"></i>
-                        <input type="text" name="username" placeholder="Nome de utilizador" required
-                            value="<?= htmlspecialchars($old_username) ?>">
+                        <input type="text" name="username"
+                               placeholder="Nome de utilizador"
+                               required
+                               value="<?= htmlspecialchars($old_username) ?>">
                     </div>
 
                     <!-- Nome Completo -->
                     <div class="input-container">
                         <i class="fa fa-id-card"></i>
-                        <input type="text" name="nome_completo" placeholder="Nome completo" required
-                            value="<?= htmlspecialchars($old_nome_completo) ?>">
+                        <input type="text" name="nome_completo"
+                               placeholder="Nome completo"
+                               required
+                               value="<?= htmlspecialchars($old_nome_completo) ?>">
                     </div>
 
                     <!-- Morada -->
                     <div class="input-container">
                         <i class="fa fa-home"></i>
-                        <input type="text" name="morada" placeholder="Morada" required
-                            value="<?= htmlspecialchars($old_morada) ?>">
+                        <input type="text" name="morada"
+                               placeholder="Morada"
+                               required
+                               value="<?= htmlspecialchars($old_morada) ?>">
                     </div>
 
                     <!-- Telefone -->
                     <div class="input-container">
                         <i class="fa fa-phone"></i>
-                        <input type="tel" name="telefone" placeholder="Telefone" required
-                            value="<?= htmlspecialchars($old_telefone) ?>">
+                        <input type="tel" name="telefone"
+                               placeholder="Telefone"
+                               required
+                               value="<?= htmlspecialchars($old_telefone) ?>">
                     </div>
 
-                    <!-- Password -->
+                    <!-- Palavra-passe -->
                     <div class="input-container">
                         <i class="fa fa-lock"></i>
-                        <input type="password" name="password" placeholder="Password" required>
+                        <input type="password" name="password"
+                               placeholder="Palavra-passe"
+                               required>
                     </div>
 
-                    <!-- Confirmar Password -->
+                    <!-- Confirmar Palavra-passe -->
                     <div class="input-container">
                         <i class="fa fa-lock"></i>
-                        <input type="password" name="confirm_password" placeholder="Confirmar Password" required>
+                        <input type="password" name="confirm_password"
+                               placeholder="Confirmar Palavra-passe"
+                               required>
                     </div>
 
+                    <!-- Botão de Submissão -->
                     <button type="submit">Registar</button>
-                    
+
+                    <!-- Ligação para Login -->
                     <div class="login-link">
-                        Já tem conta? <a href="login.php">Faça login aqui</a>
+                        Já tem conta? <a href="login.php">Inicie sessão aqui</a>
                     </div>
                 </form>
             </div>
         </div>
     </section>
 
-    <!-- Footer -->
+    <!-- Rodapé -->
     <footer class="footer">
         <div class="social-links">
             <a href="#" class="social-link">FB</a>
             <a href="#" class="social-link">TW</a>
             <a href="#" class="social-link">IG</a>
         </div>
-        
+
         <div class="footer-links">
             <a href="empresa.php" class="footer-link">Sobre Nós</a>
             <a href="empresa.php#contactos" class="footer-link">Contactos</a>
             <a href="consultar_rotas.php" class="footer-link">Rotas e Horários</a>
         </div>
-        
+
         <p>&copy; 2024 FelixBus. Todos os direitos reservados.</p>
     </footer>
 </body>
