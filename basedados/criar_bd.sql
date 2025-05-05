@@ -91,13 +91,14 @@ CREATE TABLE bilhetes (
     id_horario INT NOT NULL,
     id_utilizador INT NOT NULL,
     data_viagem DATE NOT NULL COMMENT 'Data específica da viagem',
-    hora_viagem TIME NOT NULL COMMENT 'Hora específica da viagem',
     data_compra DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     preco_pago DECIMAL(10,2) NOT NULL COMMENT 'Valor no momento da compra',
     valido BOOLEAN NOT NULL DEFAULT 1 COMMENT 'Se o bilhete está ativo',
     numero_lugar INT NOT NULL,
+    comprado_por INT COMMENT 'ID do funcionário que realizou a compra, NULL se foi o próprio cliente',
     FOREIGN KEY (id_horario) REFERENCES horarios(id_horario),
-    FOREIGN KEY (id_utilizador) REFERENCES utilizadores(id_utilizador)
+    FOREIGN KEY (id_utilizador) REFERENCES utilizadores(id_utilizador),
+    FOREIGN KEY (comprado_por) REFERENCES utilizadores(id_utilizador)
 );
 
 -- Tabela para gerenciar capacidade das viagens por data
