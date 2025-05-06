@@ -1,118 +1,147 @@
 <?php
+/**
+ * Gestão de Utilizadores
+ *
+ * Este ficheiro permite ao administrador gerir utilizadores do sistema FelixBus,
+ * incluindo inserção, edição, validação e remoção de utilizadores.
+ *
+ * Acesso ao ficheiro: apenas Administradores.
+ */
+
+// Inicia a sessão
 session_start();
+
+// Inclui o ficheiro de ligação à base de dados
 include '../basedados/basedados.h';
 
+// Verifica se o utilizador está autenticado e tem perfil de administrador
 if (!isset($_SESSION['id_utilizador']) || $_SESSION['perfil'] !== 'administrador') {
     header("Location: login.php");
     exit();
 }
 
+// Inicializa variáveis de mensagens
 $mensagem = '';
 $erro = '';
 
-// Processar ações de gestão de utilizadores
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['acao'])) {
-        switch ($_POST['acao']) {
-            case 'inserir':
-                $nome = trim($_POST['nome']);
-                $email = trim($_POST['email']);
-                $nome_utilizador = trim($_POST['username']);
+// Verifica se existe mensagem na sessão
+if (isset($_SESSION['mensagem'])) {
+    $mensagem = $_SESSION['mensagem'];
+    unset($_SESSION['mensagem']);
+}
+
+/**
+ * Processa as ações de gestão de utilizadores
+ */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
+    $acao = $_POST['acao'];
+
+    // Obtém o ID do utilizador para ações que o requerem
+    $id = $_POST['id_utilizador'] ?? null;
+
+    switch ($acao) {
+        case 'inserir':
+            // Recolhe e limpa os dados do formulário
+            $nome = trim($_POST['nome']);
+            $email = trim($_POST['email']);
+            $nome_utilizador = trim($_POST['username']);
+            $hash_password = md5($_POST['password']);
+            $perfil = $_POST['perfil'];
+            $telefone = trim($_POST['telefone']);
+            $morada = trim($_POST['morada']);
+
+            // Prepara e executa a query de inserção
+            $sql = "INSERT INTO utilizadores (nome_completo, email, nome_utilizador, hash_password, perfil, telefone, morada)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "sssssss", $nome, $email, $nome_utilizador, $hash_password, $perfil, $telefone, $morada);
+
+            if (mysqli_stmt_execute($stmt)) {
+                $mensagem = "Utilizador inserido com sucesso!";
+            } else {
+                $erro = "Erro ao inserir utilizador: " . mysqli_error($conn);
+            }
+            break;
+
+        case 'editar':
+            // Recolhe e limpa os dados do formulário
+            $nome = trim($_POST['nome']);
+            $email = trim($_POST['email']);
+            $perfil = $_POST['perfil'];
+            $telefone = trim($_POST['telefone']);
+            $morada = trim($_POST['morada']);
+
+            // Verifica se foi fornecida uma nova password
+            if (!empty($_POST['password'])) {
                 $hash_password = md5($_POST['password']);
-                $perfil = $_POST['perfil'];
-                $telefone = trim($_POST['telefone']);
-                $morada = trim($_POST['morada']);
-                
-                $sql = "INSERT INTO utilizadores (nome_completo, email, nome_utilizador, hash_password, perfil, telefone, morada) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?)";
+                $sql = "UPDATE utilizadores
+                       SET nome_completo = ?, email = ?, perfil = ?, telefone = ?, morada = ?, hash_password = ?
+                       WHERE id_utilizador = ?";
                 $stmt = mysqli_prepare($conn, $sql);
-                mysqli_stmt_bind_param($stmt, "sssssss", $nome, $email, $nome_utilizador, $hash_password, $perfil, $telefone, $morada);
-                
-                if (mysqli_stmt_execute($stmt)) {
-                    $mensagem = "Utilizador inserido com sucesso!";
-                } else {
-                    $erro = "Erro ao inserir utilizador: " . mysqli_error($conn);
-                }
-                break;
-
-            case 'editar':
-                $id = $_POST['id_utilizador'];
-                $nome = trim($_POST['nome']);
-                $email = trim($_POST['email']);
-                $perfil = $_POST['perfil'];
-                $telefone = trim($_POST['telefone']);
-                $morada = trim($_POST['morada']);
-                
-                // Se uma nova password foi fornecida
-                if (!empty($_POST['password'])) {
-                    $hash_password = md5($_POST['password']);
-                    $sql = "UPDATE utilizadores 
-                           SET nome_completo = ?, email = ?, perfil = ?, telefone = ?, morada = ?, hash_password = ? 
-                           WHERE id_utilizador = ?";
-                    $stmt = mysqli_prepare($conn, $sql);
-                    mysqli_stmt_bind_param($stmt, "ssssssi", $nome, $email, $perfil, $telefone, $morada, $hash_password, $id);
-                } else {
-                    $sql = "UPDATE utilizadores 
-                           SET nome_completo = ?, email = ?, perfil = ?, telefone = ?, morada = ? 
-                           WHERE id_utilizador = ?";
-                    $stmt = mysqli_prepare($conn, $sql);
-                    mysqli_stmt_bind_param($stmt, "sssssi", $nome, $email, $perfil, $telefone, $morada, $id);
-                }
-                
-                if (mysqli_stmt_execute($stmt)) {
-                    $_SESSION['mensagem'] = "Utilizador atualizado com sucesso!";
-                    header("Location: gerir_utilizadores.php#lista");
-                    exit();
-                } else {
-                    $erro = "Erro ao atualizar utilizador: " . mysqli_error($conn);
-                }
-                break;
-
-            case 'validar':
-                $id = $_POST['id_utilizador'];
-                $sql = "UPDATE utilizadores SET validado = 1 WHERE id_utilizador = ?";
+                mysqli_stmt_bind_param($stmt, "ssssssi", $nome, $email, $perfil, $telefone, $morada, $hash_password, $id);
+            } else {
+                $sql = "UPDATE utilizadores
+                       SET nome_completo = ?, email = ?, perfil = ?, telefone = ?, morada = ?
+                       WHERE id_utilizador = ?";
                 $stmt = mysqli_prepare($conn, $sql);
-                mysqli_stmt_bind_param($stmt, "i", $id);
-                
-                if (mysqli_stmt_execute($stmt)) {
-                    $_SESSION['mensagem'] = "Utilizador validado com sucesso!";
-                    header("Location: gerir_utilizadores.php#lista");
-                    exit();
-                } else {
-                    $erro = "Erro ao validar utilizador: " . mysqli_error($conn);
-                }
-                break;
+                mysqli_stmt_bind_param($stmt, "sssssi", $nome, $email, $perfil, $telefone, $morada, $id);
+            }
 
-            case 'rejeitar':
-                $id = $_POST['id_utilizador'];
-                $sql = "DELETE FROM utilizadores WHERE id_utilizador = ? AND validado = 0";
-                $stmt = mysqli_prepare($conn, $sql);
-                mysqli_stmt_bind_param($stmt, "i", $id);
-                
-                if (mysqli_stmt_execute($stmt)) {
-                    $mensagem = "Registro rejeitado com sucesso!";
-                } else {
-                    $erro = "Erro ao rejeitar registro: " . mysqli_error($conn);
-                }
-                break;
+            if (mysqli_stmt_execute($stmt)) {
+                $_SESSION['mensagem'] = "Utilizador atualizado com sucesso!";
+                header("Location: gerir_utilizadores.php#lista");
+                exit();
+            } else {
+                $erro = "Erro ao atualizar utilizador: " . mysqli_error($conn);
+            }
+            break;
 
-            case 'desvalidar':
-                $id = $_POST['id_utilizador'];
-                $sql = "UPDATE utilizadores SET validado = 0 WHERE id_utilizador = ?";
-                $stmt = mysqli_prepare($conn, $sql);
-                mysqli_stmt_bind_param($stmt, "i", $id);
-                
-                if (mysqli_stmt_execute($stmt)) {
-                    $mensagem = "Utilizador desvalidado com sucesso!";
-                } else {
-                    $erro = "Erro ao desvalidar utilizador: " . mysqli_error($conn);
-                }
-                break;
-        }
+        case 'validar':
+            // Atualiza o estado de validação para 1 (validado)
+            $sql = "UPDATE utilizadores SET validado = 1 WHERE id_utilizador = ?";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "i", $id);
+
+            if (mysqli_stmt_execute($stmt)) {
+                $_SESSION['mensagem'] = "Utilizador validado com sucesso!";
+                header("Location: gerir_utilizadores.php#lista");
+                exit();
+            } else {
+                $erro = "Erro ao validar utilizador: " . mysqli_error($conn);
+            }
+            break;
+
+        case 'rejeitar':
+            // Remove utilizador não validado
+            $sql = "DELETE FROM utilizadores WHERE id_utilizador = ? AND validado = 0";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "i", $id);
+
+            if (mysqli_stmt_execute($stmt)) {
+                $mensagem = "Registo rejeitado com sucesso!";
+            } else {
+                $erro = "Erro ao rejeitar registo: " . mysqli_error($conn);
+            }
+            break;
+
+        case 'desvalidar':
+            // Atualiza o estado de validação para 0 (não validado)
+            $sql = "UPDATE utilizadores SET validado = 0 WHERE id_utilizador = ?";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "i", $id);
+
+            if (mysqli_stmt_execute($stmt)) {
+                $mensagem = "Utilizador desvalidado com sucesso!";
+            } else {
+                $erro = "Erro ao desvalidar utilizador: " . mysqli_error($conn);
+            }
+            break;
     }
 }
 
-// Buscar utilizador específico para edição
+/**
+ * Obtém dados do utilizador para edição
+ */
 $utilizador_edicao = null;
 if (isset($_GET['editar']) && is_numeric($_GET['editar'])) {
     $id = $_GET['editar'];
@@ -124,15 +153,11 @@ if (isset($_GET['editar']) && is_numeric($_GET['editar'])) {
     $utilizador_edicao = mysqli_fetch_assoc($result);
 }
 
-// Buscar todos os utilizadores para visualização
+/**
+ * Obtém lista de todos os utilizadores
+ */
 $sql = "SELECT * FROM utilizadores ORDER BY data_registo DESC";
 $result = mysqli_query($conn, $sql);
-
-// No início do arquivo, após session_start()
-if (isset($_SESSION['mensagem'])) {
-    $mensagem = $_SESSION['mensagem'];
-    unset($_SESSION['mensagem']);
-}
 ?>
 
 <!DOCTYPE html>
@@ -144,6 +169,7 @@ if (isset($_SESSION['mensagem'])) {
     <link rel="stylesheet" href="gerir_utilizadores.css">
 </head>
 <body>
+    <!-- Barra de navegação -->
     <nav class="navbar">
         <div class="logo">
             <a href="pagina_inicial_admin.php">
@@ -151,25 +177,15 @@ if (isset($_SESSION['mensagem'])) {
             </a>
         </div>
         <div class="nav-links">
-        <?php if (isset($_SESSION['id_utilizador'])): ?>
-                <?php if ($_SESSION['perfil'] === 'funcionário'): ?>
-                    <a href="pagina_inicial_funcionario.php" class="nav-link">Área do Funcionário</a>
-                    <a href="perfil.php" class="nav-link">Perfil</a>
-                    <a href="logout.php" class="nav-link">Logout</a>
-                <?php elseif ($_SESSION['perfil'] === 'administrador'): ?>
-                    <a href="pagina_inicial_admin.php" class="nav-link">Painel de Administração</a>
-                    <a href="perfil.php" class="nav-link">Perfil</a>
-                    <a href="logout.php" class="nav-link">Logout</a>
-                <?php endif; ?>
-            <?php else: ?>
-                <a href="empresa.php" class="nav-link">Sobre Nós</a>
-                <a href="register.php" class="nav-link">Registar</a>
-                <a href="login.php" class="nav-link">Login</a>
-            <?php endif; ?>
+            <a href="pagina_inicial_admin.php" class="nav-link">Painel</a>
+            <a href="perfil.php" class="nav-link">Perfil</a>
+            <a href="logout.php" class="nav-link">Sair</a>
         </div>
     </nav>
 
+    <!-- Conteúdo principal -->
     <main class="container">
+        <!-- Mensagens de alerta -->
         <?php if ($mensagem): ?>
             <div class="alert alert-success"><?php echo $mensagem; ?></div>
         <?php endif; ?>
@@ -181,14 +197,16 @@ if (isset($_SESSION['mensagem'])) {
         <section class="form-section">
             <h2><?php echo $utilizador_edicao ? 'Editar Utilizador' : 'Inserir Novo Utilizador'; ?></h2>
             <form method="POST" class="form-grid">
+                <!-- Campos ocultos -->
                 <input type="hidden" name="acao" value="<?php echo $utilizador_edicao ? 'editar' : 'inserir'; ?>">
                 <?php if ($utilizador_edicao): ?>
                     <input type="hidden" name="id_utilizador" value="<?php echo $utilizador_edicao['id_utilizador']; ?>">
                 <?php endif; ?>
-                
+
+                <!-- Dados pessoais -->
                 <div class="form-group">
                     <label for="nome">Nome Completo</label>
-                    <input type="text" id="nome" name="nome" required 
+                    <input type="text" id="nome" name="nome" required
                            value="<?php echo $utilizador_edicao ? htmlspecialchars($utilizador_edicao['nome_completo']) : ''; ?>">
                 </div>
 
@@ -198,18 +216,20 @@ if (isset($_SESSION['mensagem'])) {
                            value="<?php echo $utilizador_edicao ? htmlspecialchars($utilizador_edicao['email']) : ''; ?>">
                 </div>
 
+                <!-- Dados de acesso -->
                 <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" 
+                    <label for="username">Nome de Utilizador</label>
+                    <input type="text" id="username" name="username"
                            <?php echo $utilizador_edicao ? 'disabled' : 'required'; ?>
                            value="<?php echo $utilizador_edicao ? htmlspecialchars($utilizador_edicao['nome_utilizador']) : ''; ?>">
                 </div>
 
                 <div class="form-group">
-                    <label for="password">Password <?php echo $utilizador_edicao ? '(deixe em branco para manter)' : ''; ?></label>
+                    <label for="password">Palavra-passe <?php echo $utilizador_edicao ? '(deixe em branco para manter)' : ''; ?></label>
                     <input type="password" id="password" name="password" <?php echo $utilizador_edicao ? '' : 'required'; ?>>
                 </div>
 
+                <!-- Informações de contacto -->
                 <div class="form-group">
                     <label for="telefone">Telefone</label>
                     <input type="tel" id="telefone" name="telefone"
@@ -217,11 +237,12 @@ if (isset($_SESSION['mensagem'])) {
                 </div>
 
                 <div class="form-group">
-                    <label for="morada">Morada:</label>
-                    <input type="text" id="morada" name="morada" 
+                    <label for="morada">Morada</label>
+                    <input type="text" id="morada" name="morada"
                            value="<?php echo $utilizador_edicao ? htmlspecialchars($utilizador_edicao['morada']) : ''; ?>" required>
                 </div>
 
+                <!-- Tipo de perfil -->
                 <div class="form-group">
                     <label for="perfil">Perfil</label>
                     <select id="perfil" name="perfil" required>
@@ -231,10 +252,11 @@ if (isset($_SESSION['mensagem'])) {
                     </select>
                 </div>
 
+                <!-- Botões de ação -->
                 <div class="form-actions">
                     <button type="submit" class="btn-primary"><?php echo $utilizador_edicao ? 'Atualizar' : 'Inserir'; ?></button>
                     <?php if ($utilizador_edicao): ?>
-                        <a href="gerir_utilizadores.php" class="btn-secondary">Cancelar Edição</a>
+                        <a href="gerir_utilizadores.php" class="btn-secondary">Cancelar</a>
                     <?php endif; ?>
                 </div>
             </form>
@@ -242,7 +264,7 @@ if (isset($_SESSION['mensagem'])) {
 
         <!-- Lista de Utilizadores -->
         <section id="lista" class="lista-utilizadores">
-            <h2>Visualizar Utilizadores</h2>
+            <h2>Lista de Utilizadores</h2>
             <div class="table-responsive">
                 <table>
                     <thead>
@@ -264,10 +286,12 @@ if (isset($_SESSION['mensagem'])) {
                                 <td><?php echo htmlspecialchars($user['perfil']); ?></td>
                                 <td><?php echo isset($user['validado']) ? ($user['validado'] ? 'Sim' : 'Não') : 'Não'; ?></td>
                                 <td class="actions">
+                                    <!-- Botão de edição -->
                                     <a href="?editar=<?php echo $user['id_utilizador']; ?>" class="btn-edit">Editar</a>
-                                    
+
                                     <?php if ($user['perfil'] === 'cliente'): ?>
                                         <?php if (!isset($user['validado']) || !$user['validado']): ?>
+                                            <!-- Botões para utilizadores não validados -->
                                             <form method="POST" style="display: inline;">
                                                 <input type="hidden" name="id_utilizador" value="<?php echo $user['id_utilizador']; ?>">
                                                 <input type="hidden" name="acao" value="validar">
@@ -277,19 +301,18 @@ if (isset($_SESSION['mensagem'])) {
                                             <form method="POST" style="display: inline;">
                                                 <input type="hidden" name="id_utilizador" value="<?php echo $user['id_utilizador']; ?>">
                                                 <input type="hidden" name="acao" value="rejeitar">
-                                                <button type="submit" 
-                                                        class="btn-reject"
-                                                        onclick="return confirm('Tem certeza que deseja rejeitar este registro?')">
+                                                <button type="submit" class="btn-reject"
+                                                        onclick="return confirm('Tem a certeza que deseja rejeitar este registo?')">
                                                     Rejeitar
                                                 </button>
                                             </form>
                                         <?php else: ?>
+                                            <!-- Botão para utilizadores validados -->
                                             <form method="POST" style="display: inline;">
                                                 <input type="hidden" name="id_utilizador" value="<?php echo $user['id_utilizador']; ?>">
                                                 <input type="hidden" name="acao" value="desvalidar">
-                                                <button type="submit" 
-                                                        class="btn-warning"
-                                                        onclick="return confirm('Tem certeza que deseja desvalidar este utilizador?')">
+                                                <button type="submit" class="btn-warning"
+                                                        onclick="return confirm('Tem a certeza que deseja desvalidar este utilizador?')">
                                                     Desvalidar
                                                 </button>
                                             </form>
@@ -304,29 +327,9 @@ if (isset($_SESSION['mensagem'])) {
         </section>
     </main>
 
+    <!-- Rodapé -->
     <footer class="footer">
         <p>&copy; 2024 FelixBus. Todos os direitos reservados.</p>
     </footer>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
