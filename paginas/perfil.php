@@ -1,113 +1,133 @@
 <?php
+// Inicia a sessão
 session_start();
 
-include '../basedados/basedados.h'; // Inclui o arquivo diretamente
+// Inclui ligação à base de dados
+include '../basedados/basedados.h';
 
-if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'cliente' && $_SESSION['perfil'] !== 'funcionário' && $_SESSION['perfil'] !== 'administrador')) {
+// Verifica se o utilizador está autenticado com perfil válido
+if (!isset($_SESSION['id_utilizador']) || !in_array($_SESSION['perfil'], ['cliente', 'funcionário', 'administrador'])) {
     header("Location: login.php");
     exit();
 }
 
+// Valor padrão para campos vazios
+$valor_padrao = 'Não disponível';
 ?>
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FelixBus - Perfil</title>
+    <title>FelixBus - Perfil do Utilizador</title>
     <link rel="stylesheet" href="perfil.css">
 </head>
 <body>
-    <!-- Navegação -->
+    <!-- Barra de Navegação -->
     <nav class="navbar">
         <div class="logo">
-            <a href="<?php 
-                if ($_SESSION['perfil'] === 'cliente') {
-                    echo 'pagina_inicial_cliente.php';
-                } elseif ($_SESSION['perfil'] === 'funcionário') {
-                    echo 'pagina_inicial_funcionario.php';
-                } elseif ($_SESSION['perfil'] === 'administrador') {
-                    echo 'pagina_inicial_admin.php';
-                } else {
-                    echo 'index.php';
-                }
-            ?>">
+            <?php
+            // Define página inicial conforme perfil
+            $pagina_inicial = 'index.php';
+            if ($_SESSION['perfil'] == 'cliente') {
+                $pagina_inicial = 'pagina_inicial_cliente.php';
+            } elseif ($_SESSION['perfil'] == 'funcionário') {
+                $pagina_inicial = 'pagina_inicial_funcionario.php';
+            } elseif ($_SESSION['perfil'] == 'administrador') {
+                $pagina_inicial = 'pagina_inicial_admin.php';
+            }
+            ?>
+            <a href="<?php echo $pagina_inicial; ?>">
                 <img src="logo.png" alt="FelixBus Logo">
             </a>
         </div>
+
         <div class="nav-links">
-            <?php if (isset($_SESSION['id_utilizador'])): ?>
-                <?php if ($_SESSION['perfil'] === 'cliente'): ?>
-                    <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
-                    <a href="minhas_viagens.php" class="nav-link">Minhas Viagens</a>
-                    <a href="carteira.php" class="nav-link">Carteira</a>
-                    <a href="perfil.php" class="nav-link">Perfil</a>
-                    <a href="logout.php" class="nav-link">Sair</a>
-                <?php elseif ($_SESSION['perfil'] === 'funcionário'): ?>
-                    <a href="pagina_inicial_funcionario.php" class="nav-link">Área do Funcionário</a>
-                    <a href="perfil.php" class="nav-link">Perfil</a>
-                    <a href="logout.php" class="nav-link">Sair</a>
-                <?php elseif ($_SESSION['perfil'] === 'administrador'): ?>
-                    <a href="pagina_inicial_admin.php" class="nav-link">Painel</a>
-                    <a href="perfil.php" class="nav-link">Perfil</a>
-                    <a href="logout.php" class="nav-link">Sair</a>
-                <?php endif; ?>
-            <?php else: ?>
-                <a href="empresa.php" class="nav-link">Sobre Nós</a>
-                <a href="register.php" class="nav-link">Registar</a>
-                <a href="login.php" class="nav-link">Login</a>
-            <?php endif; ?>
+            <?php
+            // Links de navegação
+            if ($_SESSION['perfil'] == 'cliente') {
+                echo '<a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>';
+                echo '<a href="minhas_viagens.php" class="nav-link">Minhas Viagens</a>';
+                echo '<a href="carteira.php" class="nav-link">Carteira</a>';
+            } elseif ($_SESSION['perfil'] == 'funcionário') {
+                echo '<a href="pagina_inicial_funcionario.php" class="nav-link">Área do Funcionário</a>';
+            } elseif ($_SESSION['perfil'] == 'administrador') {
+                echo '<a href="pagina_inicial_admin.php" class="nav-link">Painel</a>';
+            }
+
+            // Links comuns a todos os perfis
+            echo '<a href="perfil.php" class="nav-link">Perfil</a>';
+            echo '<a href="logout.php" class="nav-link">Sair</a>';
+            ?>
         </div>
     </nav>
 
-    <!-- Hero Section -->
+    <!-- Perfil do Utilizador -->
     <section class="hero">
         <div class="hero-content">
-            <h1 class="hero-title">Bem-Vindo ao seu perfil,
+            <h1 class="hero-title">
+                Bem-Vindo ao seu perfil,
                 <span class="user-name">
-                    <?php echo !empty($_SESSION['nome_completo']) ? $_SESSION['nome_completo'] : ''; ?>
+                    <?php echo isset($_SESSION['nome_completo']) && !empty($_SESSION['nome_completo']) ? $_SESSION['nome_completo'] : ''; ?>
                 </span>
             </h1>
+
+            <!-- Informações do Utilizador -->
             <section class="user-info">
                 <div class="user-info-container">
-                    <h2>Informações do Usuário</h2>
+                    <h2>Informações do Utilizador</h2>
+
+                    <!-- Dados do utilizador -->
                     <ul id="user-info-display">
-                        <li><strong>Nome Completo:</strong> <?php echo $_SESSION['nome_completo'] ?? 'Não disponível'; ?></li>
-                        <li><strong>Nome de Utilizador:</strong> <?php echo $_SESSION['nome_utilizador'] ?? 'Não disponível'; ?></li>
-                        <li><strong>Email:</strong> <?php echo $_SESSION['email'] ?? 'Não disponível'; ?></li>
-                        <li><strong>Telefone:</strong> <?php echo $_SESSION['telefone'] ?? 'Não disponível'; ?></li>
-                        <li><strong>Morada:</strong> <?php echo $_SESSION['morada'] ?? 'Não disponível'; ?></li>
+                        <?php
+                        // Campos a mostrar
+                        $campos = [
+                            'nome_completo' => 'Nome Completo',
+                            'nome_utilizador' => 'Nome de Utilizador',
+                            'email' => 'Email',
+                            'telefone' => 'Telefone',
+                            'morada' => 'Morada'
+                        ];
+
+                        // Mostra cada campo
+                        foreach ($campos as $campo => $label) {
+                            $valor = isset($_SESSION[$campo]) && !empty($_SESSION[$campo]) ?
+                                    $_SESSION[$campo] : $valor_padrao;
+                            echo '<li><strong>' . $label . ':</strong> ' . $valor . '</li>';
+                        }
+                        ?>
                     </ul>
 
-                    <button id="edit-button">Editar</button>
+                    <!-- Botão de edição -->
+                    <button id="edit-button" class="btn-primary">Editar</button>
 
-                    <!-- Formulário de edição -->
+                    <!-- Formulário de edição (oculto) -->
                     <form method="POST" action="atualizar_perfil.php" id="edit-form" style="display: none;">
                         <ul>
-                            <li>
-                                <label for="nome_completo">Nome Completo:</label>
-                                <input type="text" name="nome_completo" id="nome_completo" value="<?php echo $_SESSION['nome_completo'] ?? ''; ?>">
-                            </li>
-                            <li>
-                                <label for="nome_utilizador">Nome de Utilizador:</label>
-                                <input type="text" name="nome_utilizador" id="nome_utilizador" value="<?php echo $_SESSION['nome_utilizador'] ?? ''; ?>">
-                            </li>
-                            <li>
-                                <label for="email">Email:</label>
-                                <input type="email" name="email" id="email" value="<?php echo $_SESSION['email'] ?? ''; ?>">
-                            </li>
-                            <li>
-                                <label for="telefone">Telefone:</label>
-                                <input type="text" name="telefone" id="telefone" value="<?php echo $_SESSION['telefone'] ?? ''; ?>">
-                            </li>
-                            <li>
-                                <label for="morada">Morada:</label>
-                                <input type="text" name="morada" id="morada" value="<?php echo $_SESSION['morada'] ?? ''; ?>">
-                            </li>
+                            <?php
+                            // Gera campos do formulário
+                            foreach ($campos as $campo => $label) {
+                                echo '<li>';
+                                echo '<label for="' . $campo . '">' . $label . ':</label>';
+
+                                // Tipo de campo
+                                $tipo = ($campo == 'email') ? 'email' : 'text';
+
+                                // Valor do campo
+                                $valor = isset($_SESSION[$campo]) && !empty($_SESSION[$campo]) ?
+                                        $_SESSION[$campo] : '';
+
+                                echo '<input type="' . $tipo . '" name="' . $campo . '" id="' . $campo . '" ';
+                                echo 'value="' . $valor . '">';
+                                echo '</li>';
+                            }
+                            ?>
                         </ul>
+
+                        <!-- Botões -->
                         <div class="button-group">
-                            <button type="submit">Salvar</button>
-                            <button type="button" id="cancel-button">Cancelar</button>
+                            <button type="submit" class="btn-primary">Guardar</button>
+                            <button type="button" id="cancel-button" class="btn-secondary">Cancelar</button>
                         </div>
                     </form>
                 </div>
@@ -115,40 +135,49 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'cliente' && 
         </div>
     </section>
 
+    <!-- Script para mostrar/ocultar formulário -->
     <script>
-        const editButton = document.getElementById('edit-button');
-        const cancelButton = document.getElementById('cancel-button');
-        const editForm = document.getElementById('edit-form');
-        const userInfoDisplay = document.getElementById('user-info-display');
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elementos da página
+            const editBtn = document.getElementById('edit-button');
+            const cancelBtn = document.getElementById('cancel-button');
+            const form = document.getElementById('edit-form');
+            const info = document.getElementById('user-info-display');
 
-        editButton.addEventListener('click', () => {
-            userInfoDisplay.style.display = 'none'; // Esconde as informações básicas
-            editForm.style.display = 'block'; // Mostra o formulário de edição
-            editButton.style.display = 'none'; // Esconde o botão de editar apenas quando o formulário está visível
-        });
+            // Botão Editar
+            editBtn.addEventListener('click', () => {
+                info.style.display = 'none';
+                form.style.display = 'block';
+                editBtn.style.display = 'none';
+            });
 
-        cancelButton.addEventListener('click', () => {
-            editForm.style.display = 'none'; // Esconde o formulário de edição
-            userInfoDisplay.style.display = 'block'; // Mostra as informações básicas
-            editButton.style.display = 'block'; // Mostra o botão de editar novamente
+            // Botão Cancelar
+            cancelBtn.addEventListener('click', () => {
+                form.style.display = 'none';
+                info.style.display = 'block';
+                editBtn.style.display = 'block';
+            });
         });
     </script>
 
-    <!-- Footer -->
+    <!-- Rodapé -->
     <footer class="footer">
+        <!-- Redes sociais -->
         <div class="social-links">
             <a href="#" class="social-link">FB</a>
             <a href="#" class="social-link">TW</a>
             <a href="#" class="social-link">IG</a>
         </div>
-        
+
+        <!-- Links úteis -->
         <div class="footer-links">
             <a href="empresa.php" class="footer-link">Sobre Nós</a>
             <a href="empresa.php#contactos" class="footer-link">Contactos</a>
             <a href="consultar_rotas.php" class="footer-link">Rotas e Horários</a>
         </div>
-        
-        <p>&copy; 2024 FelixBus. Todos os direitos reservados.</p>
+
+        <!-- Copyright -->
+        <p>&copy; <?php echo date('Y'); ?> FelixBus. Todos os direitos reservados.</p>
     </footer>
 </body>
 </html>
