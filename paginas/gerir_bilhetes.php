@@ -2,198 +2,169 @@
 session_start();
 include '../basedados/basedados.h';
 
-// Verificar permissões
+/**
+ * Sistema de Gestão de Bilhetes
+ *
+ * Este ficheiro permite que funcionários e administradores comprem bilhetes para clientes.
+ *
+ * @author FelixBus
+ * @version 1.0
+ */
+
+// Verificar permissões de acesso
 if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'funcionário' && $_SESSION['perfil'] !== 'administrador')) {
     header("Location: login.php");
     exit();
 }
 
-/**
- * Sistema de gestão de bilhetes
- *
- * Este sistema permite que funcionários comprem bilhetes para clientes.
- *
- * Funcionamento dos lugares disponíveis:
- * 1. Cada horário tem um número base de lugares disponíveis definido na tabela 'horarios'
- * 2. Para cada data específica, é criado um registro na tabela 'viagens_diarias'
- * 3. Quando um bilhete é comprado, o número de lugares disponíveis é reduzido apenas para aquela data
- * 4. Cada data começa com o número base de lugares disponíveis (ex: 50)
- * 5. Se em um dia X restam 49 lugares, no dia Y ainda haverá os 50 lugares originais
- */
-
-// Inicializar mensagens
+// Inicializar variáveis
 $mensagem = '';
 $erro = '';
+$resultados = [];
+$origens = [];
+$destinos = [];
+$cliente_info = [];
 
+// Obter mensagem da sessão, se existir
 if (isset($_SESSION['mensagem'])) {
     $mensagem = $_SESSION['mensagem'];
     unset($_SESSION['mensagem']);
 }
 
-// Buscar todos os clientes
+// Obter lista de clientes
 $sql_clientes = "SELECT u.id_utilizador, u.nome_completo, u.email, c.saldo
-                 FROM utilizadores u
-                 LEFT JOIN carteiras c ON u.id_utilizador = c.id_utilizador
-                 WHERE u.perfil = 'cliente'
-                 ORDER BY u.nome_completo ASC";
+                FROM utilizadores u
+                LEFT JOIN carteiras c ON u.id_utilizador = c.id_utilizador
+                WHERE u.perfil = 'cliente'
+                ORDER BY u.nome_completo ASC";
 $result_clientes = mysqli_query($conn, $sql_clientes);
 
-// Se um cliente foi selecionado, buscar rotas disponíveis
+// Processar seleção de cliente
 if (isset($_GET['id_cliente'])) {
     $id_cliente = $_GET['id_cliente'];
 
-    // Buscar informações do cliente
-    $sql_cliente = "SELECT nome_completo, email FROM utilizadores WHERE id_utilizador = ?";
-    $stmt = mysqli_prepare($conn, $sql_cliente);
+    // Obter informações do cliente selecionado
+    $stmt = mysqli_prepare($conn, "SELECT nome_completo, email FROM utilizadores WHERE id_utilizador = ?");
     mysqli_stmt_bind_param($stmt, "i", $id_cliente);
     mysqli_stmt_execute($stmt);
     $cliente_info = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
 
-    // Buscar todas as origens e destinos distintos para os dropdowns
-    $sql_origens = "SELECT DISTINCT origem FROM rotas WHERE origem IS NOT NULL ORDER BY origem";
-    $result_origens = mysqli_query($conn, $sql_origens);
-    $origens = [];
+    // Obter origens disponíveis
+    $result_origens = mysqli_query($conn, "SELECT DISTINCT origem FROM rotas WHERE origem IS NOT NULL ORDER BY origem");
     while ($row = mysqli_fetch_assoc($result_origens)) {
         $origens[] = $row['origem'];
     }
 
-    $sql_destinos = "SELECT DISTINCT destino FROM rotas WHERE destino IS NOT NULL ORDER BY destino";
-    $result_destinos = mysqli_query($conn, $sql_destinos);
-    $destinos = [];
+    // Obter destinos disponíveis
+    $result_destinos = mysqli_query($conn, "SELECT DISTINCT destino FROM rotas WHERE destino IS NOT NULL ORDER BY destino");
     while ($row = mysqli_fetch_assoc($result_destinos)) {
         $destinos[] = $row['destino'];
     }
 
-    // Inicializar variáveis usando o operador de coalescência nula (??)
+    // Definir parâmetros de pesquisa
     $origem = trim($_GET['origem'] ?? '');
     $destino = trim($_GET['destino'] ?? '');
     $data_viagem = $_GET['data_viagem'] ?? date('Y-m-d');
-    $resultados = [];
 
-    // IMPORTANTE: Este sistema garante que todas as rotas apareçam em todos os dias
-    // e que os lugares disponíveis estejam corretamente ligados à tabela de viagens diárias.
-    // Quando uma data é selecionada, o sistema verifica se existem registros para todos os horários
-    // nessa data e cria os registros faltantes automaticamente.
+    // Garantir que existam registos de viagens diárias para todos os horários na data selecionada
+    criarRegistosViagensSeNecessario($conn, $data_viagem);
 
-    // Verificar e garantir que existam viagens diárias para todos os horários na data selecionada
-    // Isto é crucial para que todas as rotas apareçam em todos os dias
+    // Processar pesquisa de rotas
+    if (isset($_GET['pesquisar'])) {
+        $resultados = pesquisarRotas($conn, $data_viagem, $origem, $destino);
+    }
+}
 
-    // Primeiro, buscar todos os horários disponíveis no sistema
-    $sql_horarios = "SELECT id_horario, lugares_disponiveis FROM horarios";
-    $result_horarios = mysqli_query($conn, $sql_horarios);
+/**
+ * Cria registos de viagens diárias para todos os horários na data especificada, se não existirem
+ *
+ * @param mysqli $conn Conexão com a base de dados
+ * @param string $data_viagem Data da viagem no formato Y-m-d
+ */
+function criarRegistosViagensSeNecessario($conn, $data_viagem) {
+    // Obter todos os horários disponíveis
+    $result_horarios = mysqli_query($conn, "SELECT id_horario, lugares_disponiveis FROM horarios");
     $todos_horarios = [];
-
-    // Armazenar todos os horários em um array para uso posterior
     while ($horario = mysqli_fetch_assoc($result_horarios)) {
         $todos_horarios[$horario['id_horario']] = $horario['lugares_disponiveis'];
     }
 
-    // Verificar quais horários já têm registros para a data selecionada
-    $sql_check_viagens = "SELECT id_horario FROM viagens_diarias WHERE data_viagem = ?";
-    $stmt_check = mysqli_prepare($conn, $sql_check_viagens);
-    mysqli_stmt_bind_param($stmt_check, "s", $data_viagem);
-    mysqli_stmt_execute($stmt_check);
-    $result_check = mysqli_stmt_get_result($stmt_check);
+    // Verificar quais horários já têm registos para a data selecionada
+    $stmt = mysqli_prepare($conn, "SELECT id_horario FROM viagens_diarias WHERE data_viagem = ?");
+    mysqli_stmt_bind_param($stmt, "s", $data_viagem);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
 
     $horarios_existentes = [];
-    while ($row = mysqli_fetch_assoc($result_check)) {
+    while ($row = mysqli_fetch_assoc($result)) {
         $horarios_existentes[] = $row['id_horario'];
     }
 
-    // Para cada horário que não tem registro na data selecionada, criar um novo registro
-    // Isto garante que TODAS as rotas apareçam em TODOS os dias, mesmo que não tenham sido criadas anteriormente
+    // Criar registos para horários que ainda não existem na data selecionada
     foreach ($todos_horarios as $id_horario => $lugares_disponiveis) {
         if (!in_array($id_horario, $horarios_existentes)) {
-            // Inserir um novo registro na tabela viagens_diarias com os lugares disponíveis iniciais
-            // Os lugares disponíveis são copiados da tabela de horários para manter a consistência
-            // Isto garante que cada dia começa com o número base de lugares disponíveis
-            $sql_insert = "INSERT INTO viagens_diarias (id_horario, data_viagem, lugares_disponiveis)
-                           VALUES (?, ?, ?)";
-            $stmt_insert = mysqli_prepare($conn, $sql_insert);
-            mysqli_stmt_bind_param($stmt_insert, "isi", $id_horario, $data_viagem, $lugares_disponiveis);
-            mysqli_stmt_execute($stmt_insert);
-
-            // Registrar no log que um novo registro foi criado (opcional, para debug)
-            // error_log("Criado registro para horário ID: $id_horario na data: $data_viagem com $lugares_disponiveis lugares");
+            $stmt = mysqli_prepare($conn,
+                "INSERT INTO viagens_diarias (id_horario, data_viagem, lugares_disponiveis) VALUES (?, ?, ?)");
+            mysqli_stmt_bind_param($stmt, "isi", $id_horario, $data_viagem, $lugares_disponiveis);
+            mysqli_stmt_execute($stmt);
         }
-    }
-
-    // Buscar resultados se houver pesquisa
-    // Usamos JOIN com a tabela viagens_diarias para obter os lugares disponíveis corretos para a data selecionada
-    // Como já garantimos que todos os horários têm registros na tabela viagens_diarias, não precisamos de LEFT JOIN
-    if (isset($_GET['pesquisar'])) {
-        $sql_rotas = "SELECT h.id_horario, r.origem, r.destino,
-                           TIME(h.hora_partida) as hora_partida,
-                           TIME(h.hora_chegada) as hora_chegada,
-                           h.preco,
-                           vd.lugares_disponiveis as lugares_disponiveis_data
-                    FROM horarios h
-                    JOIN rotas r ON h.id_rota = r.id_rota
-                    JOIN viagens_diarias vd ON h.id_horario = vd.id_horario AND vd.data_viagem = ?
-                    WHERE 1=1";
-
-        // Inicializar arrays e variáveis
-        $params = [$data_viagem];
-        $types = "s";
-
-        if (!empty($origem) || !empty($destino)) {
-            if (!empty($origem)) {
-                $sql_rotas .= " AND r.origem = ?";
-                $params[] = $origem;
-                $types .= "s";
-            }
-
-            if (!empty($destino)) {
-                $sql_rotas .= " AND r.destino = ?";
-                $params[] = $destino;
-                $types .= "s";
-            }
-        }
-
-        $sql_rotas .= " ORDER BY h.hora_partida ASC";
-
-        $stmt = mysqli_prepare($conn, $sql_rotas);
-
-        if (!$stmt) {
-            die("Erro na preparação da consulta: " . mysqli_error($conn));
-        }
-
-        mysqli_stmt_bind_param($stmt, $types, ...$params);
-
-        if (!mysqli_stmt_execute($stmt)) {
-            die("Erro na execução da consulta: " . mysqli_error($conn));
-        }
-
-        $result = mysqli_stmt_get_result($stmt);
-
-        if (!$result) {
-            die("Erro ao obter resultados: " . mysqli_error($conn));
-        }
-
-        $resultados = mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 }
 
-// Incluir as funções necessárias
-function gerarCodigoBilhete($conn) {
-    do {
-        $codigo = '';
-        $caracteres = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        for ($i = 0; $i < 8; $i++) {
-            $codigo .= $caracteres[rand(0, strlen($caracteres) - 1)];
-        }
+/**
+ * Pesquisa rotas disponíveis com base nos critérios fornecidos
+ *
+ * @param mysqli $conn Conexão com a base de dados
+ * @param string $data_viagem Data da viagem
+ * @param string $origem Cidade de origem (opcional)
+ * @param string $destino Cidade de destino (opcional)
+ * @return array Array associativo com os resultados da pesquisa
+ */
+function pesquisarRotas($conn, $data_viagem, $origem, $destino) {
+    $sql = "SELECT h.id_horario, r.origem, r.destino,
+               TIME(h.hora_partida) as hora_partida,
+               TIME(h.hora_chegada) as hora_chegada,
+               h.preco,
+               vd.lugares_disponiveis as lugares_disponiveis_data
+            FROM horarios h
+            JOIN rotas r ON h.id_rota = r.id_rota
+            JOIN viagens_diarias vd ON h.id_horario = vd.id_horario AND vd.data_viagem = ?
+            WHERE 1=1";
 
-        $sql = "SELECT 1 FROM bilhetes WHERE codigo_bilhete = ?";
-        $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "s", $codigo);
-        mysqli_stmt_execute($stmt);
-        $resultado = mysqli_stmt_get_result($stmt);
-    } while (mysqli_num_rows($resultado) > 0);
+    // Preparar parâmetros
+    $params = [$data_viagem];
+    $types = "s";
 
-    return $codigo;
+    // Adicionar filtros se fornecidos
+    if (!empty($origem)) {
+        $sql .= " AND r.origem = ?";
+        $params[] = $origem;
+        $types .= "s";
+    }
+
+    if (!empty($destino)) {
+        $sql .= " AND r.destino = ?";
+        $params[] = $destino;
+        $types .= "s";
+    }
+
+    $sql .= " ORDER BY h.hora_partida ASC";
+
+    // Executar consulta
+    $stmt = mysqli_prepare($conn, $sql);
+    if (!$stmt) {
+        return [];
+    }
+
+    mysqli_stmt_bind_param($stmt, $types, ...$params);
+
+    if (!mysqli_stmt_execute($stmt)) {
+        return [];
+    }
+
+    $result = mysqli_stmt_get_result($stmt);
+    return mysqli_fetch_all($result, MYSQLI_ASSOC);
 }
-
-
 ?>
 
 <!DOCTYPE html>
@@ -203,28 +174,7 @@ function gerarCodigoBilhete($conn) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FelixBus - Gestão de Bilhetes</title>
     <link rel="stylesheet" href="consultar_rotas.css">
-    <style>
-        /* Estilos específicos para gerir_bilhetes.php */
-        main.container {
-            padding: 120px 5% 60px;
-            background-color: var(--dark-bg);
-            min-height: 80vh;
-        }
-
-        .clients-list h2 {
-            color: var(--gold-accent);
-            margin-bottom: 20px;
-            text-align: center;
-            font-size: 2rem;
-        }
-
-        .rotas-section h2 {
-            color: var(--gold-accent);
-            margin-bottom: 20px;
-            text-align: center;
-            font-size: 2rem;
-        }
-    </style>
+    <link rel="stylesheet" href="gerir_bilhetes.css">
 </head>
 <body>
     <!-- Navigation -->
@@ -253,15 +203,15 @@ function gerarCodigoBilhete($conn) {
                     <a href="minhas_viagens.php" class="nav-link">Minhas Viagens</a>
                     <a href="carteira.php" class="nav-link">Carteira</a>
                     <a href="perfil.php" class="nav-link">Perfil</a>
-                    <a href="logout.php" class="nav-link">Logout</a>
+                    <a href="logout.php" class="nav-link">Sair</a>
                 <?php elseif ($_SESSION['perfil'] === 'funcionário'): ?>
                     <a href="pagina_inicial_funcionario.php" class="nav-link">Área do Funcionário</a>
                     <a href="perfil.php" class="nav-link">Perfil</a>
-                    <a href="logout.php" class="nav-link">Logout</a>
+                    <a href="logout.php" class="nav-link">Sair</a>
                 <?php elseif ($_SESSION['perfil'] === 'administrador'): ?>
                     <a href="pagina_inicial_admin.php" class="nav-link">Painel de Administração</a>
                     <a href="perfil.php" class="nav-link">Perfil</a>
-                    <a href="logout.php" class="nav-link">Logout</a>
+                    <a href="logout.php" class="nav-link">Sair</a>
                 <?php endif; ?>
             <?php else: ?>
                 <a href="empresa.php" class="nav-link">Sobre Nós</a>
@@ -271,7 +221,7 @@ function gerarCodigoBilhete($conn) {
         </div>
     </nav>
 
-    <main class="container" style="max-width: 100%; padding: 120px 2% 60px;">
+    <main class="container">
         <?php if (!empty($mensagem)): ?>
             <div class="alert alert-success"><?php echo htmlspecialchars($mensagem); ?></div>
         <?php endif; ?>
@@ -394,170 +344,5 @@ function gerarCodigoBilhete($conn) {
             </section>
         <?php endif; ?>
     </main>
-
-    <style>
-    /* Estilos adicionais para gerir_bilhetes.php */
-    .clients-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 20px;
-        padding: 20px;
-    }
-
-    .client-card {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-        padding: 20px;
-        text-decoration: none;
-        color: var(--text-light);
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .client-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        background: rgba(228, 188, 79, 0.1);
-        border-color: var(--gold-accent);
-    }
-
-    .client-card h3 {
-        margin: 0 0 10px 0;
-        color: var(--gold-accent);
-    }
-
-    .client-card p {
-        margin: 5px 0;
-        color: var(--text-light);
-    }
-
-    /* Estilos para a seção de rotas */
-    .rotas-section {
-        padding: 20px 0;
-    }
-
-    /* Estilos para a tabela de resultados */
-    .results-section .container {
-        max-width: 100%;
-        padding: 0;
-    }
-
-    .results-container {
-        width: 100%;
-        overflow-x: auto;
-    }
-
-    .results-table {
-        min-width: 100%;
-        table-layout: fixed;
-    }
-
-    .results-table th,
-    .results-table td {
-        padding: 12px 15px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    /* Definir larguras específicas para as colunas */
-    .results-table th:nth-child(1),
-    .results-table td:nth-child(1) {
-        width: 15%;
-    }
-
-    .results-table th:nth-child(2),
-    .results-table td:nth-child(2) {
-        width: 15%;
-    }
-
-    .results-table th:nth-child(3),
-    .results-table td:nth-child(3),
-    .results-table th:nth-child(4),
-    .results-table td:nth-child(4) {
-        width: 10%;
-    }
-
-    .results-table th:nth-child(5),
-    .results-table td:nth-child(5),
-    .results-table th:nth-child(6),
-    .results-table td:nth-child(6) {
-        width: 10%;
-        text-align: center;
-    }
-
-    .results-table th:nth-child(7),
-    .results-table td:nth-child(7) {
-        width: 10%;
-        text-align: center;
-    }
-
-    /* Estilos para o botão de voltar */
-    .back-button {
-        margin-top: 30px;
-        text-align: center;
-    }
-
-    .btn-secondary {
-        background-color: rgba(255, 255, 255, 0.1);
-        color: var(--text-light);
-        padding: 10px 20px;
-        border-radius: 5px;
-        text-decoration: none;
-        display: inline-block;
-        transition: all var(--transition-speed);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .btn-secondary:hover {
-        background-color: rgba(255, 255, 255, 0.2);
-        transform: translateY(-2px);
-    }
-
-    /* Estilos para o botão de ação */
-    .btn-action {
-        background-color: var(--gold-accent);
-        color: var(--dark-bg);
-        padding: 8px 15px;
-        border-radius: 5px;
-        text-decoration: none;
-        display: inline-block;
-        font-weight: bold;
-        transition: all var(--transition-speed);
-        white-space: nowrap;
-        text-align: center;
-    }
-
-    .btn-action:hover {
-        background-color: var(--gold-accent-hover);
-        transform: translateY(-2px);
-    }
-
-    .esgotado {
-        color: #e74c3c;
-        font-weight: bold;
-        display: inline-block;
-        padding: 8px 15px;
-    }
-
-    /* Estilos para alertas */
-    .alert {
-        padding: 15px;
-        margin-bottom: 20px;
-        border-radius: 5px;
-    }
-
-    .alert-success {
-        background-color: rgba(40, 167, 69, 0.2);
-        border: 1px solid rgba(40, 167, 69, 0.3);
-        color: #2ecc71;
-    }
-
-    .alert-danger {
-        background-color: rgba(220, 53, 69, 0.2);
-        border: 1px solid rgba(220, 53, 69, 0.3);
-        color: #e74c3c;
-    }
-    </style>
 </body>
 </html>

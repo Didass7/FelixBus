@@ -16,7 +16,7 @@ if (!isset($_SESSION['id_utilizador']) || $_SESSION['perfil'] != 'cliente') {
 }
 
 // Verificar se o ID do horário e a data foram fornecidos
-if (!isset($_GET['id_horario']) || empty($_GET['id_horario']) || 
+if (!isset($_GET['id_horario']) || empty($_GET['id_horario']) ||
     !isset($_GET['data_viagem']) || empty($_GET['data_viagem'])) {
     $_SESSION['mensagem'] = "ID do horário ou data não fornecidos.";
     header("Location: consultar_rotas.php");
@@ -46,12 +46,12 @@ if ($data_viagem > $data_limite) {
 
 // Buscar informações do horário com validação mais robusta
 $sql_horario = "SELECT h.*, r.origem, r.destino,
-                (SELECT COUNT(*) 
-                 FROM bilhetes b 
-                 WHERE b.id_horario = h.id_horario 
+                (SELECT COUNT(*)
+                 FROM bilhetes b
+                 WHERE b.id_horario = h.id_horario
                  AND b.data_viagem = ?) as bilhetes_vendidos
-                FROM horarios h 
-                INNER JOIN rotas r ON h.id_rota = r.id_rota 
+                FROM horarios h
+                INNER JOIN rotas r ON h.id_rota = r.id_rota
                 WHERE h.id_horario = ?";
 
 $stmt = mysqli_prepare($conn, $sql_horario);
@@ -93,8 +93,8 @@ mysqli_stmt_execute($stmt);
 $id_viagem_diaria = mysqli_insert_id($conn);
 
 // Verificar lugares disponíveis para a data específica
-$sql_verificar_lugares = "SELECT lugares_disponiveis 
-                         FROM viagens_diarias 
+$sql_verificar_lugares = "SELECT lugares_disponiveis
+                         FROM viagens_diarias
                          WHERE id_viagem_diaria = ?";
 $stmt = mysqli_prepare($conn, $sql_verificar_lugares);
 mysqli_stmt_bind_param($stmt, "i", $id_viagem_diaria);
@@ -108,71 +108,13 @@ if ($viagem['lugares_disponiveis'] <= 0) {
     exit();
 }
 
-// Adicionar a função de gerar código de bilhete no início do arquivo
-function gerarCodigoBilhete($conn) {
-    do {
-        $codigo = '';
-        $caracteres = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        for ($i = 0; $i < 8; $i++) {
-            $codigo .= $caracteres[rand(0, strlen($caracteres) - 1)];
-        }
-        
-        $sql = "SELECT 1 FROM bilhetes WHERE codigo_bilhete = ?";
-        $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "s", $codigo);
-        mysqli_stmt_execute($stmt);
-        $resultado = mysqli_stmt_get_result($stmt);
-    } while (mysqli_num_rows($resultado) > 0);
-    
-    return $codigo;
-}
-
-// Adicione esta função no início do arquivo
-function gerarLugarDisponivel($conn, $id_horario, $data_viagem) {
-    // Buscar lugares já ocupados para este horário e data
-    $sql = "SELECT numero_lugar 
-            FROM bilhetes 
-            WHERE id_horario = ? 
-            AND data_viagem = ?";
-    
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "is", $id_horario, $data_viagem);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    
-    $lugares_ocupados = [];
-    while ($row = mysqli_fetch_assoc($result)) {
-        $lugares_ocupados[] = $row['numero_lugar'];
-    }
-    
-    // Buscar capacidade do autocarro
-    $sql = "SELECT capacidade_autocarro FROM horarios WHERE id_horario = ?";
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "i", $id_horario);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $horario = mysqli_fetch_assoc($result);
-    $capacidade = $horario['capacidade_autocarro'];
-    
-    // Gerar array com todos os lugares disponíveis
-    $lugares_disponiveis = array_diff(range(1, $capacidade), $lugares_ocupados);
-    
-    // Se não houver lugares disponíveis, retorna false
-    if (empty($lugares_disponiveis)) {
-        return false;
-    }
-    
-    // Seleciona um lugar aleatório dos disponíveis
-    $lugar_aleatorio = array_rand(array_flip($lugares_disponiveis));
-    
-    return $lugar_aleatorio;
-}
+// Nota: As funções foram removidas e seu código será incorporado diretamente no processamento da compra
 
 // Processar a compra apenas quando o formulário for submetido
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         mysqli_begin_transaction($conn);
-        
+
         // Verificar saldo do cliente
         $sql_carteira = "SELECT id_carteira, saldo FROM carteiras WHERE id_utilizador = ?";
         $stmt = mysqli_prepare($conn, $sql_carteira);
@@ -211,39 +153,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         mysqli_stmt_execute($stmt);
 
         // 4. Registrar a transação
-        $sql_trans = "INSERT INTO transacoes (id_carteira_origem, id_carteira_destino, valor, tipo, descricao) 
+        $sql_trans = "INSERT INTO transacoes (id_carteira_origem, id_carteira_destino, valor, tipo, descricao)
                      VALUES (?, ?, ?, 'bilhete', 'Compra de bilhete')";
         $stmt = mysqli_prepare($conn, $sql_trans);
-        mysqli_stmt_bind_param($stmt, "iid", 
-            $carteira_cliente['id_carteira'], 
-            $carteira_empresa['id_carteira'], 
+        mysqli_stmt_bind_param($stmt, "iid",
+            $carteira_cliente['id_carteira'],
+            $carteira_empresa['id_carteira'],
             $horario['preco']
         );
         mysqli_stmt_execute($stmt);
 
-        // 5. Criar o bilhete
-        $codigo_bilhete = gerarCodigoBilhete($conn);
-        $lugar = gerarLugarDisponivel($conn, $id_horario, $data_viagem);
-        if (!$lugar) {
+        // 5. Gera um código único para o bilhete
+        $codigo_bilhete = '';
+        do {
+            // Gera um código aleatório de 8 caracteres
+            $codigo_bilhete = '';
+            $caracteres = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            for ($i = 0; $i < 8; $i++) {
+                $codigo_bilhete .= $caracteres[rand(0, strlen($caracteres) - 1)];
+            }
+
+            // Verifica se o código já existe na base de dados
+            $sql = "SELECT 1 FROM bilhetes WHERE codigo_bilhete = ?";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "s", $codigo_bilhete);
+            mysqli_stmt_execute($stmt);
+            $resultado = mysqli_stmt_get_result($stmt);
+        } while (mysqli_num_rows($resultado) > 0); // Repete se o código já existir
+
+        // 6. Encontra um lugar disponível para o bilhete
+        // Obtém os lugares já ocupados para este horário e data
+        $sql = "SELECT numero_lugar
+                FROM bilhetes
+                WHERE id_horario = ?
+                AND data_viagem = ?";
+
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "is", $id_horario, $data_viagem);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+
+        $lugares_ocupados = [];
+        while ($row = mysqli_fetch_assoc($result)) {
+            $lugares_ocupados[] = $row['numero_lugar'];
+        }
+
+        // Obtém a capacidade total do autocarro
+        $sql = "SELECT capacidade_autocarro FROM horarios WHERE id_horario = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "i", $id_horario);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $horario_capacidade = mysqli_fetch_assoc($result);
+        $capacidade = $horario_capacidade['capacidade_autocarro'];
+
+        // Calcula os lugares disponíveis
+        $lugares_disponiveis = array_diff(range(1, $capacidade), $lugares_ocupados);
+
+        // Verifica se há lugares disponíveis
+        if (empty($lugares_disponiveis)) {
             throw new Exception("Não há lugares disponíveis.");
         }
 
-        $sql_bilhete = "INSERT INTO bilhetes (codigo_bilhete, id_horario, id_utilizador, data_viagem, preco_pago, numero_lugar) 
+        // Seleciona um lugar aleatório dos disponíveis
+        $lugar = array_rand(array_flip($lugares_disponiveis));
+
+        $sql_bilhete = "INSERT INTO bilhetes (codigo_bilhete, id_horario, id_utilizador, data_viagem, preco_pago, numero_lugar)
                         VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = mysqli_prepare($conn, $sql_bilhete);
-        mysqli_stmt_bind_param($stmt, "siisdi", 
+        mysqli_stmt_bind_param($stmt, "siisdi",
             $codigo_bilhete,
-            $id_horario, 
-            $id_utilizador, 
+            $id_horario,
+            $id_utilizador,
             $data_viagem,
             $horario['preco'],
             $lugar
         );
         mysqli_stmt_execute($stmt);
 
-        // 6. Atualizar lugares disponíveis
-        $sql_lugares = "UPDATE viagens_diarias 
-                         SET lugares_disponiveis = lugares_disponiveis - 1 
+        // 7. Atualiza os lugares disponíveis
+        $sql_lugares = "UPDATE viagens_diarias
+                         SET lugares_disponiveis = lugares_disponiveis - 1
                          WHERE id_viagem_diaria = ?";
         $stmt = mysqli_prepare($conn, $sql_lugares);
         mysqli_stmt_bind_param($stmt, "i", $id_viagem_diaria);
@@ -253,7 +243,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['compra_concluida'] = true;
         header("Location: minhas_viagens.php");
         exit();
-        
+
     } catch (Exception $e) {
         mysqli_rollback($conn);
         $mensagem = $e->getMessage();
@@ -277,7 +267,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         function noBack() {
             window.history.forward();
         }
-        
+
         // Prevenir reenvio do formulário ao atualizar a página
         if (window.history.replaceState) {
             window.history.replaceState(null, null, window.location.href);
@@ -287,7 +277,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body onload="noBack();" onpageshow="if (event.persisted) noBack();" onunload="">
     <nav class="navbar">
         <div class="logo">
-            <a href="<?php 
+            <a href="<?php
                 if (isset($_SESSION['id_utilizador'])) {
                     switch($_SESSION['perfil']) {
                         case 'cliente':
@@ -325,11 +315,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
         </div>
     </nav>
-    
+
     <main class="container">
         <section class="compra-bilhete">
             <h2>Confirmar Compra de Bilhete</h2>
-            
+
             <?php if (!empty($mensagem)): ?>
                 <div class="mensagem erro"><?php echo htmlspecialchars($mensagem); ?></div>
             <?php endif; ?>

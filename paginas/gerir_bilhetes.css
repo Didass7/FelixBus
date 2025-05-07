@@ -179,20 +179,184 @@ tr:hover {
 
 /* Alert Messages */
 .alert {
-    padding: 1rem;
-    border-radius: var(--border-radius);
-    margin-bottom: 1rem;
-    text-align: center;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
 }
 
 .alert-success {
-    background-color: rgba(76, 175, 80, 0.2);
-    border: 1px solid #4CAF50;
-    color: #4CAF50;
+    background-color: rgba(40, 167, 69, 0.2);
+    border: 1px solid rgba(40, 167, 69, 0.3);
+    color: #2ecc71;
 }
 
 .alert-danger {
-    background-color: rgba(244, 67, 54, 0.2);
-    border: 1px solid #F44336;
-    color: #F44336;
+    background-color: rgba(220, 53, 69, 0.2);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    color: #e74c3c;
+}
+
+/* Estilos específicos para gerir_bilhetes.php */
+main.container {
+    padding: 120px 5% 60px;
+    background-color: var(--dark-bg);
+    min-height: 80vh;
+}
+
+.clients-list h2 {
+    color: var(--gold-accent);
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 2rem;
+}
+
+.rotas-section h2 {
+    color: var(--gold-accent);
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 2rem;
+}
+
+/* Estilos para a lista de clientes */
+.clients-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.client-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 20px;
+    text-decoration: none;
+    color: var(--text-light);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.client-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    background: rgba(228, 188, 79, 0.1);
+    border-color: var(--gold-accent);
+}
+
+.client-card h3 {
+    margin: 0 0 10px 0;
+    color: var(--gold-accent);
+}
+
+.client-card p {
+    margin: 5px 0;
+    color: var(--text-light);
+}
+
+/* Estilos para a seção de rotas */
+.rotas-section {
+    padding: 20px 0;
+}
+
+/* Estilos para a tabela de resultados */
+.results-section .container {
+    max-width: 100%;
+    padding: 0;
+}
+
+.results-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.results-table {
+    min-width: 100%;
+    table-layout: fixed;
+}
+
+.results-table th,
+.results-table td {
+    padding: 12px 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Definir larguras específicas para as colunas */
+.results-table th:nth-child(1),
+.results-table td:nth-child(1) {
+    width: 15%;
+}
+
+.results-table th:nth-child(2),
+.results-table td:nth-child(2) {
+    width: 15%;
+}
+
+.results-table th:nth-child(3),
+.results-table td:nth-child(3),
+.results-table th:nth-child(4),
+.results-table td:nth-child(4) {
+    width: 10%;
+}
+
+.results-table th:nth-child(5),
+.results-table td:nth-child(5),
+.results-table th:nth-child(6),
+.results-table td:nth-child(6) {
+    width: 10%;
+    text-align: center;
+}
+
+.results-table th:nth-child(7),
+.results-table td:nth-child(7) {
+    width: 10%;
+    text-align: center;
+}
+
+/* Estilos para o botão de voltar */
+.back-button {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.btn-secondary {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    display: inline-block;
+    transition: all var(--transition-speed);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+/* Estilos para o botão de ação */
+.btn-action {
+    background-color: var(--gold-accent);
+    color: var(--dark-bg);
+    padding: 8px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    display: inline-block;
+    font-weight: bold;
+    transition: all var(--transition-speed);
+    white-space: nowrap;
+    text-align: center;
+}
+
+.btn-action:hover {
+    background-color: var(--gold-accent-hover);
+    transform: translateY(-2px);
+}
+
+.esgotado {
+    color: #e74c3c;
+    font-weight: bold;
+    display: inline-block;
+    padding: 8px 15px;
 }

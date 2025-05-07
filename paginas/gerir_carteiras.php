@@ -1,56 +1,70 @@
 <?php
+/**
+ * Sistema de Gestão de Carteiras
+ *
+ * Este ficheiro permite que funcionários e administradores gerenciem as carteiras dos clientes,
+ * realizando operações de depósito e levantamento.
+ *
+ * @author FelixBus
+ * @version 1.0
+ */
+
 session_start();
 include '../basedados/basedados.h';
 
+// Verificar permissões de acesso
 if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'funcionário' && $_SESSION['perfil'] !== 'administrador')) {
     header("Location: login.php");
     exit();
 }
 
+// Inicializar variáveis
 $mensagem = '';
 $erro = '';
-
-// Buscar saldo da empresa
-$sql_empresa = "SELECT saldo FROM carteiras WHERE tipo = 'empresa' LIMIT 1";
-$result_empresa = mysqli_query($conn, $sql_empresa);
 $saldo_empresa = 0;
+
+// Obter saldo da empresa
+$result_empresa = mysqli_query($conn, "SELECT saldo FROM carteiras WHERE tipo = 'empresa' LIMIT 1");
 if ($empresa = mysqli_fetch_assoc($result_empresa)) {
     $saldo_empresa = $empresa['saldo'];
 }
 
-// Processar operações de carteira
+// Processar operações de carteira (depósito ou levantamento)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Obter dados do formulário
     $id_cliente = $_POST['id_cliente'];
     $operacao = $_POST['operacao'];
     $valor = floatval($_POST['valor']);
-    
-    // Buscar carteira do cliente
-    $sql = "SELECT id_carteira, saldo FROM carteiras WHERE id_utilizador = ?";
-    $stmt = mysqli_prepare($conn, $sql);
+
+    // Obter carteira do cliente
+    $stmt = mysqli_prepare($conn, "SELECT id_carteira, saldo FROM carteiras WHERE id_utilizador = ?");
     mysqli_stmt_bind_param($stmt, "i", $id_cliente);
     mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $carteira = mysqli_fetch_assoc($result);
+    $carteira = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
 
-    if ($carteira) {
+    // Verificar se a carteira existe
+    if (!$carteira) {
+        $erro = "Carteira não encontrada.";
+    } else {
+        // Processar depósito
         if ($operacao === 'deposito') {
             $novo_saldo = $carteira['saldo'] + $valor;
-            $sql_update = "UPDATE carteiras SET saldo = ? WHERE id_carteira = ?";
-            $stmt = mysqli_prepare($conn, $sql_update);
+            $stmt = mysqli_prepare($conn, "UPDATE carteiras SET saldo = ? WHERE id_carteira = ?");
             mysqli_stmt_bind_param($stmt, "di", $novo_saldo, $carteira['id_carteira']);
-            
+
             if (mysqli_stmt_execute($stmt)) {
                 $mensagem = "Depósito realizado com sucesso!";
             } else {
                 $erro = "Erro ao realizar depósito.";
             }
-        } elseif ($operacao === 'levantamento') {
+        }
+        // Processar levantamento
+        elseif ($operacao === 'levantamento') {
             if ($carteira['saldo'] >= $valor) {
                 $novo_saldo = $carteira['saldo'] - $valor;
-                $sql_update = "UPDATE carteiras SET saldo = ? WHERE id_carteira = ?";
-                $stmt = mysqli_prepare($conn, $sql_update);
+                $stmt = mysqli_prepare($conn, "UPDATE carteiras SET saldo = ? WHERE id_carteira = ?");
                 mysqli_stmt_bind_param($stmt, "di", $novo_saldo, $carteira['id_carteira']);
-                
+
                 if (mysqli_stmt_execute($stmt)) {
                     $mensagem = "Levantamento realizado com sucesso!";
                 } else {
@@ -60,16 +74,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $erro = "Saldo insuficiente.";
             }
         }
-    } else {
-        $erro = "Carteira não encontrada.";
     }
 }
 
-// Buscar lista de clientes
-$sql_clientes = "SELECT u.id_utilizador, u.nome_completo, u.email, c.saldo 
-                 FROM utilizadores u 
-                 LEFT JOIN carteiras c ON u.id_utilizador = c.id_utilizador 
-                 WHERE u.perfil = 'cliente'";
+// Obter lista de clientes com seus saldos
+$sql_clientes = "SELECT u.id_utilizador, u.nome_completo, u.email, c.saldo
+                FROM utilizadores u
+                LEFT JOIN carteiras c ON u.id_utilizador = c.id_utilizador
+                WHERE u.perfil = 'cliente'";
 $result_clientes = mysqli_query($conn, $sql_clientes);
 ?>
 
@@ -82,32 +94,27 @@ $result_clientes = mysqli_query($conn, $sql_clientes);
     <link rel="stylesheet" href="gerir_carteiras.css">
 </head>
 <body>
+    <!-- Barra de navegação -->
     <nav class="navbar">
         <div class="logo">
-            <a href="pagina_inicial_funcionario.php">
+            <a href="<?php echo $_SESSION['perfil'] === 'administrador' ? 'pagina_inicial_admin.php' : 'pagina_inicial_funcionario.php'; ?>">
                 <img src="logo.png" alt="FelixBus Logo">
             </a>
         </div>
         <div class="nav-links">
-        <?php if (isset($_SESSION['id_utilizador'])): ?>
-                <?php if ($_SESSION['perfil'] === 'funcionário'): ?>
-                    <a href="pagina_inicial_funcionario.php" class="nav-link">Área do Funcionário</a>
-                    <a href="perfil.php" class="nav-link">Perfil</a>
-                    <a href="logout.php" class="nav-link">Logout</a>
-                <?php elseif ($_SESSION['perfil'] === 'administrador'): ?>
-                    <a href="pagina_inicial_admin.php" class="nav-link">Painel de Administração</a>
-                    <a href="perfil.php" class="nav-link">Perfil</a>
-                    <a href="logout.php" class="nav-link">Logout</a>
-                <?php endif; ?>
+            <?php if ($_SESSION['perfil'] === 'funcionário'): ?>
+                <a href="pagina_inicial_funcionario.php" class="nav-link">Área do Funcionário</a>
             <?php else: ?>
-                <a href="empresa.php" class="nav-link">Sobre Nós</a>
-                <a href="register.php" class="nav-link">Registar</a>
-                <a href="login.php" class="nav-link">Login</a>
+                <a href="pagina_inicial_admin.php" class="nav-link">Painel de Administração</a>
             <?php endif; ?>
+            <a href="perfil.php" class="nav-link">Perfil</a>
+            <a href="logout.php" class="nav-link">Logout</a>
         </div>
     </nav>
 
+    <!-- Conteúdo principal -->
     <main class="container">
+        <!-- Carteira da empresa -->
         <div class="empresa-carteira">
             <div class="carteira-empresa-card">
                 <h2>Carteira da Empresa</h2>
@@ -120,21 +127,24 @@ $result_clientes = mysqli_query($conn, $sql_clientes);
 
         <h1>Gestão de Carteiras</h1>
 
+        <!-- Mensagens de alerta -->
         <?php if ($mensagem): ?>
-            <div class="alert success"><?php echo $mensagem; ?></div>
+            <div class="alert success"><?php echo htmlspecialchars($mensagem); ?></div>
         <?php endif; ?>
         <?php if ($erro): ?>
-            <div class="alert error"><?php echo $erro; ?></div>
+            <div class="alert error"><?php echo htmlspecialchars($erro); ?></div>
         <?php endif; ?>
 
+        <!-- Lista de carteiras dos clientes -->
         <div class="carteiras-grid">
             <?php while ($cliente = mysqli_fetch_assoc($result_clientes)): ?>
                 <div class="carteira-card">
                     <h3><?php echo htmlspecialchars($cliente['nome_completo']); ?></h3>
                     <p>Email: <?php echo htmlspecialchars($cliente['email']); ?></p>
                     <p>Saldo Atual: <?php echo number_format($cliente['saldo'] ?? 0, 2); ?>€</p>
-                    
+
                     <div class="operacoes">
+                        <!-- Formulário de depósito -->
                         <form action="gerir_carteiras.php" method="POST" class="operacao-form">
                             <input type="hidden" name="id_cliente" value="<?php echo $cliente['id_utilizador']; ?>">
                             <input type="hidden" name="operacao" value="deposito">
@@ -144,6 +154,7 @@ $result_clientes = mysqli_query($conn, $sql_clientes);
                             </div>
                         </form>
 
+                        <!-- Formulário de levantamento -->
                         <form action="gerir_carteiras.php" method="POST" class="operacao-form">
                             <input type="hidden" name="id_cliente" value="<?php echo $cliente['id_utilizador']; ?>">
                             <input type="hidden" name="operacao" value="levantamento">
@@ -176,5 +187,3 @@ $result_clientes = mysqli_query($conn, $sql_clientes);
     </footer>
 </body>
 </html>
-
-
