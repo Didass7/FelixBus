@@ -108,7 +108,7 @@ $result_clientes = mysqli_query($conn, $sql_clientes);
                 <a href="pagina_inicial_admin.php" class="nav-link">Painel de Administração</a>
             <?php endif; ?>
             <a href="perfil.php" class="nav-link">Perfil</a>
-            <a href="logout.php" class="nav-link">Logout</a>
+            <a href="logout.php" class="nav-link">Sair</a>
         </div>
     </nav>
 

@@ -42,15 +42,15 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'cliente' && 
                     <a href="minhas_viagens.php" class="nav-link">Minhas Viagens</a>
                     <a href="carteira.php" class="nav-link">Carteira</a>
                     <a href="perfil.php" class="nav-link">Perfil</a>
-                    <a href="logout.php" class="nav-link">Logout</a>
+                    <a href="logout.php" class="nav-link">Sair</a>
                 <?php elseif ($_SESSION['perfil'] === 'funcionário'): ?>
                     <a href="pagina_inicial_funcionario.php" class="nav-link">Área do Funcionário</a>
                     <a href="perfil.php" class="nav-link">Perfil</a>
-                    <a href="logout.php" class="nav-link">Logout</a>
+                    <a href="logout.php" class="nav-link">Sair</a>
                 <?php elseif ($_SESSION['perfil'] === 'administrador'): ?>
-                    <a href="pagina_inicial_admin.php" class="nav-link">Painel de Administração</a>
+                    <a href="pagina_inicial_admin.php" class="nav-link">Painel</a>
                     <a href="perfil.php" class="nav-link">Perfil</a>
-                    <a href="logout.php" class="nav-link">Logout</a>
+                    <a href="logout.php" class="nav-link">Sair</a>
                 <?php endif; ?>
             <?php else: ?>
                 <a href="empresa.php" class="nav-link">Sobre Nós</a>
