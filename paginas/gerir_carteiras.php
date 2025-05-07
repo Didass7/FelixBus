@@ -129,18 +129,18 @@ $result_clientes = mysqli_query($conn, $sql_clientes);
 
         <!-- Mensagens de alerta -->
         <?php if ($mensagem): ?>
-            <div class="alert success"><?php echo htmlspecialchars($mensagem); ?></div>
+            <div class="alert success"><?php echo $mensagem; ?></div>
         <?php endif; ?>
         <?php if ($erro): ?>
-            <div class="alert error"><?php echo htmlspecialchars($erro); ?></div>
+            <div class="alert error"><?php echo $erro; ?></div>
         <?php endif; ?>
 
         <!-- Lista de carteiras dos clientes -->
         <div class="carteiras-grid">
             <?php while ($cliente = mysqli_fetch_assoc($result_clientes)): ?>
                 <div class="carteira-card">
-                    <h3><?php echo htmlspecialchars($cliente['nome_completo']); ?></h3>
-                    <p>Email: <?php echo htmlspecialchars($cliente['email']); ?></p>
+                    <h3><?php echo $cliente['nome_completo']; ?></h3>
+                    <p>Email: <?php echo $cliente['email']; ?></p>
                     <p>Saldo Atual: <?php echo number_format($cliente['saldo'] ?? 0, 2); ?>€</p>
 
                     <div class="operacoes">

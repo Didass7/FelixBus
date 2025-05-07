@@ -159,9 +159,9 @@ if (isset($_GET['pesquisar'])) {
                     <select class="form-input" name="origem" id="origem">
                         <option value="">Todas as origens</option>
                         <?php foreach($origens as $cidade): ?>
-                            <option value="<?php echo htmlspecialchars($cidade); ?>" 
+                            <option value="<?php echo $cidade; ?>" 
                                     <?php echo ($cidade === $origem) ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($cidade); ?>
+                                <?php echo $cidade; ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -171,9 +171,9 @@ if (isset($_GET['pesquisar'])) {
                     <select class="form-input" name="destino" id="destino">
                         <option value="">Todos os destinos</option>
                         <?php foreach($destinos as $cidade): ?>
-                            <option value="<?php echo htmlspecialchars($cidade); ?>" 
+                            <option value="<?php echo $cidade; ?>" 
                                     <?php echo ($cidade === $destino) ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($cidade); ?>
+                                <?php echo $cidade; ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -181,7 +181,7 @@ if (isset($_GET['pesquisar'])) {
                 <div class="form-group">
                     <label for="data_viagem">Data da Viagem</label>
                     <input type="date" class="form-input" name="data_viagem" id="data_viagem" 
-                           value="<?php echo htmlspecialchars($data_viagem); ?>" 
+                           value="<?php echo $data_viagem; ?>" 
                            min="<?php echo date('Y-m-d'); ?>" 
                            max="<?php echo date('Y-m-d', strtotime('+30 days')); ?>" 
                            required>
@@ -214,8 +214,8 @@ if (isset($_GET['pesquisar'])) {
                         <tbody>
                             <?php foreach($resultados as $rota): ?>
                                 <tr>
-                                    <td><?php echo htmlspecialchars($rota['origem']); ?></td>
-                                    <td><?php echo htmlspecialchars($rota['destino']); ?></td>
+                                    <td><?php echo $rota['origem']; ?></td>
+                                    <td><?php echo $rota['destino']; ?></td>
                                     <td><?php echo date('H:i', strtotime($rota['hora_partida'])); ?></td>
                                     <td><?php echo date('H:i', strtotime($rota['hora_chegada'])); ?></td>
                                     <td><?php echo number_format($rota['preco'], 2, ',', '.') . ' €'; ?></td>

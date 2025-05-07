@@ -65,18 +65,18 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'cliente' && 
         <div class="hero-content">
             <h1 class="hero-title">Bem-Vindo ao seu perfil,
                 <span class="user-name">
-                    <?php echo !empty($_SESSION['nome_completo']) ? htmlspecialchars($_SESSION['nome_completo']) : ''; ?>
+                    <?php echo !empty($_SESSION['nome_completo']) ? $_SESSION['nome_completo'] : ''; ?>
                 </span>
             </h1>
             <section class="user-info">
                 <div class="user-info-container">
                     <h2>Informações do Usuário</h2>
                     <ul id="user-info-display">
-                        <li><strong>Nome Completo:</strong> <?php echo htmlspecialchars($_SESSION['nome_completo'] ?? 'Não disponível'); ?></li>
-                        <li><strong>Nome de Utilizador:</strong> <?php echo htmlspecialchars($_SESSION['nome_utilizador'] ?? 'Não disponível'); ?></li>
-                        <li><strong>Email:</strong> <?php echo htmlspecialchars($_SESSION['email'] ?? 'Não disponível'); ?></li>
-                        <li><strong>Telefone:</strong> <?php echo htmlspecialchars($_SESSION['telefone'] ?? 'Não disponível'); ?></li>
-                        <li><strong>Morada:</strong> <?php echo htmlspecialchars($_SESSION['morada'] ?? 'Não disponível'); ?></li>
+                        <li><strong>Nome Completo:</strong> <?php echo $_SESSION['nome_completo'] ?? 'Não disponível'; ?></li>
+                        <li><strong>Nome de Utilizador:</strong> <?php echo $_SESSION['nome_utilizador'] ?? 'Não disponível'; ?></li>
+                        <li><strong>Email:</strong> <?php echo $_SESSION['email'] ?? 'Não disponível'; ?></li>
+                        <li><strong>Telefone:</strong> <?php echo $_SESSION['telefone'] ?? 'Não disponível'; ?></li>
+                        <li><strong>Morada:</strong> <?php echo $_SESSION['morada'] ?? 'Não disponível'; ?></li>
                     </ul>
 
                     <button id="edit-button">Editar</button>
@@ -86,23 +86,23 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'cliente' && 
                         <ul>
                             <li>
                                 <label for="nome_completo">Nome Completo:</label>
-                                <input type="text" name="nome_completo" id="nome_completo" value="<?php echo htmlspecialchars($_SESSION['nome_completo'] ?? ''); ?>">
+                                <input type="text" name="nome_completo" id="nome_completo" value="<?php echo $_SESSION['nome_completo'] ?? ''; ?>">
                             </li>
                             <li>
                                 <label for="nome_utilizador">Nome de Utilizador:</label>
-                                <input type="text" name="nome_utilizador" id="nome_utilizador" value="<?php echo htmlspecialchars($_SESSION['nome_utilizador'] ?? ''); ?>">
+                                <input type="text" name="nome_utilizador" id="nome_utilizador" value="<?php echo $_SESSION['nome_utilizador'] ?? ''; ?>">
                             </li>
                             <li>
                                 <label for="email">Email:</label>
-                                <input type="email" name="email" id="email" value="<?php echo htmlspecialchars($_SESSION['email'] ?? ''); ?>">
+                                <input type="email" name="email" id="email" value="<?php echo $_SESSION['email'] ?? ''; ?>">
                             </li>
                             <li>
                                 <label for="telefone">Telefone:</label>
-                                <input type="text" name="telefone" id="telefone" value="<?php echo htmlspecialchars($_SESSION['telefone'] ?? ''); ?>">
+                                <input type="text" name="telefone" id="telefone" value="<?php echo $_SESSION['telefone'] ?? ''; ?>">
                             </li>
                             <li>
                                 <label for="morada">Morada:</label>
-                                <input type="text" name="morada" id="morada" value="<?php echo htmlspecialchars($_SESSION['morada'] ?? ''); ?>">
+                                <input type="text" name="morada" id="morada" value="<?php echo $_SESSION['morada'] ?? ''; ?>">
                             </li>
                         </ul>
                         <div class="button-group">

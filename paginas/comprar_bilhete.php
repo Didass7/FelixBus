@@ -321,13 +321,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <h2>Confirmar Compra de Bilhete</h2>
 
             <?php if (!empty($mensagem)): ?>
-                <div class="mensagem erro"><?php echo htmlspecialchars($mensagem); ?></div>
+                <div class="mensagem erro"><?php echo $mensagem; ?></div>
             <?php endif; ?>
 
             <div class="detalhes-viagem">
                 <h3>Detalhes da Viagem</h3>
-                <p><strong>Origem:</strong> <?php echo htmlspecialchars($horario['origem']); ?></p>
-                <p><strong>Destino:</strong> <?php echo htmlspecialchars($horario['destino']); ?></p>
+                <p><strong>Origem:</strong> <?php echo $horario['origem']; ?></p>
+                <p><strong>Destino:</strong> <?php echo $horario['destino']; ?></p>
                 <p><strong>Data:</strong> <?php echo date('d/m/Y', strtotime($data_viagem)); ?></p>
                 <p><strong>Hora de Partida:</strong> <?php echo date('H:i', strtotime($horario['hora_partida'])); ?></p>
                 <p><strong>Hora de Chegada:</strong> <?php echo date('H:i', strtotime($horario['hora_chegada'])); ?></p>
@@ -341,4 +341,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </section>
     </main>
 </body>
+</html>
 

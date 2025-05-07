@@ -344,39 +344,39 @@ try {
                     <div class="form-group">
                         <label class="required">Origem</label>
                         <input type="text" name="origem" required
-                               value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['origem']) : ''; ?>">
+                               value="<?php echo isset($rota_edicao) ? $rota_edicao['origem'] : ''; ?>">
                     </div>
 
                     <div class="form-group">
                         <label class="required">Destino</label>
                         <input type="text" name="destino" required
-                               value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['destino']) : ''; ?>">
+                               value="<?php echo isset($rota_edicao) ? $rota_edicao['destino'] : ''; ?>">
                     </div>
 
                     <!-- Horários -->
                     <div class="form-group">
                         <label class="required">Hora de Partida</label>
                         <input type="time" name="hora_partida" required
-                               value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['hora_partida']) : ''; ?>">
+                               value="<?php echo isset($rota_edicao) ? $rota_edicao['hora_partida'] : ''; ?>">
                     </div>
 
                     <div class="form-group">
                         <label class="required">Hora de Chegada</label>
                         <input type="time" name="hora_chegada" required
-                               value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['hora_chegada']) : ''; ?>">
+                               value="<?php echo isset($rota_edicao) ? $rota_edicao['hora_chegada'] : ''; ?>">
                     </div>
 
                     <!-- Detalhes do autocarro -->
                     <div class="form-group">
                         <label class="required">Preço (€)</label>
                         <input type="number" name="preco" step="0.01" min="0" required
-                               value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['preco']) : ''; ?>">
+                               value="<?php echo isset($rota_edicao) ? $rota_edicao['preco'] : ''; ?>">
                     </div>
 
                     <div class="form-group">
                         <label class="required">Capacidade</label>
                         <input type="number" name="capacidade" min="1" required
-                               value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['capacidade_autocarro']) : ''; ?>">
+                               value="<?php echo isset($rota_edicao) ? $rota_edicao['capacidade_autocarro'] : ''; ?>">
                     </div>
 
                     <!-- Datas de validade -->
@@ -384,13 +384,13 @@ try {
                         <div class="form-group">
                             <label class="required">Data de Início</label>
                             <input type="date" name="data_inicio" required
-                                   value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['data_inicio']) : ''; ?>">
+                                   value="<?php echo isset($rota_edicao) ? $rota_edicao['data_inicio'] : ''; ?>">
                         </div>
 
                         <div class="form-group">
                             <label>Data de Fim</label>
                             <input type="date" name="data_fim"
-                                   value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['data_fim']) : ''; ?>">
+                                   value="<?php echo isset($rota_edicao) ? $rota_edicao['data_fim'] : ''; ?>">
                         </div>
                     </div>
 
@@ -423,10 +423,10 @@ try {
                         <tbody>
                             <?php while ($rota = mysqli_fetch_assoc($result_rotas)): ?>
                                 <tr>
-                                    <td><?php echo htmlspecialchars($rota['origem']); ?></td>
-                                    <td><?php echo htmlspecialchars($rota['destino']); ?></td>
-                                    <td><?php echo nl2br(htmlspecialchars($rota['horarios'])); ?></td>
-                                    <td><?php echo htmlspecialchars($rota['nome_admin']); ?></td>
+                                    <td><?php echo $rota['origem']; ?></td>
+                                    <td><?php echo $rota['destino']; ?></td>
+                                    <td><?php echo nl2br($rota['horarios']); ?></td>
+                                    <td><?php echo $rota['nome_admin']; ?></td>
                                     <td>
                                         <a href="?editar=<?php echo $rota['id_rota']; ?>" class="btn-action">Editar</a>
                                         <a href="?excluir=<?php echo $rota['id_rota']; ?>"

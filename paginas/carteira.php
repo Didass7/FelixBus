@@ -186,7 +186,7 @@ $transacoes = mysqli_stmt_get_result($stmt);
                             <td class="<?php echo $transacao['tipo'] === 'deposito' ? 'positive' : 'negative'; ?>">
                                 <?php echo ($transacao['tipo'] === 'deposito' ? '+' : '-') . number_format($transacao['valor'], 2); ?>€
                             </td>
-                            <td><?php echo htmlspecialchars($transacao['descricao']); ?></td>
+                            <td><?php echo $transacao['descricao']; ?></td>
                         </tr>
                         <?php endwhile; ?>
                     </tbody>

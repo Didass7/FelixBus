@@ -280,14 +280,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $saldo_suficiente) {
 
             <!-- Mensagens de erro -->
             <?php if (!empty($mensagem)): ?>
-                <div class="mensagem erro"><?php echo htmlspecialchars($mensagem); ?></div>
+                <div class="mensagem erro"><?php echo $mensagem; ?></div>
             <?php endif; ?>
 
             <!-- Informações do cliente -->
             <div class="cliente-info">
                 <h3>Informações do Cliente</h3>
-                <p><strong>Nome:</strong> <?php echo htmlspecialchars($cliente['nome_completo']); ?></p>
-                <p><strong>Email:</strong> <?php echo htmlspecialchars($cliente['email']); ?></p>
+                <p><strong>Nome:</strong> <?php echo $cliente['nome_completo']; ?></p>
+                <p><strong>Email:</strong> <?php echo $cliente['email']; ?></p>
                 <p><strong>Saldo Disponível:</strong>
                    <?php echo number_format($carteira_cliente['saldo'] ?? 0, 2, ',', '.'); ?> €
                 </p>
@@ -305,8 +305,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $saldo_suficiente) {
             <!-- Detalhes da viagem -->
             <div class="detalhes-viagem">
                 <h3>Detalhes da Viagem</h3>
-                <p><strong>Origem:</strong> <?php echo htmlspecialchars($horario['origem']); ?></p>
-                <p><strong>Destino:</strong> <?php echo htmlspecialchars($horario['destino']); ?></p>
+                <p><strong>Origem:</strong> <?php echo $horario['origem']; ?></p>
+                <p><strong>Destino:</strong> <?php echo $horario['destino']; ?></p>
                 <p><strong>Data:</strong> <?php echo date('d/m/Y', strtotime($data_viagem)); ?></p>
                 <p><strong>Hora de Partida:</strong> <?php echo date('H:i', strtotime($horario['hora_partida'])); ?></p>
                 <p><strong>Hora de Chegada:</strong> <?php echo date('H:i', strtotime($horario['hora_chegada'])); ?></p>

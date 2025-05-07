@@ -36,8 +36,11 @@ $old_morada = $_SESSION['old_morada'] ?? '';
 $old_telefone = $_SESSION['old_telefone'] ?? '';
 
 // Limpar variáveis de sessão após utilização
-unset($_SESSION['register_error'], $_SESSION['old_username'], $_SESSION['old_nome_completo'],
-      $_SESSION['old_morada'], $_SESSION['old_telefone']);
+unset($_SESSION['register_error'],
+      $_SESSION['old_username'],
+      $_SESSION['old_nome_completo'],
+      $_SESSION['old_morada'],
+      $_SESSION['old_telefone']);
 
 // Processar o formulário quando submetido
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -49,21 +52,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $morada = trim($_POST['morada']);
     $telefone = trim($_POST['telefone']);
 
-    // Validar dados do formulário
-    if (empty($username)) {
-        $error = "Por favor, introduza um nome de utilizador.";
-    } elseif (empty($password)) {
-        $error = "Por favor, introduza uma palavra-passe.";
-    } elseif (strlen($password) < 3) {
-        $error = "A palavra-passe deve ter pelo menos 3 caracteres.";
-    } elseif ($password !== $confirm_password) {
-        $error = "As palavras-passe não coincidem.";
-    } elseif (empty($nome_completo)) {
-        $error = "Por favor, introduza o nome completo.";
-    } elseif (empty($morada)) {
-        $error = "Por favor, introduza a morada.";
-    } elseif (empty($telefone)) {
-        $error = "Por favor, introduza o número de telefone.";
+    // Validar dados do formulário - verificação simplificada
+    $campos = [
+        'nome de utilizador' => $username,
+        'palavra-passe' => $password,
+        'nome completo' => $nome_completo,
+        'morada' => $morada,
+        'número de telefone' => $telefone
+    ];
+
+    // Verificar campos vazios
+    foreach ($campos as $campo => $valor) {
+        if (empty($valor)) {
+            $error = "Por favor, introduza o {$campo}.";
+            break;
+        }
+    }
+
+    // Verificar regras específicas se não houver erros anteriores
+    if (!$error) {
+        if (strlen($password) < 3) {
+            $error = "A palavra-passe deve ter pelo menos 3 caracteres.";
+        } elseif ($password !== $confirm_password) {
+            $error = "As palavras-passe não coincidem.";
+        }
     }
 
     // Se não houver erros, prosseguir com o registo
@@ -73,79 +85,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             die("Erro na ligação à base de dados: " . mysqli_connect_error());
         }
 
-        // Verificar se o nome de utilizador já existe
-        $sql_check = "SELECT id_utilizador FROM utilizadores WHERE nome_utilizador = ?";
-        $stmt_check = mysqli_prepare($conn, $sql_check);
-        mysqli_stmt_bind_param($stmt_check, "s", $username);
-        mysqli_stmt_execute($stmt_check);
-        mysqli_stmt_store_result($stmt_check);
+        try {
+            // Iniciar transação para garantir integridade dos dados
+            mysqli_begin_transaction($conn);
 
-        if (mysqli_stmt_num_rows($stmt_check) > 0) {
-            $error = "Este nome de utilizador já está registado.";
-        } else {
-            try {
-                // Iniciar transação para garantir integridade dos dados
-                mysqli_begin_transaction($conn);
+            // Verificar se o nome de utilizador já existe
+            $sql_check = "SELECT id_utilizador FROM utilizadores WHERE nome_utilizador = ?";
+            $stmt_check = mysqli_prepare($conn, $sql_check);
+            mysqli_stmt_bind_param($stmt_check, "s", $username);
+            mysqli_stmt_execute($stmt_check);
+            mysqli_stmt_store_result($stmt_check);
 
-                // Preparar dados para inserção
-                $hashed_password = md5($password); // Nota: MD5 não é seguro para produção
-                $email = "{$username}@example.com"; // Email temporário baseado no nome de utilizador
-
-                // Inserir novo utilizador
-                $sql_insert = "INSERT INTO utilizadores (
-                                email, hash_password, perfil, nome_utilizador,
-                                data_registo, nome_completo, telefone, morada
-                              ) VALUES (?, ?, 'cliente', ?, NOW(), ?, ?, ?)";
-
-                $stmt_insert = mysqli_prepare($conn, $sql_insert);
-                mysqli_stmt_bind_param(
-                    $stmt_insert,
-                    "ssssss",
-                    $email,
-                    $hashed_password,
-                    $username,
-                    $nome_completo,
-                    $telefone,
-                    $morada
-                );
-
-                if (mysqli_stmt_execute($stmt_insert)) {
-                    // Obter ID do novo utilizador
-                    $id_utilizador = mysqli_insert_id($conn);
-
-                    // Criar carteira para o novo utilizador
-                    $sql_create_wallet = "INSERT INTO carteiras (id_utilizador, tipo, saldo) VALUES (?, 'cliente', 0.00)";
-                    $stmt_wallet = mysqli_prepare($conn, $sql_create_wallet);
-                    mysqli_stmt_bind_param($stmt_wallet, "i", $id_utilizador);
-                    mysqli_stmt_execute($stmt_wallet);
-
-                    // Confirmar transação
-                    mysqli_commit($conn);
-
-                    // Redirecionar para página de login com mensagem de sucesso
-                    header("Location: login.php?success=1&pending=1");
-                    exit();
-                } else {
-                    throw new Exception("Erro ao registar utilizador: " . mysqli_error($conn));
-                }
-            } catch (Exception $e) {
-                // Reverter transação em caso de erro
-                mysqli_rollback($conn);
-                $error = $e->getMessage();
+            if (mysqli_stmt_num_rows($stmt_check) > 0) {
+                throw new Exception("Este nome de utilizador já está registado.");
             }
-        }
 
-        // Fechar conexão com a base de dados
-        mysqli_close($conn);
+            // Preparar dados para inserção
+            $hashed_password = md5($password); // Nota: MD5 não é seguro para produção
+            $email = "{$username}@example.com"; // Email temporário baseado no nome de utilizador
+
+            // Inserir novo utilizador
+            $sql_insert = "INSERT INTO utilizadores
+                          (email, hash_password, perfil, nome_utilizador, data_registo, nome_completo, telefone, morada)
+                          VALUES (?, ?, 'cliente', ?, NOW(), ?, ?, ?)";
+
+            $stmt_insert = mysqli_prepare($conn, $sql_insert);
+            mysqli_stmt_bind_param($stmt_insert, "ssssss",
+                                  $email, $hashed_password, $username,
+                                  $nome_completo, $telefone, $morada);
+
+            if (!mysqli_stmt_execute($stmt_insert)) {
+                throw new Exception("Erro ao registar utilizador: " . mysqli_error($conn));
+            }
+
+            // Obter ID do novo utilizador e criar carteira
+            $id_utilizador = mysqli_insert_id($conn);
+            $sql_create_wallet = "INSERT INTO carteiras (id_utilizador, tipo, saldo) VALUES (?, 'cliente', 0.00)";
+            $stmt_wallet = mysqli_prepare($conn, $sql_create_wallet);
+            mysqli_stmt_bind_param($stmt_wallet, "i", $id_utilizador);
+
+            if (!mysqli_stmt_execute($stmt_wallet)) {
+                throw new Exception("Erro ao criar carteira: " . mysqli_error($conn));
+            }
+
+            // Confirmar transação
+            mysqli_commit($conn);
+
+            // Redirecionar para página de login com mensagem de sucesso
+            header("Location: login.php?success=1&pending=1");
+            exit();
+
+        } catch (Exception $e) {
+            // Reverter transação em caso de erro
+            mysqli_rollback($conn);
+            $error = $e->getMessage();
+        } finally {
+            // Fechar conexão com a base de dados
+            mysqli_close($conn);
+        }
     }
 
     // Se houver erro, guardar dados para repopular formulário
     if ($error) {
+        // Guardar mensagem de erro e dados do formulário numa única operação
         $_SESSION['register_error'] = $error;
         $_SESSION['old_username'] = $username;
         $_SESSION['old_nome_completo'] = $nome_completo;
         $_SESSION['old_morada'] = $morada;
         $_SESSION['old_telefone'] = $telefone;
+
+        // Redirecionar de volta para o formulário
         header("Location: register.php");
         exit();
     }
@@ -183,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="login-container">
                 <!-- Mensagem de erro, se existir -->
                 <?php if (isset($error)): ?>
-                    <div class="error-message"><?= htmlspecialchars($error) ?></div>
+                    <div class="error-message"><?= $error ?></div>
                 <?php endif; ?>
 
                 <h2>Registo de Nova Conta</h2>
@@ -196,7 +205,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="text" name="username"
                                placeholder="Nome de utilizador"
                                required
-                               value="<?= htmlspecialchars($old_username) ?>">
+                               value="<?= $old_username ?>">
                     </div>
 
                     <!-- Nome Completo -->
@@ -205,7 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="text" name="nome_completo"
                                placeholder="Nome completo"
                                required
-                               value="<?= htmlspecialchars($old_nome_completo) ?>">
+                               value="<?= $old_nome_completo ?>">
                     </div>
 
                     <!-- Morada -->
@@ -214,7 +223,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="text" name="morada"
                                placeholder="Morada"
                                required
-                               value="<?= htmlspecialchars($old_morada) ?>">
+                               value="<?= $old_morada ?>">
                     </div>
 
                     <!-- Telefone -->
@@ -223,7 +232,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="tel" name="telefone"
                                placeholder="Telefone"
                                required
-                               value="<?= htmlspecialchars($old_telefone) ?>">
+                               value="<?= $old_telefone ?>">
                     </div>
 
                     <!-- Palavra-passe -->

@@ -188,13 +188,13 @@ $result_alertas = mysqli_query($conn, $sql_alertas);
                 <div class="form-group">
                     <label for="titulo">Título</label>
                     <input type="text" id="titulo" name="titulo" class="form-input"
-                           value="<?php echo $alerta_edicao ? htmlspecialchars($alerta_edicao['titulo']) : ''; ?>"
+                           value="<?php echo $alerta_edicao ? $alerta_edicao['titulo'] : ''; ?>"
                            required>
                 </div>
 
                 <div class="form-group">
                     <label for="conteudo">Conteúdo</label>
-                    <textarea id="conteudo" name="conteudo" class="form-input" rows="4" required><?php echo $alerta_edicao ? htmlspecialchars($alerta_edicao['conteudo']) : ''; ?></textarea>
+                    <textarea id="conteudo" name="conteudo" class="form-input" rows="4" required><?php echo $alerta_edicao ? $alerta_edicao['conteudo'] : ''; ?></textarea>
                 </div>
 
                 <!-- Período de validade -->
@@ -253,7 +253,7 @@ $result_alertas = mysqli_query($conn, $sql_alertas);
                         <tbody>
                             <?php while ($alerta = mysqli_fetch_assoc($result_alertas)): ?>
                                 <tr>
-                                    <td><?php echo htmlspecialchars($alerta['titulo']); ?></td>
+                                    <td><?php echo $alerta['titulo']; ?></td>
                                     <td><?php echo date('d/m/Y H:i', strtotime($alerta['data_inicio'])); ?></td>
                                     <td><?php echo date('d/m/Y H:i', strtotime($alerta['data_fim'])); ?></td>
                                     <td>
@@ -261,7 +261,7 @@ $result_alertas = mysqli_query($conn, $sql_alertas);
                                             <?php echo $alerta['ativo'] ? 'Ativo' : 'Inativo'; ?>
                                         </span>
                                     </td>
-                                    <td><?php echo htmlspecialchars($alerta['nome_admin']); ?></td>
+                                    <td><?php echo $alerta['nome_admin']; ?></td>
                                     <td class="actions">
                                         <!-- Botão de edição -->
                                         <a href="gerir_alertas.php?editar=<?php echo $alerta['id_alerta']; ?>"
