@@ -2,20 +2,20 @@
 session_start();
 include '../basedados/basedados.h';
 
-// No início do arquivo, após session_start()
+// Redirecionar para minhas viagens se a compra já foi concluída
 if (isset($_SESSION['compra_concluida']) && $_SESSION['compra_concluida'] === true) {
     unset($_SESSION['compra_concluida']);
     header("Location: minhas_viagens.php");
     exit();
 }
 
-// Verificar se o usuário está logado e é cliente
+// Verificar se o utilizador está autenticado e tem perfil de cliente
 if (!isset($_SESSION['id_utilizador']) || $_SESSION['perfil'] != 'cliente') {
     header("Location: login.php");
     exit();
 }
 
-// Verificar se o ID do horário e a data foram fornecidos
+// Verificar se os parâmetros necessários foram fornecidos
 if (!isset($_GET['id_horario']) || empty($_GET['id_horario']) ||
     !isset($_GET['data_viagem']) || empty($_GET['data_viagem'])) {
     $_SESSION['mensagem'] = "ID do horário ou data não fornecidos.";
@@ -28,7 +28,7 @@ $data_viagem = $_GET['data_viagem'];
 $id_utilizador = $_SESSION['id_utilizador'];
 $mensagem = '';
 
-// Validar a data
+// Validar a data da viagem
 $data_atual = date('Y-m-d');
 $data_limite = date('Y-m-d', strtotime('+30 days'));
 
@@ -44,12 +44,10 @@ if ($data_viagem > $data_limite) {
     exit();
 }
 
-// Buscar informações do horário com validação mais robusta
+// Obter informações do horário selecionado
 $sql_horario = "SELECT h.*, r.origem, r.destino,
-                (SELECT COUNT(*)
-                 FROM bilhetes b
-                 WHERE b.id_horario = h.id_horario
-                 AND b.data_viagem = ?) as bilhetes_vendidos
+                (SELECT COUNT(*) FROM bilhetes b
+                 WHERE b.id_horario = h.id_horario AND b.data_viagem = ?) as bilhetes_vendidos
                 FROM horarios h
                 INNER JOIN rotas r ON h.id_rota = r.id_rota
                 WHERE h.id_horario = ?";
@@ -73,14 +71,14 @@ if (!mysqli_stmt_execute($stmt)) {
 $result = mysqli_stmt_get_result($stmt);
 $horario = mysqli_fetch_assoc($result);
 
-// Verificar se o horário existe e tem todos os dados necessários
+// Verificar se o horário existe e contém todos os dados necessários
 if (!$horario || !isset($horario['preco']) || !isset($horario['lugares_disponiveis'])) {
     $_SESSION['mensagem'] = "Horário não encontrado ou dados incompletos.";
     header("Location: consultar_rotas.php");
     exit();
 }
 
-// Buscar ou criar registro na viagens_diarias
+// Criar ou obter registo na tabela viagens_diarias
 $sql_viagem_diaria = "INSERT INTO viagens_diarias (id_horario, data_viagem, lugares_disponiveis)
                       SELECT ?, ?, h.lugares_disponiveis
                       FROM horarios h
@@ -92,10 +90,10 @@ mysqli_stmt_bind_param($stmt, "isi", $id_horario, $data_viagem, $id_horario);
 mysqli_stmt_execute($stmt);
 $id_viagem_diaria = mysqli_insert_id($conn);
 
-// Verificar lugares disponíveis para a data específica
+// Verificar disponibilidade de lugares para a data específica
 $sql_verificar_lugares = "SELECT lugares_disponiveis
-                         FROM viagens_diarias
-                         WHERE id_viagem_diaria = ?";
+                          FROM viagens_diarias
+                          WHERE id_viagem_diaria = ?";
 $stmt = mysqli_prepare($conn, $sql_verificar_lugares);
 mysqli_stmt_bind_param($stmt, "i", $id_viagem_diaria);
 mysqli_stmt_execute($stmt);
@@ -108,14 +106,12 @@ if ($viagem['lugares_disponiveis'] <= 0) {
     exit();
 }
 
-// Nota: As funções foram removidas e seu código será incorporado diretamente no processamento da compra
-
-// Processar a compra apenas quando o formulário for submetido
+// Processar a compra quando o formulário é submetido
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         mysqli_begin_transaction($conn);
 
-        // Verificar saldo do cliente
+        // Verificar saldo da carteira do cliente
         $sql_carteira = "SELECT id_carteira, saldo FROM carteiras WHERE id_utilizador = ?";
         $stmt = mysqli_prepare($conn, $sql_carteira);
         mysqli_stmt_bind_param($stmt, "i", $id_utilizador);
@@ -127,17 +123,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($carteira_cliente['saldo'] < $horario['preco']) {
-            throw new Exception("Saldo insuficiente. Por favor, carregue sua carteira.");
+            throw new Exception("Saldo insuficiente. Por favor, carregue a sua carteira.");
         }
 
-        // 1. Atualizar saldo do cliente
+        // Atualizar saldo do cliente
         $novo_saldo = $carteira_cliente['saldo'] - $horario['preco'];
         $sql_update = "UPDATE carteiras SET saldo = ? WHERE id_carteira = ?";
         $stmt = mysqli_prepare($conn, $sql_update);
         mysqli_stmt_bind_param($stmt, "di", $novo_saldo, $carteira_cliente['id_carteira']);
         mysqli_stmt_execute($stmt);
 
-        // 2. Buscar carteira da empresa
+        // Obter carteira da empresa
         $sql_empresa = "SELECT id_carteira FROM carteiras WHERE tipo = 'empresa' LIMIT 1";
         $result_empresa = mysqli_query($conn, $sql_empresa);
         $carteira_empresa = mysqli_fetch_assoc($result_empresa);
@@ -146,15 +142,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("Carteira da empresa não encontrada.");
         }
 
-        // 3. Atualizar saldo da empresa
+        // Atualizar saldo da empresa
         $sql_update = "UPDATE carteiras SET saldo = saldo + ? WHERE id_carteira = ?";
         $stmt = mysqli_prepare($conn, $sql_update);
         mysqli_stmt_bind_param($stmt, "di", $horario['preco'], $carteira_empresa['id_carteira']);
         mysqli_stmt_execute($stmt);
 
-        // 4. Registrar a transação
+        // Registar a transação
         $sql_trans = "INSERT INTO transacoes (id_carteira_origem, id_carteira_destino, valor, tipo, descricao)
-                     VALUES (?, ?, ?, 'bilhete', 'Compra de bilhete')";
+                      VALUES (?, ?, ?, 'bilhete', 'Compra de bilhete')";
         $stmt = mysqli_prepare($conn, $sql_trans);
         mysqli_stmt_bind_param($stmt, "iid",
             $carteira_cliente['id_carteira'],
@@ -163,31 +159,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
         mysqli_stmt_execute($stmt);
 
-        // 5. Gera um código único para o bilhete
+        // Gerar código único para o bilhete
         $codigo_bilhete = '';
         do {
-            // Gera um código aleatório de 8 caracteres
+            // Gerar código aleatório de 8 caracteres
             $codigo_bilhete = '';
             $caracteres = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
             for ($i = 0; $i < 8; $i++) {
                 $codigo_bilhete .= $caracteres[rand(0, strlen($caracteres) - 1)];
             }
 
-            // Verifica se o código já existe na base de dados
+            // Verificar se o código já existe
             $sql = "SELECT 1 FROM bilhetes WHERE codigo_bilhete = ?";
             $stmt = mysqli_prepare($conn, $sql);
             mysqli_stmt_bind_param($stmt, "s", $codigo_bilhete);
             mysqli_stmt_execute($stmt);
             $resultado = mysqli_stmt_get_result($stmt);
-        } while (mysqli_num_rows($resultado) > 0); // Repete se o código já existir
+        } while (mysqli_num_rows($resultado) > 0);
 
-        // 6. Encontra um lugar disponível para o bilhete
-        // Obtém os lugares já ocupados para este horário e data
+        // Obter lugares já ocupados para este horário e data
         $sql = "SELECT numero_lugar
                 FROM bilhetes
-                WHERE id_horario = ?
-                AND data_viagem = ?";
-
+                WHERE id_horario = ? AND data_viagem = ?";
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, "is", $id_horario, $data_viagem);
         mysqli_stmt_execute($stmt);
@@ -198,7 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $lugares_ocupados[] = $row['numero_lugar'];
         }
 
-        // Obtém a capacidade total do autocarro
+        // Obter capacidade total do autocarro
         $sql = "SELECT capacidade_autocarro FROM horarios WHERE id_horario = ?";
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, "i", $id_horario);
@@ -207,17 +200,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $horario_capacidade = mysqli_fetch_assoc($result);
         $capacidade = $horario_capacidade['capacidade_autocarro'];
 
-        // Calcula os lugares disponíveis
+        // Calcular lugares disponíveis
         $lugares_disponiveis = array_diff(range(1, $capacidade), $lugares_ocupados);
 
-        // Verifica se há lugares disponíveis
+        // Verificar se há lugares disponíveis
         if (empty($lugares_disponiveis)) {
             throw new Exception("Não há lugares disponíveis.");
         }
 
-        // Seleciona um lugar aleatório dos disponíveis
+        // Selecionar um lugar aleatório dos disponíveis
         $lugar = array_rand(array_flip($lugares_disponiveis));
 
+        // Criar o bilhete
         $sql_bilhete = "INSERT INTO bilhetes (codigo_bilhete, id_horario, id_utilizador, data_viagem, preco_pago, numero_lugar)
                         VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = mysqli_prepare($conn, $sql_bilhete);
@@ -231,14 +225,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
         mysqli_stmt_execute($stmt);
 
-        // 7. Atualiza os lugares disponíveis
+        // Atualizar lugares disponíveis
         $sql_lugares = "UPDATE viagens_diarias
-                         SET lugares_disponiveis = lugares_disponiveis - 1
-                         WHERE id_viagem_diaria = ?";
+                        SET lugares_disponiveis = lugares_disponiveis - 1
+                        WHERE id_viagem_diaria = ?";
         $stmt = mysqli_prepare($conn, $sql_lugares);
         mysqli_stmt_bind_param($stmt, "i", $id_viagem_diaria);
         mysqli_stmt_execute($stmt);
 
+        // Finalizar transação e redirecionar
         mysqli_commit($conn);
         $_SESSION['compra_concluida'] = true;
         header("Location: minhas_viagens.php");
@@ -257,18 +252,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <title>Confirmar Compra - FelixBus</title>
     <link rel="stylesheet" href="comprar_bilhete.css">
-    <!-- Adicionar estas meta tags no head -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
-        // Prevenir voltar usando o botão do navegador
+        // Prevenir navegação para trás
         window.history.forward();
         function noBack() {
             window.history.forward();
         }
 
-        // Prevenir reenvio do formulário ao atualizar a página
+        // Prevenir reenvio do formulário
         if (window.history.replaceState) {
             window.history.replaceState(null, null, window.location.href);
         }
@@ -300,14 +294,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </a>
         </div>
         <div class="nav-links">
-            <?php if (isset($_SESSION['id_utilizador'])): ?>
-                <?php if ($_SESSION['perfil'] === 'cliente'): ?>
-                    <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
-                    <a href="minhas_viagens.php" class="nav-link">Minhas Viagens</a>
-                    <a href="carteira.php" class="nav-link">Carteira</a>
-                    <a href="perfil.php" class="nav-link">Perfil</a>
-                    <a href="logout.php" class="nav-link">Logout</a>
-                <?php endif; ?>
+            <?php if (isset($_SESSION['id_utilizador']) && $_SESSION['perfil'] === 'cliente'): ?>
+                <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
+                <a href="minhas_viagens.php" class="nav-link">Minhas Viagens</a>
+                <a href="carteira.php" class="nav-link">Carteira</a>
+                <a href="perfil.php" class="nav-link">Perfil</a>
+                <a href="logout.php" class="nav-link">Logout</a>
             <?php else: ?>
                 <a href="index.php" class="nav-link">Início</a>
                 <a href="login.php" class="nav-link">Login</a>
@@ -342,4 +334,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </main>
 </body>
 </html>
-
