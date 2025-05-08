@@ -2,15 +2,15 @@
 session_start();
 include '../basedados/basedados.h';
 
-// Buscar alertas ativos
+// Obter alertas ativos ordenados por data de criação
 $sql_alertas = "SELECT * FROM alertas WHERE ativo = 1 AND data_inicio <= NOW() AND data_fim >= NOW() ORDER BY data_criacao DESC";
 $result_alertas = mysqli_query($conn, $sql_alertas);
 
-// Verificar se existe mensagem na sessão
+// Verificar e limpar mensagem da sessão
 $mensagem = '';
 if (isset($_SESSION['mensagem'])) {
     $mensagem = $_SESSION['mensagem'];
-    unset($_SESSION['mensagem']); // Limpa a mensagem da sessão
+    unset($_SESSION['mensagem']);
 }
 ?>
 
@@ -23,28 +23,31 @@ if (isset($_SESSION['mensagem'])) {
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Navegação -->
+    <!-- Barra de Navegação -->
     <nav class="navbar">
         <div class="logo">
-            <a href="<?php 
+            <a href="<?php
+                // Determinar a página inicial com base no perfil do utilizador
+                $pagina_destino = 'index.php';
                 if (isset($_SESSION['perfil'])) {
                     if ($_SESSION['perfil'] === 'cliente') {
-                        echo 'pagina_inicial_cliente.php';
+                        $pagina_destino = 'pagina_inicial_cliente.php';
                     } elseif ($_SESSION['perfil'] === 'funcionário') {
-                        echo 'pagina_inicial_funcionario.php';
+                        $pagina_destino = 'pagina_inicial_funcionario.php';
                     } elseif ($_SESSION['perfil'] === 'administrador') {
-                        echo 'pagina_inicial_admin.php';
+                        $pagina_destino = 'pagina_inicial_admin.php';
                     }
-                } else {
-                    echo 'index.php';
                 }
+                echo $pagina_destino;
             ?>">
                 <img src="logo.png" alt="FelixBus Logo">
             </a>
         </div>
         <div class="nav-links">
-        <?php if (isset($_SESSION['id_utilizador'])): ?>
-                <?php if ($_SESSION['perfil'] === 'cliente'): ?>
+            <?php if (isset($_SESSION['id_utilizador'])): ?>
+                <?php
+                // Menu para utilizadores autenticados com base no perfil
+                if ($_SESSION['perfil'] === 'cliente'): ?>
                     <a href="minhas_viagens.php" class="nav-link">Minhas Viagens</a>
                     <a href="carteira.php" class="nav-link">Carteira</a>
                     <a href="perfil.php" class="nav-link">Perfil</a>
@@ -59,6 +62,7 @@ if (isset($_SESSION['mensagem'])) {
                     <a href="logout.php" class="nav-link">Logout</a>
                 <?php endif; ?>
             <?php else: ?>
+                <!-- Menu para visitantes não autenticados -->
                 <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
                 <a href="empresa.php" class="nav-link">Sobre Nós</a>
                 <a href="register.php" class="nav-link">Registar</a>
@@ -68,18 +72,18 @@ if (isset($_SESSION['mensagem'])) {
         </div>
     </nav>
 
-    <!-- Secção Principal -->
+    <!-- Secção Principal da Página -->
     <section class="hero">
         <div class="hero-container">
-            <!-- Conteúdo Principal -->
+            <!-- Conteúdo Principal com Texto e Botões -->
             <div class="hero-content">
                 <div class="hero-text">
                     <h1 class="hero-title">Viagens de Luxo Reimaginadas</h1>
                     <p class="hero-subtitle">Conforto excepcional a preços acessíveis</p>
                     <p class="login-subtitle">Crie uma conta ou faça Login para usufruir dos nossos serviços!</p>
                 </div>
-                
-                <!-- Botões de Login e Registo -->
+
+                <!-- Botões para Autenticação -->
                 <div class="login-button">
                     <button class="btn-primary" type="button" onclick="window.location.href='login.php'">Login</button>
                     <button class="btn-primary" type="button" onclick="window.location.href='register.php'">Registar</button>
@@ -91,15 +95,13 @@ if (isset($_SESSION['mensagem'])) {
             <div class="hero-alerts">
                 <h2 class="alerts-title">Alertas e Promoções</h2>
                 <div class="alerts-container">
-
-                    <!-- Loop para iterar sobre a tabela de alertas -->
-                    <?php while ($alerta = mysqli_fetch_assoc($result_alertas)): ?>
+                    <?php
+                    // Apresentar cada alerta ativo
+                    while ($alerta = mysqli_fetch_assoc($result_alertas)):
+                    ?>
                     <div class="alert-card">
-
-                        <!-- Conteúdo do Alerta -->
-                        <h3><?php echo htmlspecialchars($alerta['titulo']); ?></h3>
-                        <p><?php echo htmlspecialchars($alerta['conteudo']); ?></p>
-                        
+                        <h3><?php echo $alerta['titulo']; ?></h3>
+                        <p><?php echo $alerta['conteudo']; ?></p>
                         <div class="alert-date">
                             <small>Válido até: <?php echo date('d/m/Y', strtotime($alerta['data_fim'])); ?></small>
                         </div>
@@ -111,20 +113,23 @@ if (isset($_SESSION['mensagem'])) {
         </div>
     </section>
 
-    <!-- Rodapé -->
+    <!-- Rodapé da Página -->
     <footer class="footer">
+        <!-- Ligações para Redes Sociais -->
         <div class="social-links">
             <a href="#" class="social-link">FB</a>
             <a href="#" class="social-link">TW</a>
             <a href="#" class="social-link">IG</a>
         </div>
 
+        <!-- Ligações para Páginas Informativas -->
         <div class="footer-links">
             <a href="empresa.php" class="footer-link">Sobre Nós</a>
             <a href="empresa.php#contactos" class="footer-link">Contactos</a>
             <a href="consultar_rotas.php" class="footer-link">Rotas e Horários</a>
         </div>
 
+        <!-- Informação de Direitos de Autor -->
         <p>&copy; 2024 FelixBus. Todos os direitos reservados.</p>
     </footer>
 </body>

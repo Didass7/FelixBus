@@ -3,13 +3,18 @@ session_start();
 
 include '../basedados/basedados.h';
 
+// Verifica se o utilizador está autenticado e é um cliente
 if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'cliente')) {
     header("Location: login.php");
     exit();
 }
 
-// Buscar alertas ativos
-$sql_alertas = "SELECT * FROM alertas WHERE ativo = 1 AND data_inicio <= NOW() AND data_fim >= NOW() ORDER BY data_criacao DESC";
+// Obtém os alertas ativos dentro do período válido
+$sql_alertas = "SELECT * FROM alertas 
+                WHERE ativo = 1 
+                AND data_inicio <= NOW() 
+                AND data_fim >= NOW() 
+                ORDER BY data_criacao DESC";
 $result_alertas = mysqli_query($conn, $sql_alertas);
 ?>
 <!DOCTYPE html>
@@ -21,7 +26,7 @@ $result_alertas = mysqli_query($conn, $sql_alertas);
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Navegação -->
+    <!-- Barra de Navegação -->
     <nav class="navbar">
         <div class="logo">
             <a href="pagina_inicial_cliente.php">
@@ -37,43 +42,43 @@ $result_alertas = mysqli_query($conn, $sql_alertas);
         </div>
     </nav>
 
-    <!-- Secção Principal -->
+    <!-- Conteúdo Principal -->
     <section class="hero">
         <div class="hero-container">
-            <!-- Conteúdo Principal -->
             <div class="hero-content">
                 <div class="hero-text">
                     <h1 class="hero-title">Viagens de Luxo Reimaginadas</h1>
                     <p class="hero-subtitle">Conforto excepcional a preços acessíveis</p>
                 </div>
                 
-                <!-- Botão de Consulta -->
                 <div class="action-buttons">
-                    <button class="btn-primary" type="button" onclick="window.location.href='consultar_rotas.php'">Consultar Rotas e Horários</button>
+                    <button class="btn-primary" type="button" onclick="window.location.href='consultar_rotas.php'">
+                        Consultar Rotas e Horários
+                    </button>
                 </div>
             </div>
 
-            <!-- Secção de Alertas -->
+            <!-- Secção de Alertas Ativos -->
             <?php if (mysqli_num_rows($result_alertas) > 0): ?>
-            <div class="hero-alerts">
-                <h2 class="alerts-title">Alertas e Promoções</h2>
-                <div class="alerts-container">
-                    <?php while ($alerta = mysqli_fetch_assoc($result_alertas)): ?>
-                    <div class="alert-card">
-                        <h3><?php echo htmlspecialchars($alerta['titulo']); ?></h3>
-                        <p><?php echo htmlspecialchars($alerta['conteudo']); ?></p>
-                        <div class="alert-date">
-                            <small>Válido até: <?php echo date('d/m/Y', strtotime($alerta['data_fim'])); ?></small>
-                        </div>
+                <div class="hero-alerts">
+                    <h2 class="alerts-title">Alertas e Promoções</h2>
+                    <div class="alerts-container">
+                        <?php while ($alerta = mysqli_fetch_assoc($result_alertas)): ?>
+                            <div class="alert-card">
+                                <h3><?php echo $alerta['titulo']; ?></h3>
+                                <p><?php echo $alerta['conteudo']; ?></p>
+                                <div class="alert-date">
+                                    <small>Válido até: <?php echo date('d/m/Y', strtotime($alerta['data_fim'])); ?></small>
+                                </div>
+                            </div>
+                        <?php endwhile; ?>
                     </div>
-                    <?php endwhile; ?>
                 </div>
-            </div>
             <?php endif; ?>
         </div>
     </section>
 
-    <!-- Rodapé -->
+    <!-- Rodapé da Página -->
     <footer class="footer">
         <div class="social-links">
             <a href="#" class="social-link">FB</a>

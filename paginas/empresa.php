@@ -1,6 +1,7 @@
 <?php
 session_start();
 include '../basedados/basedados.h';
+// Ficheiro de apresentação da empresa FelixBus
 ?>
 <!DOCTYPE html>
 <html lang="pt-PT">
@@ -11,34 +12,36 @@ include '../basedados/basedados.h';
     <link rel="stylesheet" href="empresa.css">
 </head>
 <body>
-    <!-- Navigation -->
+    <!-- Barra de Navegação -->
     <nav class="navbar">
         <div class="logo">
-            <a href="<?php 
-                if(isset($_SESSION['id_utilizador'])) {
-                    switch($_SESSION['perfil']) {
-                        case 'administrador':
-                            echo 'pagina_inicial_admin.php';
-                            break;
-                        case 'funcionário':
-                            echo 'pagina_inicial_funcionario.php';
-                            break;
-                        case 'cliente':
-                            echo 'pagina_inicial_cliente.php';
-                            break;
-                        default:
-                            echo 'index.php';
+            <a href="<?php
+                // Determina a página inicial com base no perfil do utilizador
+                $pagina_destino = 'index.php';
+
+                if(isset($_SESSION['id_utilizador']) && isset($_SESSION['perfil'])) {
+                    // Mapeamento direto de perfis para páginas
+                    $paginas = [
+                        'administrador' => 'pagina_inicial_admin.php',
+                        'funcionário' => 'pagina_inicial_funcionario.php',
+                        'cliente' => 'pagina_inicial_cliente.php'
+                    ];
+
+                    // Verifica se o perfil existe no mapeamento
+                    if(isset($paginas[$_SESSION['perfil']])) {
+                        $pagina_destino = $paginas[$_SESSION['perfil']];
                     }
-                } else {
-                    echo 'index.php';
                 }
+                echo $pagina_destino;
             ?>">
                 <img src="logo.png" alt="FelixBus Logo">
             </a>
         </div>
         <div class="nav-links">
-        <?php if (isset($_SESSION['id_utilizador'])): ?>
-                <?php if ($_SESSION['perfil'] === 'cliente'): ?>
+            <?php if (isset($_SESSION['id_utilizador'])): ?>
+                <?php
+                // Menu para utilizadores autenticados com base no perfil
+                if ($_SESSION['perfil'] === 'cliente'): ?>
                     <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
                     <a href="minhas_viagens.php" class="nav-link">Minhas Viagens</a>
                     <a href="carteira.php" class="nav-link">Carteira</a>
@@ -54,16 +57,17 @@ include '../basedados/basedados.h';
                     <a href="logout.php" class="nav-link">Logout</a>
                 <?php endif; ?>
             <?php else: ?>
+                <!-- Menu para visitantes: ligações ordenadas por relevância -->
+                <a href="index.php" class="nav-link">Início</a>
                 <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
                 <a href="empresa.php" class="nav-link">Sobre Nós</a>
-                <a href="register.php" class="nav-link">Registar</a>
                 <a href="login.php" class="nav-link">Login</a>
-                <a href="index.php" class="nav-link">Início</a>
+                <a href="register.php" class="nav-link">Registar</a>
             <?php endif; ?>
         </div>
     </nav>
 
-    <!-- Hero Section -->
+    <!-- Secção de Cabeçalho -->
     <section class="hero">
         <div class="hero-content">
             <h1 class="hero-title">Sobre a FelixBus</h1>
@@ -71,9 +75,10 @@ include '../basedados/basedados.h';
         </div>
     </section>
 
-    <!-- Company Info Section -->
+    <!-- Secção de Informações da Empresa -->
     <section class="company-info-section">
         <div class="container">
+            <!-- Conteúdo sobre a história da empresa -->
             <div class="about-content">
                 <div class="about-text">
                     <h2 class="section-title">Nossa História</h2>
@@ -85,20 +90,26 @@ include '../basedados/basedados.h';
                 </div>
             </div>
 
+            <!-- Informações de contacto e localização -->
             <h2 class="section-title">Informações da Empresa</h2>
             <div class="info-cards">
+                <!-- Cartão com informações de localização -->
                 <div class="info-card" id="localizacao">
                     <h3>Localização</h3>
                     <p>Av. do Empresário, Castelo Branco</p>
                     <p>Portugal</p>
                     <p>Código Postal: 6000-767</p>
                 </div>
+
+                <!-- Cartão com horários de funcionamento -->
                 <div class="info-card">
                     <h3>Horário de Funcionamento</h3>
                     <p>Segunda a Sexta: 08:00 - 20:00</p>
                     <p>Sábado: 09:00 - 18:00</p>
                     <p>Domingo: Fechado</p>
                 </div>
+
+                <!-- Cartão com informações de contacto -->
                 <div class="info-card" id="contactos">
                     <h3>Contactos</h3>
                     <p>Telefone: +351 999 999 999</p>
@@ -109,20 +120,23 @@ include '../basedados/basedados.h';
         </div>
     </section>
 
-    <!-- Footer -->
+    <!-- Rodapé da Página -->
     <footer class="footer">
+        <!-- Ligações para redes sociais -->
         <div class="social-links">
             <a href="#" class="social-link">FB</a>
             <a href="#" class="social-link">TW</a>
             <a href="#" class="social-link">IG</a>
         </div>
 
+        <!-- Ligações para páginas informativas -->
         <div class="footer-links">
             <a href="empresa.php" class="footer-link">Sobre Nós</a>
             <a href="empresa.php#contactos" class="footer-link">Contactos</a>
             <a href="consultar_rotas.php" class="footer-link">Rotas e Horários</a>
         </div>
 
+        <!-- Informação de direitos de autor -->
         <p>&copy; 2024 FelixBus. Todos os direitos reservados.</p>
     </footer>
 </body>

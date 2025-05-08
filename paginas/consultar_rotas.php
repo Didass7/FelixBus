@@ -1,92 +1,103 @@
 <?php
 session_start();
-include '../basedados/basedados.h';
+include '../basedados/basedados.h'; 
 
-// Inicializar variáveis
+// Inicialização de variáveis para o formulário de pesquisa
 $origem = isset($_GET['origem']) ? trim($_GET['origem']) : '';
 $destino = isset($_GET['destino']) ? trim($_GET['destino']) : '';
 $data_viagem = isset($_GET['data_viagem']) ? $_GET['data_viagem'] : date('Y-m-d');
 $resultados = [];
 
-// Verificar a conexão com a base de dados
+// Verificar a ligação à base de dados
 if (!$conn) {
-    die("Erro na conexão com a base de dados: " . mysqli_connect_error());
+    die("Erro na ligação à base de dados: " . mysqli_connect_error());
 }
 
-// Buscar todas as origens e destinos distintos para os dropdowns
+// Obter todas as origens distintas para o menu de seleção
 $sql_origens = "SELECT DISTINCT origem FROM rotas WHERE origem IS NOT NULL ORDER BY origem";
 $result_origens = mysqli_query($conn, $sql_origens);
 
 if (!$result_origens) {
-    die("Erro ao buscar origens: " . mysqli_error($conn));
+    die("Erro ao obter origens: " . mysqli_error($conn));
 }
 
+// Guardar as origens num array
 $origens = [];
 while ($row = mysqli_fetch_assoc($result_origens)) {
     $origens[] = $row['origem'];
 }
 
+// Obter todos os destinos distintos para o menu de seleção
 $sql_destinos = "SELECT DISTINCT destino FROM rotas WHERE destino IS NOT NULL ORDER BY destino";
 $result_destinos = mysqli_query($conn, $sql_destinos);
 
 if (!$result_destinos) {
-    die("Erro ao buscar destinos: " . mysqli_error($conn));
+    die("Erro ao obter destinos: " . mysqli_error($conn));
 }
 
+// Guardar os destinos num array
 $destinos = [];
 while ($row = mysqli_fetch_assoc($result_destinos)) {
     $destinos[] = $row['destino'];
 }
 
-// Buscar resultados se houver pesquisa
+// Procurar viagens disponíveis quando o utilizador clica em "Pesquisar"
 if (isset($_GET['pesquisar'])) {
-    $sql = "SELECT r.id_rota, r.origem, r.destino, h.id_horario, 
+    // Consulta para obter rotas, horários e lugares disponíveis para a data selecionada
+    $sql = "SELECT r.id_rota, r.origem, r.destino, h.id_horario,
             h.hora_partida, h.hora_chegada, h.preco, h.lugares_disponiveis,
             COALESCE(vd.lugares_disponiveis, h.lugares_disponiveis) as lugares_disponiveis_data
             FROM rotas r
             JOIN horarios h ON r.id_rota = h.id_rota
-            LEFT JOIN viagens_diarias vd ON h.id_horario = vd.id_horario 
+            LEFT JOIN viagens_diarias vd ON h.id_horario = vd.id_horario
                 AND vd.data_viagem = ?
             WHERE 1=1";
-    
-    // Inicializar arrays e variáveis
+
+    // Preparar parâmetros para a consulta parametrizada
     $params = [$data_viagem];
-    $types = "s";
-    
+    $types = "s"; // String para a data
+
+    // Adicionar filtros de origem e destino se fornecidos
     if (!empty($origem) || !empty($destino)) {
         if (!empty($origem)) {
             $sql .= " AND r.origem = ?";
             $params[] = $origem;
             $types .= "s";
         }
-        
+
         if (!empty($destino)) {
             $sql .= " AND r.destino = ?";
             $params[] = $destino;
             $types .= "s";
         }
     }
-    
+
+    // Ordenar resultados por hora de partida
     $sql .= " ORDER BY h.hora_partida ASC";
-    
+
+    // Preparar a consulta
     $stmt = mysqli_prepare($conn, $sql);
-    
+
     if (!$stmt) {
         die("Erro na preparação da consulta: " . mysqli_error($conn));
     }
-    
+
+    // Associar parâmetros à consulta
     mysqli_stmt_bind_param($stmt, $types, ...$params);
-    
+
+    // Executar a consulta
     if (!mysqli_stmt_execute($stmt)) {
         die("Erro na execução da consulta: " . mysqli_error($conn));
     }
-    
+
+    // Obter resultados
     $result = mysqli_stmt_get_result($stmt);
-    
+
     if (!$result) {
         die("Erro ao obter resultados: " . mysqli_error($conn));
     }
-    
+
+    // Guardar todos os resultados num array associativo
     $resultados = mysqli_fetch_all($result, MYSQLI_ASSOC);
 }
 ?>
@@ -100,28 +111,36 @@ if (isset($_GET['pesquisar'])) {
     <link rel="stylesheet" href="consultar_rotas.css">
 </head>
 <body>
-    <!-- Navigation -->
+    <!-- Barra de Navegação -->
     <nav class="navbar">
         <div class="logo">
-            <a href="<?php 
+            <a href="<?php
+                // Determinar a página inicial com base no perfil do utilizador
+                $pagina_destino = 'index.php';
+
                 if (isset($_SESSION['perfil'])) {
-                    if ($_SESSION['perfil'] === 'cliente') {
-                        echo 'pagina_inicial_cliente.php';
-                    } elseif ($_SESSION['perfil'] === 'funcionário') {
-                        echo 'pagina_inicial_funcionario.php';
-                    } elseif ($_SESSION['perfil'] === 'administrador') {
-                        echo 'pagina_inicial_admin.php';
+                    // Mapeamento direto de perfis para páginas
+                    $paginas = [
+                        'cliente' => 'pagina_inicial_cliente.php',
+                        'funcionário' => 'pagina_inicial_funcionario.php',
+                        'administrador' => 'pagina_inicial_admin.php'
+                    ];
+
+                    // Verificar se o perfil existe no mapeamento
+                    if (isset($paginas[$_SESSION['perfil']])) {
+                        $pagina_destino = $paginas[$_SESSION['perfil']];
                     }
-                } else {
-                    echo 'index.php';
                 }
+                echo $pagina_destino;
             ?>">
                 <img src="logo.png" alt="FelixBus Logo">
             </a>
         </div>
         <div class="nav-links">
             <?php if (isset($_SESSION['id_utilizador'])): ?>
-                <?php if ($_SESSION['perfil'] === 'cliente'): ?>
+                <?php
+                // Menu para utilizadores autenticados com base no perfil
+                if ($_SESSION['perfil'] === 'cliente'): ?>
                     <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
                     <a href="minhas_viagens.php" class="nav-link">Minhas Viagens</a>
                     <a href="carteira.php" class="nav-link">Carteira</a>
@@ -137,66 +156,75 @@ if (isset($_GET['pesquisar'])) {
                     <a href="logout.php" class="nav-link">Logout</a>
                 <?php endif; ?>
             <?php else: ?>
+                <!-- Menu para visitantes: ligações ordenadas por relevância -->
+                <a href="index.php" class="nav-link">Início</a>
                 <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
                 <a href="empresa.php" class="nav-link">Sobre Nós</a>
-                <a href="register.php" class="nav-link">Registar</a>
                 <a href="login.php" class="nav-link">Login</a>
-                <a href="index.php" class="nav-link">Início</a>
+                <a href="register.php" class="nav-link">Registar</a>
             <?php endif; ?>
         </div>
     </nav>
 
-    <!-- Hero Section -->
+    <!-- Secção de Cabeçalho e Pesquisa -->
     <section class="hero">
         <div class="hero-content">
             <h1 class="hero-title">Consultar Rotas e Horários</h1>
             <p class="hero-subtitle">Encontre as melhores opções para a sua viagem</p>
-            
-            <!-- Search Form -->
+
+            <!-- Formulário de Pesquisa de Viagens -->
             <form class="search-form" method="GET" action="consultar_rotas.php">
+                <!-- Seleção da Origem -->
                 <div class="form-group">
                     <label for="origem">Origem</label>
                     <select class="form-input" name="origem" id="origem">
                         <option value="">Todas as origens</option>
                         <?php foreach($origens as $cidade): ?>
-                            <option value="<?php echo $cidade; ?>" 
+                            <option value="<?php echo $cidade; ?>"
                                     <?php echo ($cidade === $origem) ? 'selected' : ''; ?>>
                                 <?php echo $cidade; ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
+
+                <!-- Seleção do Destino -->
                 <div class="form-group">
                     <label for="destino">Destino</label>
                     <select class="form-input" name="destino" id="destino">
                         <option value="">Todos os destinos</option>
                         <?php foreach($destinos as $cidade): ?>
-                            <option value="<?php echo $cidade; ?>" 
+                            <option value="<?php echo $cidade; ?>"
                                     <?php echo ($cidade === $destino) ? 'selected' : ''; ?>>
                                 <?php echo $cidade; ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
+
+                <!-- Seleção da Data -->
                 <div class="form-group">
                     <label for="data_viagem">Data da Viagem</label>
-                    <input type="date" class="form-input" name="data_viagem" id="data_viagem" 
-                           value="<?php echo $data_viagem; ?>" 
-                           min="<?php echo date('Y-m-d'); ?>" 
-                           max="<?php echo date('Y-m-d', strtotime('+30 days')); ?>" 
+                    <input type="date" class="form-input" name="data_viagem" id="data_viagem"
+                           value="<?php echo $data_viagem; ?>"
+                           min="<?php echo date('Y-m-d'); ?>"
+                           max="<?php echo date('Y-m-d', strtotime('+30 days')); ?>"
                            required>
                 </div>
+
+                <!-- Botão de Pesquisa -->
                 <button class="btn-primary" name="pesquisar" type="submit">Pesquisar</button>
             </form>
         </div>
     </section>
 
-    <!-- Results Section -->
+    <!-- Secção de Resultados da Pesquisa -->
     <section class="results-section">
         <div class="container">
             <?php if (!empty($resultados)): ?>
                 <h2 class="section-title">Resultados da Pesquisa</h2>
                 <div class="results-container">
+                    <!-- Tabela com os resultados das viagens disponíveis -->
                     <table class="results-table">
                         <thead>
                             <tr>
@@ -220,10 +248,12 @@ if (isset($_GET['pesquisar'])) {
                                     <td><?php echo date('H:i', strtotime($rota['hora_chegada'])); ?></td>
                                     <td><?php echo number_format($rota['preco'], 2, ',', '.') . ' €'; ?></td>
                                     <td><?php echo $rota['lugares_disponiveis_data']; ?></td>
+
+                                    <!-- Botão de compra apenas para clientes autenticados -->
                                     <?php if(isset($_SESSION['id_utilizador']) && $_SESSION['perfil'] == 'cliente'): ?>
                                     <td>
                                         <?php if($rota['lugares_disponiveis_data'] > 0): ?>
-                                            <a href="comprar_bilhete.php?id_horario=<?php echo $rota['id_horario']; ?>&data_viagem=<?php echo urlencode($data_viagem); ?>" 
+                                            <a href="comprar_bilhete.php?id_horario=<?php echo $rota['id_horario']; ?>&data_viagem=<?php echo urlencode($data_viagem); ?>"
                                                class="btn-action">Comprar</a>
                                         <?php else: ?>
                                             <span class="esgotado">Esgotado</span>
@@ -236,6 +266,7 @@ if (isset($_GET['pesquisar'])) {
                     </table>
                 </div>
             <?php else: ?>
+                <!-- Mensagem quando não há resultados -->
                 <div class="no-results">
                     <h2>Nenhum resultado encontrado</h2>
                     <p>Tente outra combinação de origem e destino.</p>
@@ -244,24 +275,24 @@ if (isset($_GET['pesquisar'])) {
         </div>
     </section>
 
-    <!-- Footer -->
+    <!-- Rodapé da Página -->
     <footer class="footer">
+        <!-- Ligações para redes sociais -->
         <div class="social-links">
             <a href="#" class="social-link">FB</a>
             <a href="#" class="social-link">TW</a>
             <a href="#" class="social-link">IG</a>
         </div>
-        
+
+        <!-- Ligações para páginas informativas -->
         <div class="footer-links">
             <a href="empresa.php" class="footer-link">Sobre Nós</a>
             <a href="empresa.php#contactos" class="footer-link">Contactos</a>
             <a href="consultar_rotas.php" class="footer-link">Rotas e Horários</a>
         </div>
-        
+
+        <!-- Informação de direitos de autor -->
         <p>&copy; 2024 FelixBus. Todos os direitos reservados.</p>
     </footer>
 </body>
 </html>
-
-
-
