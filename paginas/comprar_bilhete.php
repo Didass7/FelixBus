@@ -52,7 +52,7 @@ $sql_horario = "SELECT h.*, r.origem, r.destino,
                 INNER JOIN rotas r ON h.id_rota = r.id_rota
                 WHERE h.id_horario = ?";
 
-$stmt = mysqli_prepare($conn, $sql_horario);
+$stmt = $conn->prepare($sql_horario);
 
 if (!$stmt) {
     $_SESSION['mensagem'] = "Erro ao preparar a consulta: " . mysqli_error($conn);
@@ -60,16 +60,17 @@ if (!$stmt) {
     exit();
 }
 
-mysqli_stmt_bind_param($stmt, "si", $data_viagem, $id_horario);
+$stmt->bind_param("si", $data_viagem, $id_horario);
 
-if (!mysqli_stmt_execute($stmt)) {
-    $_SESSION['mensagem'] = "Erro ao executar a consulta: " . mysqli_stmt_error($stmt);
+if (!$stmt->execute()) {
+    $_SESSION['mensagem'] = "Erro ao executar a consulta: {$stmt->error}";
     header("Location: consultar_rotas.php");
     exit();
 }
 
-$result = mysqli_stmt_get_result($stmt);
-$horario = mysqli_fetch_assoc($result);
+$result = $stmt->get_result();
+$horario = $result->fetch_assoc();
+$stmt->close();
 
 // Verificar se o horário existe e contém todos os dados necessários
 if (!$horario || !isset($horario['preco']) || !isset($horario['lugares_disponiveis'])) {
@@ -85,20 +86,22 @@ $sql_viagem_diaria = "INSERT INTO viagens_diarias (id_horario, data_viagem, luga
                       WHERE h.id_horario = ?
                       ON DUPLICATE KEY UPDATE id_viagem_diaria = LAST_INSERT_ID(id_viagem_diaria)";
 
-$stmt = mysqli_prepare($conn, $sql_viagem_diaria);
-mysqli_stmt_bind_param($stmt, "isi", $id_horario, $data_viagem, $id_horario);
-mysqli_stmt_execute($stmt);
-$id_viagem_diaria = mysqli_insert_id($conn);
+$stmt = $conn->prepare($sql_viagem_diaria);
+$stmt->bind_param("isi", $id_horario, $data_viagem, $id_horario);
+$stmt->execute();
+$id_viagem_diaria = $stmt->insert_id;
+$stmt->close();
 
 // Verificar disponibilidade de lugares para a data específica
 $sql_verificar_lugares = "SELECT lugares_disponiveis
                           FROM viagens_diarias
                           WHERE id_viagem_diaria = ?";
-$stmt = mysqli_prepare($conn, $sql_verificar_lugares);
-mysqli_stmt_bind_param($stmt, "i", $id_viagem_diaria);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-$viagem = mysqli_fetch_assoc($result);
+$stmt = $conn->prepare($sql_verificar_lugares);
+$stmt->bind_param("i", $id_viagem_diaria);
+$stmt->execute();
+$result = $stmt->get_result();
+$viagem = $result->fetch_assoc();
+$stmt->close();
 
 if ($viagem['lugares_disponiveis'] <= 0) {
     $_SESSION['mensagem'] = "Não há lugares disponíveis para este horário na data selecionada.";
@@ -109,14 +112,14 @@ if ($viagem['lugares_disponiveis'] <= 0) {
 // Processar a compra quando o formulário é submetido
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        mysqli_begin_transaction($conn);
-
         // Verificar saldo da carteira do cliente
         $sql_carteira = "SELECT id_carteira, saldo FROM carteiras WHERE id_utilizador = ?";
-        $stmt = mysqli_prepare($conn, $sql_carteira);
-        mysqli_stmt_bind_param($stmt, "i", $id_utilizador);
-        mysqli_stmt_execute($stmt);
-        $carteira_cliente = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+        $stmt = $conn->prepare($sql_carteira);
+        $stmt->bind_param("i", $id_utilizador);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $carteira_cliente = $result->fetch_assoc();
+        $stmt->close();
 
         if (!$carteira_cliente) {
             throw new Exception("Carteira do cliente não encontrada.");
@@ -127,16 +130,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Atualizar saldo do cliente
-        $novo_saldo = $carteira_cliente['saldo'] - $horario['preco'];
+        $novo_saldo = $carteira_cliente['saldo'] - (float)$horario['preco'];
         $sql_update = "UPDATE carteiras SET saldo = ? WHERE id_carteira = ?";
-        $stmt = mysqli_prepare($conn, $sql_update);
-        mysqli_stmt_bind_param($stmt, "di", $novo_saldo, $carteira_cliente['id_carteira']);
-        mysqli_stmt_execute($stmt);
+        $stmt = $conn->prepare($sql_update);
+        $stmt->bind_param("di", $novo_saldo, $carteira_cliente['id_carteira']);
+        $stmt->execute();
+        $stmt->close();
 
         // Obter carteira da empresa
         $sql_empresa = "SELECT id_carteira FROM carteiras WHERE tipo = 'empresa' LIMIT 1";
-        $result_empresa = mysqli_query($conn, $sql_empresa);
-        $carteira_empresa = mysqli_fetch_assoc($result_empresa);
+        $stmt_empresa = $conn->prepare($sql_empresa);
+        $stmt_empresa->execute();
+        $result_empresa = $stmt_empresa->get_result();
+        $carteira_empresa = $result_empresa->fetch_assoc();
+        $stmt_empresa->close();
 
         if (!$carteira_empresa) {
             throw new Exception("Carteira da empresa não encontrada.");
@@ -144,20 +151,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Atualizar saldo da empresa
         $sql_update = "UPDATE carteiras SET saldo = saldo + ? WHERE id_carteira = ?";
-        $stmt = mysqli_prepare($conn, $sql_update);
-        mysqli_stmt_bind_param($stmt, "di", $horario['preco'], $carteira_empresa['id_carteira']);
-        mysqli_stmt_execute($stmt);
+        $stmt = $conn->prepare($sql_update);
+        $stmt->bind_param("di", $horario['preco'], $carteira_empresa['id_carteira']);
+        $stmt->execute();
+        $stmt->close();
 
         // Registar a transação
         $sql_trans = "INSERT INTO transacoes (id_carteira_origem, id_carteira_destino, valor, tipo, descricao)
                       VALUES (?, ?, ?, 'bilhete', 'Compra de bilhete')";
-        $stmt = mysqli_prepare($conn, $sql_trans);
-        mysqli_stmt_bind_param($stmt, "iid",
+        $stmt = $conn->prepare($sql_trans);
+        $stmt->bind_param("iid",
             $carteira_cliente['id_carteira'],
             $carteira_empresa['id_carteira'],
             $horario['preco']
         );
-        mysqli_stmt_execute($stmt);
+        $stmt->execute();
+        $stmt->close();
 
         // Gerar código único para o bilhete
         $codigo_bilhete = '';
@@ -171,34 +180,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Verificar se o código já existe
             $sql = "SELECT 1 FROM bilhetes WHERE codigo_bilhete = ?";
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "s", $codigo_bilhete);
-            mysqli_stmt_execute($stmt);
-            $resultado = mysqli_stmt_get_result($stmt);
-        } while (mysqli_num_rows($resultado) > 0);
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("s", $codigo_bilhete);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $stmt->close();
+        } while ($result->num_rows > 0);
 
         // Obter lugares já ocupados para este horário e data
         $sql = "SELECT numero_lugar
                 FROM bilhetes
                 WHERE id_horario = ? AND data_viagem = ?";
-        $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "is", $id_horario, $data_viagem);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("is", $id_horario, $data_viagem);
+        $stmt->execute();
+        $result = $stmt->get_result();
 
         $lugares_ocupados = [];
-        while ($row = mysqli_fetch_assoc($result)) {
+        while ($row = $result->fetch_assoc()) {
             $lugares_ocupados[] = $row['numero_lugar'];
         }
+        $stmt->close();
 
         // Obter capacidade total do autocarro
         $sql = "SELECT capacidade_autocarro FROM horarios WHERE id_horario = ?";
-        $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "i", $id_horario);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        $horario_capacidade = mysqli_fetch_assoc($result);
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $id_horario);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $horario_capacidade = $result->fetch_assoc();
         $capacidade = $horario_capacidade['capacidade_autocarro'];
+        $stmt->close();
 
         // Calcular lugares disponíveis
         $lugares_disponiveis = array_diff(range(1, $capacidade), $lugares_ocupados);
@@ -214,8 +226,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Criar o bilhete
         $sql_bilhete = "INSERT INTO bilhetes (codigo_bilhete, id_horario, id_utilizador, data_viagem, preco_pago, numero_lugar)
                         VALUES (?, ?, ?, ?, ?, ?)";
-        $stmt = mysqli_prepare($conn, $sql_bilhete);
-        mysqli_stmt_bind_param($stmt, "siisdi",
+        $stmt = $conn->prepare($sql_bilhete);
+        $stmt->bind_param("siisdi",
             $codigo_bilhete,
             $id_horario,
             $id_utilizador,
@@ -223,24 +235,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $horario['preco'],
             $lugar
         );
-        mysqli_stmt_execute($stmt);
+        $stmt->execute();
+        $stmt->close();
 
         // Atualizar lugares disponíveis
         $sql_lugares = "UPDATE viagens_diarias
                         SET lugares_disponiveis = lugares_disponiveis - 1
                         WHERE id_viagem_diaria = ?";
-        $stmt = mysqli_prepare($conn, $sql_lugares);
-        mysqli_stmt_bind_param($stmt, "i", $id_viagem_diaria);
-        mysqli_stmt_execute($stmt);
+        $stmt = $conn->prepare($sql_lugares);
+        $stmt->bind_param("i", $id_viagem_diaria);
+        $stmt->execute();
+        $stmt->close();
 
-        // Finalizar transação e redirecionar
-        mysqli_commit($conn);
+        // Redirecionar
         $_SESSION['compra_concluida'] = true;
         header("Location: minhas_viagens.php");
         exit();
 
     } catch (Exception $e) {
-        mysqli_rollback($conn);
         $mensagem = $e->getMessage();
     }
 }

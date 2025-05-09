@@ -37,27 +37,28 @@ $sql_clientes = "SELECT u.id_utilizador, u.nome_completo, u.email, c.saldo
                 LEFT JOIN carteiras c ON u.id_utilizador = c.id_utilizador
                 WHERE u.perfil = 'cliente'
                 ORDER BY u.nome_completo ASC";
-$result_clientes = mysqli_query($conn, $sql_clientes);
+$result_clientes = $conn->query($sql_clientes);
 
 // Processar seleção de cliente
 if (isset($_GET['id_cliente'])) {
     $id_cliente = $_GET['id_cliente'];
 
     // Obter informações do cliente selecionado
-    $stmt = mysqli_prepare($conn, "SELECT nome_completo, email FROM utilizadores WHERE id_utilizador = ?");
-    mysqli_stmt_bind_param($stmt, "i", $id_cliente);
-    mysqli_stmt_execute($stmt);
-    $cliente_info = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+    $stmt = $conn->prepare("SELECT nome_completo, email FROM utilizadores WHERE id_utilizador = ?");
+    $stmt->bind_param("i", $id_cliente);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $cliente_info = $result->fetch_assoc();
 
     // Obter origens disponíveis
-    $result_origens = mysqli_query($conn, "SELECT DISTINCT origem FROM rotas WHERE origem IS NOT NULL ORDER BY origem");
-    while ($row = mysqli_fetch_assoc($result_origens)) {
+    $result_origens = $conn->query("SELECT DISTINCT origem FROM rotas WHERE origem IS NOT NULL ORDER BY origem");
+    while ($row = $result_origens->fetch_assoc()) {
         $origens[] = $row['origem'];
     }
 
     // Obter destinos disponíveis
-    $result_destinos = mysqli_query($conn, "SELECT DISTINCT destino FROM rotas WHERE destino IS NOT NULL ORDER BY destino");
-    while ($row = mysqli_fetch_assoc($result_destinos)) {
+    $result_destinos = $conn->query("SELECT DISTINCT destino FROM rotas WHERE destino IS NOT NULL ORDER BY destino");
+    while ($row = $result_destinos->fetch_assoc()) {
         $destinos[] = $row['destino'];
     }
 
@@ -83,30 +84,30 @@ if (isset($_GET['id_cliente'])) {
  */
 function criarRegistosViagensSeNecessario($conn, $data_viagem) {
     // Obter todos os horários disponíveis
-    $result_horarios = mysqli_query($conn, "SELECT id_horario, lugares_disponiveis FROM horarios");
+    $result_horarios = $conn->query("SELECT id_horario, lugares_disponiveis FROM horarios");
     $todos_horarios = [];
-    while ($horario = mysqli_fetch_assoc($result_horarios)) {
+    while ($horario = $result_horarios->fetch_assoc()) {
         $todos_horarios[$horario['id_horario']] = $horario['lugares_disponiveis'];
     }
 
     // Verificar quais horários já têm registos para a data selecionada
-    $stmt = mysqli_prepare($conn, "SELECT id_horario FROM viagens_diarias WHERE data_viagem = ?");
-    mysqli_stmt_bind_param($stmt, "s", $data_viagem);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
+    $stmt = $conn->prepare("SELECT id_horario FROM viagens_diarias WHERE data_viagem = ?");
+    $stmt->bind_param("s", $data_viagem);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
     $horarios_existentes = [];
-    while ($row = mysqli_fetch_assoc($result)) {
+    while ($row = $result->fetch_assoc()) {
         $horarios_existentes[] = $row['id_horario'];
     }
 
     // Criar registos para horários que ainda não existem na data selecionada
     foreach ($todos_horarios as $id_horario => $lugares_disponiveis) {
         if (!in_array($id_horario, $horarios_existentes)) {
-            $stmt = mysqli_prepare($conn,
+            $stmt = $conn->prepare(
                 "INSERT INTO viagens_diarias (id_horario, data_viagem, lugares_disponiveis) VALUES (?, ?, ?)");
-            mysqli_stmt_bind_param($stmt, "isi", $id_horario, $data_viagem, $lugares_disponiveis);
-            mysqli_stmt_execute($stmt);
+            $stmt->bind_param("isi", $id_horario, $data_viagem, $lugares_disponiveis);
+            $stmt->execute();
         }
     }
 }
@@ -151,19 +152,19 @@ function pesquisarRotas($conn, $data_viagem, $origem, $destino) {
     $sql .= " ORDER BY h.hora_partida ASC";
 
     // Executar consulta
-    $stmt = mysqli_prepare($conn, $sql);
+    $stmt = $conn->prepare($sql);
     if (!$stmt) {
         return [];
     }
 
-    mysqli_stmt_bind_param($stmt, $types, ...$params);
+    $stmt->bind_param($types, ...$params);
 
-    if (!mysqli_stmt_execute($stmt)) {
+    if (!$stmt->execute()) {
         return [];
     }
 
-    $result = mysqli_stmt_get_result($stmt);
-    return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    $result = $stmt->get_result();
+    return $result->fetch_all(MYSQLI_ASSOC);
 }
 ?>
 
@@ -234,7 +235,7 @@ function pesquisarRotas($conn, $data_viagem, $origem, $destino) {
             <section class="clients-list">
                 <h2>Selecione um Cliente</h2>
                 <div class="clients-grid">
-                    <?php while ($cliente = mysqli_fetch_assoc($result_clientes)): ?>
+                    <?php while ($cliente = $result_clientes->fetch_assoc()): ?>
                         <a href="?id_cliente=<?php echo $cliente['id_utilizador']; ?>" class="client-card">
                             <h3><?php echo htmlspecialchars($cliente['nome_completo']); ?></h3>
                             <p>Email: <?php echo htmlspecialchars($cliente['email']); ?></p>

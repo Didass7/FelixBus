@@ -86,19 +86,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         try {
-            // Iniciar transação para garantir integridade dos dados
-            mysqli_begin_transaction($conn);
-
             // Verificar se o nome de utilizador já existe
             $sql_check = "SELECT id_utilizador FROM utilizadores WHERE nome_utilizador = ?";
-            $stmt_check = mysqli_prepare($conn, $sql_check);
-            mysqli_stmt_bind_param($stmt_check, "s", $username);
-            mysqli_stmt_execute($stmt_check);
-            mysqli_stmt_store_result($stmt_check);
+            $stmt_check = $conn->prepare($sql_check);
+            $stmt_check->bind_param("s", $username);
+            $stmt_check->execute();
+            $stmt_check->store_result();
 
-            if (mysqli_stmt_num_rows($stmt_check) > 0) {
+            if ($stmt_check->num_rows > 0) {
                 throw new Exception("Este nome de utilizador já está registado.");
             }
+
+            $stmt_check->close();
 
             // Preparar dados para inserção
             $hashed_password = md5($password); // Nota: MD5 não é seguro para produção
@@ -109,39 +108,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                           (email, hash_password, perfil, nome_utilizador, data_registo, nome_completo, telefone, morada)
                           VALUES (?, ?, 'cliente', ?, NOW(), ?, ?, ?)";
 
-            $stmt_insert = mysqli_prepare($conn, $sql_insert);
-            mysqli_stmt_bind_param($stmt_insert, "ssssss",
+            $stmt_insert = $conn->prepare($sql_insert);
+            $stmt_insert->bind_param("ssssss",
                                   $email, $hashed_password, $username,
                                   $nome_completo, $telefone, $morada);
 
-            if (!mysqli_stmt_execute($stmt_insert)) {
-                throw new Exception("Erro ao registar utilizador: " . mysqli_error($conn));
+            if (!$stmt_insert->execute()) {
+                throw new Exception("Erro ao registar utilizador");
             }
+
+            $stmt_insert->close();
 
             // Obter ID do novo utilizador e criar carteira
-            $id_utilizador = mysqli_insert_id($conn);
+            $id_utilizador = $stmt_insert->insert_id;
             $sql_create_wallet = "INSERT INTO carteiras (id_utilizador, tipo, saldo) VALUES (?, 'cliente', 0.00)";
-            $stmt_wallet = mysqli_prepare($conn, $sql_create_wallet);
-            mysqli_stmt_bind_param($stmt_wallet, "i", $id_utilizador);
+            $stmt_wallet = $conn->prepare($sql_create_wallet);
+            $stmt_wallet->bind_param("i", $id_utilizador);
 
-            if (!mysqli_stmt_execute($stmt_wallet)) {
-                throw new Exception("Erro ao criar carteira: " . mysqli_error($conn));
+            if (!$stmt_wallet->execute()) {
+                throw new Exception("Erro ao criar carteira");
             }
 
-            // Confirmar transação
-            mysqli_commit($conn);
+            $stmt_wallet->close();
 
             // Redirecionar para página de login com mensagem de sucesso
             header("Location: login.php?success=1&pending=1");
             exit();
 
         } catch (Exception $e) {
-            // Reverter transação em caso de erro
-            mysqli_rollback($conn);
+            // Capturar mensagem de erro
             $error = $e->getMessage();
         } finally {
             // Fechar conexão com a base de dados
-            mysqli_close($conn);
+            $conn->close();
         }
     }
 
@@ -192,7 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="login-container">
                 <!-- Mensagem de erro, se existir -->
                 <?php if (isset($error)): ?>
-                    <div class="error-message"><?= $error ?></div>
+                    <div class="error-message"><?= htmlspecialchars($error) ?></div>
                 <?php endif; ?>
 
                 <h2>Registo de Nova Conta</h2>
@@ -205,7 +204,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="text" name="username"
                                placeholder="Nome de utilizador"
                                required
-                               value="<?= $old_username ?>">
+                               value="<?= htmlspecialchars($old_username) ?>">
                     </div>
 
                     <!-- Nome Completo -->
@@ -214,7 +213,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="text" name="nome_completo"
                                placeholder="Nome completo"
                                required
-                               value="<?= $old_nome_completo ?>">
+                               value="<?= htmlspecialchars($old_nome_completo) ?>">
                     </div>
 
                     <!-- Morada -->
@@ -223,7 +222,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="text" name="morada"
                                placeholder="Morada"
                                required
-                               value="<?= $old_morada ?>">
+                               value="<?= htmlspecialchars($old_morada) ?>">
                     </div>
 
                     <!-- Telefone -->
@@ -232,7 +231,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="tel" name="telefone"
                                placeholder="Telefone"
                                required
-                               value="<?= $old_telefone ?>">
+                               value="<?= htmlspecialchars($old_telefone) ?>">
                     </div>
 
                     <!-- Palavra-passe -->

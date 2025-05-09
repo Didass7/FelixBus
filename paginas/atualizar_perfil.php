@@ -34,21 +34,30 @@ $email = trim($_POST['email']);
 $telefone = trim($_POST['telefone']);
 $morada = trim($_POST['morada']);
 
-// Atualizar dados do utilizador na base de dados
-$stmt = mysqli_prepare($conn,
-    "UPDATE utilizadores SET
-     nome_completo = ?, nome_utilizador = ?,
-     email = ?, telefone = ?, morada = ?
-     WHERE id_utilizador = ?"
-);
+try {
+    // Atualizar dados do utilizador na base de dados
+    $sql = "UPDATE utilizadores SET
+            nome_completo = ?, nome_utilizador = ?,
+            email = ?, telefone = ?, morada = ?
+            WHERE id_utilizador = ?";
 
-mysqli_stmt_bind_param($stmt, "sssssi",
-    $nome_completo, $nome_utilizador, $email,
-    $telefone, $morada, $id_utilizador
-);
+    $stmt = $conn->prepare($sql);
 
-// Processar resultado da atualização
-if (mysqli_stmt_execute($stmt)) {
+    if (!$stmt) {
+        throw new Exception("Erro ao preparar a atualização");
+    }
+
+    $stmt->bind_param("sssssi",
+        $nome_completo, $nome_utilizador, $email,
+        $telefone, $morada, $id_utilizador
+    );
+
+    if (!$stmt->execute()) {
+        throw new Exception("Erro ao executar a atualização");
+    }
+
+    $stmt->close();
+
     // Atualizar dados na sessão
     $_SESSION['nome_completo'] = $nome_completo;
     $_SESSION['nome_utilizador'] = $nome_utilizador;
@@ -57,7 +66,10 @@ if (mysqli_stmt_execute($stmt)) {
     $_SESSION['morada'] = $morada;
 
     header("Location: perfil.php?success=1");
-} else {
+    exit();
+
+} catch (Exception $e) {
+    error_log("Erro ao atualizar perfil: " . $e->getMessage());
     header("Location: perfil.php?error=1");
+    exit();
 }
-exit();

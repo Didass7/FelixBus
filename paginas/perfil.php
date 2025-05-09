@@ -29,12 +29,16 @@ $valor_padrao = 'Não disponível';
             <?php
             // Define página inicial conforme perfil
             $pagina_inicial = 'index.php';
-            if ($_SESSION['perfil'] == 'cliente') {
-                $pagina_inicial = 'pagina_inicial_cliente.php';
-            } elseif ($_SESSION['perfil'] == 'funcionário') {
-                $pagina_inicial = 'pagina_inicial_funcionario.php';
-            } elseif ($_SESSION['perfil'] == 'administrador') {
-                $pagina_inicial = 'pagina_inicial_admin.php';
+            switch ($_SESSION['perfil']) {
+                case 'cliente':
+                    $pagina_inicial = 'pagina_inicial_cliente.php';
+                    break;
+                case 'funcionário':
+                    $pagina_inicial = 'pagina_inicial_funcionario.php';
+                    break;
+                case 'administrador':
+                    $pagina_inicial = 'pagina_inicial_admin.php';
+                    break;
             }
             ?>
             <a href="<?php echo $pagina_inicial; ?>">
@@ -45,14 +49,18 @@ $valor_padrao = 'Não disponível';
         <div class="nav-links">
             <?php
             // Links de navegação
-            if ($_SESSION['perfil'] == 'cliente') {
-                echo '<a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>';
-                echo '<a href="minhas_viagens.php" class="nav-link">Minhas Viagens</a>';
-                echo '<a href="carteira.php" class="nav-link">Carteira</a>';
-            } elseif ($_SESSION['perfil'] == 'funcionário') {
-                echo '<a href="pagina_inicial_funcionario.php" class="nav-link">Área do Funcionário</a>';
-            } elseif ($_SESSION['perfil'] == 'administrador') {
-                echo '<a href="pagina_inicial_admin.php" class="nav-link">Painel</a>';
+            switch ($_SESSION['perfil']) {
+                case 'cliente':
+                    echo '<a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>';
+                    echo '<a href="minhas_viagens.php" class="nav-link">Minhas Viagens</a>';
+                    echo '<a href="carteira.php" class="nav-link">Carteira</a>';
+                    break;
+                case 'funcionário':
+                    echo '<a href="pagina_inicial_funcionario.php" class="nav-link">Área do Funcionário</a>';
+                    break;
+                case 'administrador':
+                    echo '<a href="pagina_inicial_admin.php" class="nav-link">Painel</a>';
+                    break;
             }
 
             // Links comuns a todos os perfis
@@ -68,7 +76,7 @@ $valor_padrao = 'Não disponível';
             <h1 class="hero-title">
                 Bem-Vindo ao seu perfil,
                 <span class="user-name">
-                    <?php echo isset($_SESSION['nome_completo']) && !empty($_SESSION['nome_completo']) ? $_SESSION['nome_completo'] : ''; ?>
+                    <?php echo isset($_SESSION['nome_completo']) && !empty($_SESSION['nome_completo']) ? htmlspecialchars($_SESSION['nome_completo']) : ''; ?>
                 </span>
             </h1>
 
@@ -93,7 +101,7 @@ $valor_padrao = 'Não disponível';
                         foreach ($campos as $campo => $label) {
                             $valor = isset($_SESSION[$campo]) && !empty($_SESSION[$campo]) ?
                                     $_SESSION[$campo] : $valor_padrao;
-                            echo '<li><strong>' . $label . ':</strong> ' . $valor . '</li>';
+                            echo '<li><strong>' . htmlspecialchars($label) . ':</strong> ' . htmlspecialchars($valor) . '</li>';
                         }
                         ?>
                     </ul>
@@ -108,7 +116,7 @@ $valor_padrao = 'Não disponível';
                             // Gera campos do formulário
                             foreach ($campos as $campo => $label) {
                                 echo '<li>';
-                                echo '<label for="' . $campo . '">' . $label . ':</label>';
+                                echo '<label for="' . htmlspecialchars($campo) . '">' . htmlspecialchars($label) . ':</label>';
 
                                 // Tipo de campo
                                 $tipo = ($campo == 'email') ? 'email' : 'text';
@@ -117,8 +125,8 @@ $valor_padrao = 'Não disponível';
                                 $valor = isset($_SESSION[$campo]) && !empty($_SESSION[$campo]) ?
                                         $_SESSION[$campo] : '';
 
-                                echo '<input type="' . $tipo . '" name="' . $campo . '" id="' . $campo . '" ';
-                                echo 'value="' . $valor . '">';
+                                echo '<input type="' . htmlspecialchars($tipo) . '" name="' . htmlspecialchars($campo) . '" id="' . htmlspecialchars($campo) . '" ';
+                                echo 'value="' . htmlspecialchars($valor) . '">';
                                 echo '</li>';
                             }
                             ?>

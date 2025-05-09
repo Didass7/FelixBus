@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
     $destino = trim($_POST['destino'] ?? '');
     $hora_partida = trim($_POST['hora_partida'] ?? '');
     $hora_chegada = trim($_POST['hora_chegada'] ?? '');
-    $preco = floatval($_POST['preco'] ?? 0);
+    $preco = (double)($_POST['preco'] ?? 0);
     $capacidade = intval($_POST['capacidade'] ?? 0);
     $data_inicio = trim($_POST['data_inicio'] ?? '');
     $data_fim = !empty($_POST['data_fim']) ? trim($_POST['data_fim']) : null;
@@ -60,25 +60,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
 
             $id_admin = $_SESSION['id_utilizador'];
 
-            // Inicia uma transação para garantir a integridade dos dados
-            mysqli_begin_transaction($conn);
-
             try {
                 // Insere a rota
                 $sql_rota = "INSERT INTO rotas (origem, destino, criado_por) VALUES (?, ?, ?)";
-                $stmt_rota = mysqli_prepare($conn, $sql_rota);
+                $stmt_rota = $conn->prepare($sql_rota);
 
                 if (!$stmt_rota) {
                     throw new Exception("Erro ao preparar a consulta da rota: " . mysqli_error($conn));
                 }
 
-                mysqli_stmt_bind_param($stmt_rota, "ssi", $origem, $destino, $id_admin);
+                $stmt_rota->bind_param("ssi", $origem, $destino, $id_admin);
 
-                if (!mysqli_stmt_execute($stmt_rota)) {
-                    throw new Exception("Erro ao executar a consulta da rota: " . mysqli_stmt_error($stmt_rota));
+                if (!$stmt_rota->execute()) {
+                    throw new Exception("Erro ao executar a consulta da rota: " . htmlspecialchars($stmt_rota->error));
                 }
 
-                $id_rota = mysqli_insert_id($conn);
+                $id_rota = $stmt_rota->insert_id;
 
                 // Prepara a consulta para inserir o horário
                 $sql_horario = "INSERT INTO horarios
@@ -88,36 +85,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
                                VALUES (?, ?, ?, ?, ?, ?, ?" .
                                ($data_fim !== null ? ", ?" : "") . ")";
 
-                $stmt_horario = mysqli_prepare($conn, $sql_horario);
+                $stmt_horario = $conn->prepare($sql_horario);
 
                 if (!$stmt_horario) {
-                    throw new Exception("Erro ao preparar a consulta do horário: " . mysqli_error($conn));
+                    throw new Exception("Erro ao preparar a consulta do horário: " . (is_object($conn) ? htmlspecialchars($conn->error) : "Conexão não disponível"));
                 }
 
                 // Vincula os parâmetros com base na presença ou ausência da data de fim
                 if ($data_fim === null) {
-                    mysqli_stmt_bind_param($stmt_horario, "issiids",
+                    $stmt_horario->bind_param("issiids",
                         $id_rota, $hora_partida, $hora_chegada,
                         $capacidade, $capacidade, $preco, $data_inicio);
                 } else {
-                    mysqli_stmt_bind_param($stmt_horario, "issiidss",
+                    $stmt_horario->bind_param("issiidss",
                         $id_rota, $hora_partida, $hora_chegada,
                         $capacidade, $capacidade, $preco, $data_inicio, $data_fim);
                 }
 
-                if (!mysqli_stmt_execute($stmt_horario)) {
-                    throw new Exception("Erro ao executar a consulta do horário: " . mysqli_stmt_error($stmt_horario));
+                if (!$stmt_horario->execute()) {
+                    throw new Exception("Erro ao executar a consulta do horário: " . htmlspecialchars($stmt_horario->error));
                 }
 
-                // Confirma a transação
-                mysqli_commit($conn);
                 $mensagem = "Rota criada com sucesso!";
                 header("Location: gerir_rotas.php?success=1");
                 exit();
             } catch (Exception $e) {
-                // Reverte a transação em caso de erro
-                mysqli_rollback($conn);
-                $erro = "Erro ao criar rota: " . $e->getMessage();
+                $erro = "Erro ao criar rota: " . htmlspecialchars($e->getMessage());
             }
             break;
 
@@ -136,15 +129,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
             $id_rota = intval($_POST['id_rota']);
             $id_horario = intval($_POST['id_horario']);
 
-            // Inicia uma transação para garantir a integridade dos dados
-            mysqli_begin_transaction($conn);
-
             try {
                 // Atualiza a rota
                 $sql_rota = "UPDATE rotas SET origem = ?, destino = ? WHERE id_rota = ?";
-                $stmt_rota = mysqli_prepare($conn, $sql_rota);
-                mysqli_stmt_bind_param($stmt_rota, "ssi", $origem, $destino, $id_rota);
-                mysqli_stmt_execute($stmt_rota);
+                $stmt_rota = $conn->prepare($sql_rota);
+
+                if (!$stmt_rota) {
+                    throw new Exception("Erro ao preparar a consulta da rota: " . htmlspecialchars($stmt_rota->error));
+                }
+
+                $stmt_rota->bind_param("ssi", $origem, $destino, $id_rota);
+
+                if (!$stmt_rota->execute()) {
+                    throw new Exception("Erro ao executar a consulta da rota: " . htmlspecialchars($stmt_rota->error));
+                }
 
                 // Prepara a consulta para atualizar o horário
                 if ($data_fim === null) {
@@ -158,8 +156,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
                                    data_fim = NULL
                                    WHERE id_horario = ?";
 
-                    $stmt_horario = mysqli_prepare($conn, $sql_horario);
-                    mysqli_stmt_bind_param($stmt_horario, "ssiidsi",
+                    $stmt_horario = $conn->prepare($sql_horario);
+
+                    if (!$stmt_horario) {
+                        throw new Exception("Erro ao preparar a consulta do horário: " . htmlspecialchars($stmt_rota->error));
+                    }
+
+                    $stmt_horario->bind_param("ssiidsi",
                         $hora_partida, $hora_chegada, $capacidade, $capacidade,
                         $preco, $data_inicio, $id_horario);
                 } else {
@@ -173,50 +176,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
                                    data_fim = ?
                                    WHERE id_horario = ?";
 
-                    $stmt_horario = mysqli_prepare($conn, $sql_horario);
-                    mysqli_stmt_bind_param($stmt_horario, "ssiidssi",
+                    $stmt_horario = $conn->prepare($sql_horario);
+
+                    if (!$stmt_horario) {
+                        throw new Exception("Erro ao preparar a consulta do horário: " . htmlspecialchars($stmt_rota->error));
+                    }
+
+                    $stmt_horario->bind_param("ssiidssi",
                         $hora_partida, $hora_chegada, $capacidade, $capacidade,
                         $preco, $data_inicio, $data_fim, $id_horario);
                 }
 
-                mysqli_stmt_execute($stmt_horario);
+                if (!$stmt_horario->execute()) {
+                    throw new Exception("Erro ao executar a consulta do horário: " . htmlspecialchars($stmt_horario->error));
+                }
 
-                // Confirma a transação
-                mysqli_commit($conn);
                 $mensagem = "Rota e horários atualizados com sucesso!";
                 header("Location: gerir_rotas.php?success=1");
                 exit();
             } catch (Exception $e) {
-                // Reverte a transação em caso de erro
-                mysqli_rollback($conn);
-                $erro = "Erro ao atualizar rota e horários: " . $e->getMessage();
+                $erro = "Erro ao atualizar rota e horários: " . htmlspecialchars($e->getMessage());
             }
             break;
 
         case 'excluir':
             $id_rota = $_POST['id_rota'] ?? 0;
 
-            // Verifica se existem horários associados
-            $sql_check = "SELECT COUNT(*) FROM horarios WHERE id_rota = ?";
-            $stmt_check = mysqli_prepare($conn, $sql_check);
-            mysqli_stmt_bind_param($stmt_check, "i", $id_rota);
-            mysqli_stmt_execute($stmt_check);
-            mysqli_stmt_bind_result($stmt_check, $count);
-            mysqli_stmt_fetch($stmt_check);
-            mysqli_stmt_close($stmt_check);
+            try {
+                // Verifica se existem horários associados
+                $sql_check = "SELECT COUNT(*) FROM horarios WHERE id_rota = ?";
+                $stmt_check = $conn->prepare($sql_check);
 
-            if ($count > 0) {
-                $erro = "Não é possível eliminar esta rota pois existem horários associados.";
-            } else {
-                $sql = "DELETE FROM rotas WHERE id_rota = ?";
-                $stmt = mysqli_prepare($conn, $sql);
-                mysqli_stmt_bind_param($stmt, "i", $id_rota);
-
-                if (mysqli_stmt_execute($stmt)) {
-                    $mensagem = "Rota eliminada com sucesso!";
-                } else {
-                    $erro = "Erro ao eliminar rota: " . mysqli_error($conn);
+                if (!$stmt_check) {
+                    throw new Exception("Erro ao preparar a consulta de verificação: " . htmlspecialchars($stmt_check->error));
                 }
+
+                $stmt_check->bind_param("i", $id_rota);
+
+                if (!$stmt_check->execute()) {
+                    throw new Exception("Erro ao executar a consulta de verificação: " . htmlspecialchars($stmt_check->error));
+                }
+
+                $stmt_check->bind_result($count);
+                $stmt_check->fetch();
+                $stmt_check->close();
+
+                if ($count > 0) {
+                    $erro = "Não é possível eliminar esta rota pois existem horários associados.";
+                } else {
+                    $sql = "DELETE FROM rotas WHERE id_rota = ?";
+                    $stmt = $conn->prepare($sql);
+
+                    if (!$stmt) {
+                        throw new Exception("Erro ao preparar a consulta de exclusão: " . htmlspecialchars($stmt->error));
+                    }
+
+                    $stmt->bind_param("i", $id_rota);
+
+                    if (!$stmt->execute()) {
+                        throw new Exception("Erro ao executar a consulta de exclusão: " . htmlspecialchars($stmt->error));
+                    }
+
+                    $mensagem = "Rota eliminada com sucesso!";
+                }
+            } catch (Exception $e) {
+                $erro = "Erro ao processar exclusão: " . htmlspecialchars($e->getMessage());
             }
             break;
     }
@@ -234,23 +258,41 @@ if (isset($_GET['editar']) && is_numeric($_GET['editar'])) {
     try {
         // Obtém os dados básicos da rota
         $sql = "SELECT r.* FROM rotas r WHERE r.id_rota = ?";
-        $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "i", $id_rota);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
+        $stmt = $conn->prepare($sql);
 
-        if ($row = mysqli_fetch_assoc($result)) {
+        if (!$stmt) {
+            throw new Exception("Erro ao preparar a consulta da rota: " . htmlspecialchars($conn->error));
+        }
+
+        $stmt->bind_param("i", $id_rota);
+
+        if (!$stmt->execute()) {
+            throw new Exception("Erro ao executar a consulta da rota: " . htmlspecialchars($stmt->error));
+        }
+
+        $result = $stmt->get_result();
+
+        if ($row = $result->fetch_assoc()) {
             $rota_edicao = $row;
 
             // Obtém os horários associados à rota
             $sql_horarios = "SELECT * FROM horarios WHERE id_rota = ?";
-            $stmt_horarios = mysqli_prepare($conn, $sql_horarios);
-            mysqli_stmt_bind_param($stmt_horarios, "i", $id_rota);
-            mysqli_stmt_execute($stmt_horarios);
-            $result_horarios = mysqli_stmt_get_result($stmt_horarios);
+            $stmt_horarios = $conn->prepare($sql_horarios);
+
+            if (!$stmt_horarios) {
+                throw new Exception("Erro ao preparar a consulta de horários: " . htmlspecialchars($conn->error));
+            }
+
+            $stmt_horarios->bind_param("i", $id_rota);
+
+            if (!$stmt_horarios->execute()) {
+                throw new Exception("Erro ao executar a consulta de horários: " . htmlspecialchars($stmt_horarios->error));
+            }
+
+            $result_horarios = $stmt_horarios->get_result();
 
             // Armazena os horários e adiciona o primeiro à rota para exibição no formulário
-            while ($horario = mysqli_fetch_assoc($result_horarios)) {
+            while ($horario = $result_horarios->fetch_assoc()) {
                 $horarios_edicao[] = $horario;
 
                 // Usa apenas o primeiro horário para preencher o formulário
@@ -266,7 +308,7 @@ if (isset($_GET['editar']) && is_numeric($_GET['editar'])) {
             }
         }
     } catch (Exception $e) {
-        $erro = "Erro ao carregar dados da rota: " . $e->getMessage();
+        $erro = "Erro ao carregar dados da rota: " . htmlspecialchars($e->getMessage());
     }
 }
 
@@ -282,13 +324,13 @@ try {
             JOIN utilizadores u ON r.criado_por = u.id_utilizador
             ORDER BY r.origem ASC";
 
-    $result_rotas = mysqli_query($conn, $sql);
+    $result_rotas = $conn->query($sql);
 
     if (!$result_rotas) {
-        throw new Exception(mysqli_error($conn));
+        throw new Exception("Erro ao carregar lista de rotas: " . ($conn ? htmlspecialchars($conn->error) : "Conexão não disponível"));
     }
 } catch (Exception $e) {
-    $erro = "Erro ao carregar lista de rotas: " . $e->getMessage();
+    $erro = "Erro ao carregar lista de rotas: " . htmlspecialchars($e->getMessage());
     $result_rotas = false;
 }
 ?>
@@ -322,10 +364,10 @@ try {
 
         <!-- Mensagens de alerta -->
         <?php if ($mensagem): ?>
-            <div class="alert alert-success"><?php echo $mensagem; ?></div>
+            <div class="alert alert-success"><?php echo htmlspecialchars($mensagem); ?></div>
         <?php endif; ?>
         <?php if ($erro): ?>
-            <div class="alert alert-error"><?php echo $erro; ?></div>
+            <div class="alert alert-error"><?php echo htmlspecialchars($erro); ?></div>
         <?php endif; ?>
 
         <!-- Formulário de Criação/Edição -->
@@ -336,47 +378,47 @@ try {
                     <!-- Campos ocultos -->
                     <input type="hidden" name="acao" value="<?php echo isset($rota_edicao) ? 'editar' : 'criar'; ?>">
                     <?php if (isset($rota_edicao)): ?>
-                        <input type="hidden" name="id_rota" value="<?php echo $rota_edicao['id_rota']; ?>">
-                        <input type="hidden" name="id_horario" value="<?php echo $rota_edicao['id_horario']; ?>">
+                        <input type="hidden" name="id_rota" value="<?php echo htmlspecialchars($rota_edicao['id_rota']); ?>">
+                        <input type="hidden" name="id_horario" value="<?php echo htmlspecialchars($rota_edicao['id_horario']); ?>">
                     <?php endif; ?>
 
                     <!-- Dados da rota -->
                     <div class="form-group">
                         <label class="required">Origem</label>
                         <input type="text" name="origem" required
-                               value="<?php echo isset($rota_edicao) ? $rota_edicao['origem'] : ''; ?>">
+                               value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['origem']) : ''; ?>">
                     </div>
 
                     <div class="form-group">
                         <label class="required">Destino</label>
                         <input type="text" name="destino" required
-                               value="<?php echo isset($rota_edicao) ? $rota_edicao['destino'] : ''; ?>">
+                               value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['destino']) : ''; ?>">
                     </div>
 
                     <!-- Horários -->
                     <div class="form-group">
                         <label class="required">Hora de Partida</label>
                         <input type="time" name="hora_partida" required
-                               value="<?php echo isset($rota_edicao) ? $rota_edicao['hora_partida'] : ''; ?>">
+                               value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['hora_partida']) : ''; ?>">
                     </div>
 
                     <div class="form-group">
                         <label class="required">Hora de Chegada</label>
                         <input type="time" name="hora_chegada" required
-                               value="<?php echo isset($rota_edicao) ? $rota_edicao['hora_chegada'] : ''; ?>">
+                               value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['hora_chegada']) : ''; ?>">
                     </div>
 
                     <!-- Detalhes do autocarro -->
                     <div class="form-group">
                         <label class="required">Preço (€)</label>
                         <input type="number" name="preco" step="0.01" min="0" required
-                               value="<?php echo isset($rota_edicao) ? $rota_edicao['preco'] : ''; ?>">
+                               value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['preco']) : ''; ?>">
                     </div>
 
                     <div class="form-group">
                         <label class="required">Capacidade</label>
                         <input type="number" name="capacidade" min="1" required
-                               value="<?php echo isset($rota_edicao) ? $rota_edicao['capacidade_autocarro'] : ''; ?>">
+                               value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['capacidade_autocarro']) : ''; ?>">
                     </div>
 
                     <!-- Datas de validade -->
@@ -384,13 +426,13 @@ try {
                         <div class="form-group">
                             <label class="required">Data de Início</label>
                             <input type="date" name="data_inicio" required
-                                   value="<?php echo isset($rota_edicao) ? $rota_edicao['data_inicio'] : ''; ?>">
+                                   value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['data_inicio']) : ''; ?>">
                         </div>
 
                         <div class="form-group">
                             <label>Data de Fim</label>
                             <input type="date" name="data_fim"
-                                   value="<?php echo isset($rota_edicao) ? $rota_edicao['data_fim'] : ''; ?>">
+                                   value="<?php echo isset($rota_edicao) ? htmlspecialchars($rota_edicao['data_fim']) : ''; ?>">
                         </div>
                     </div>
 
@@ -408,7 +450,7 @@ try {
         <!-- Lista de Rotas -->
         <section class="lista-rotas">
             <h2>Rotas Existentes</h2>
-            <?php if ($result_rotas && mysqli_num_rows($result_rotas) > 0): ?>
+            <?php if ($result_rotas && $result_rotas->num_rows > 0): ?>
                 <div class="table-responsive">
                     <table class="results-table">
                         <thead>
@@ -421,15 +463,15 @@ try {
                             </tr>
                         </thead>
                         <tbody>
-                            <?php while ($rota = mysqli_fetch_assoc($result_rotas)): ?>
+                            <?php while ($rota = $result_rotas->fetch_assoc()): ?>
                                 <tr>
-                                    <td><?php echo $rota['origem']; ?></td>
-                                    <td><?php echo $rota['destino']; ?></td>
-                                    <td><?php echo nl2br($rota['horarios']); ?></td>
-                                    <td><?php echo $rota['nome_admin']; ?></td>
+                                    <td><?php echo htmlspecialchars($rota['origem']); ?></td>
+                                    <td><?php echo htmlspecialchars($rota['destino']); ?></td>
+                                    <td><?php echo nl2br(htmlspecialchars($rota['horarios'])); ?></td>
+                                    <td><?php echo htmlspecialchars($rota['nome_admin']); ?></td>
                                     <td>
-                                        <a href="?editar=<?php echo $rota['id_rota']; ?>" class="btn-action">Editar</a>
-                                        <a href="?excluir=<?php echo $rota['id_rota']; ?>"
+                                        <a href="?editar=<?php echo htmlspecialchars($rota['id_rota']); ?>" class="btn-action">Editar</a>
+                                        <a href="?excluir=<?php echo htmlspecialchars($rota['id_rota']); ?>"
                                            class="btn-action btn-delete"
                                            onclick="return confirm('Tem a certeza que deseja eliminar esta rota?')">
                                             Eliminar

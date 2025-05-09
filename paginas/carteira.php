@@ -21,82 +21,91 @@ if ($_SESSION['perfil'] === 'funcionário') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_utilizador = $_SESSION['id_utilizador'];
     $operacao = $_POST['operacao'];
-    $valor = floatval($_POST['valor']);
+    $valor = (float)$_POST['valor'];
 
     // Obter dados da carteira do utilizador
     $sql = "SELECT id_carteira, saldo FROM carteiras WHERE id_utilizador = ?";
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "i", $id_utilizador);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $carteira = mysqli_fetch_assoc($result);
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $id_utilizador);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $carteira = $result->fetch_assoc();
+    $stmt->close();
 
     if ($operacao === 'deposito') {
         // Adicionar fundos à carteira
         $novo_saldo = $carteira['saldo'] + $valor;
         $sql_update = "UPDATE carteiras SET saldo = ? WHERE id_carteira = ?";
-        $stmt = mysqli_prepare($conn, $sql_update);
-        mysqli_stmt_bind_param($stmt, "di", $novo_saldo, $carteira['id_carteira']);
-        mysqli_stmt_execute($stmt);
+        $stmt = $conn->prepare($sql_update);
+        $stmt->bind_param("di", $novo_saldo, $carteira['id_carteira']);
+        $stmt->execute();
+        $stmt->close();
 
         // Registar a transação
         $sql_trans = "INSERT INTO transacoes (id_carteira_destino, valor, tipo, descricao)
                       VALUES (?, ?, 'deposito', 'Depósito de fundos')";
-        $stmt = mysqli_prepare($conn, $sql_trans);
-        mysqli_stmt_bind_param($stmt, "id", $carteira['id_carteira'], $valor);
-        mysqli_stmt_execute($stmt);
+        $stmt = $conn->prepare($sql_trans);
+        $stmt->bind_param("id", $carteira['id_carteira'], $valor);
+        $stmt->execute();
+        $stmt->close();
     } elseif ($operacao === 'levantamento') {
         // Verificar se há saldo suficiente
         if ($carteira['saldo'] >= $valor) {
             // Subtrair fundos da carteira
             $novo_saldo = $carteira['saldo'] - $valor;
             $sql_update = "UPDATE carteiras SET saldo = ? WHERE id_carteira = ?";
-            $stmt = mysqli_prepare($conn, $sql_update);
-            mysqli_stmt_bind_param($stmt, "di", $novo_saldo, $carteira['id_carteira']);
-            mysqli_stmt_execute($stmt);
+            $stmt = $conn->prepare($sql_update);
+            $stmt->bind_param("di", $novo_saldo, $carteira['id_carteira']);
+            $stmt->execute();
+            $stmt->close();
 
             // Registar a transação
             $sql_trans = "INSERT INTO transacoes (id_carteira_origem, valor, tipo, descricao)
                           VALUES (?, ?, 'levantamento', 'Levantamento de fundos')";
-            $stmt = mysqli_prepare($conn, $sql_trans);
-            mysqli_stmt_bind_param($stmt, "id", $carteira['id_carteira'], $valor);
-            mysqli_stmt_execute($stmt);
+            $stmt = $conn->prepare($sql_trans);
+            $stmt->bind_param("id", $carteira['id_carteira'], $valor);
+            $stmt->execute();
+            $stmt->close();
         }
     }
 }
 
 // Verificar se o utilizador tem carteira, caso não tenha, criar uma
 $sql_check = "SELECT id_carteira, saldo FROM carteiras WHERE id_utilizador = ?";
-$stmt = mysqli_prepare($conn, $sql_check);
-mysqli_stmt_bind_param($stmt, "i", $_SESSION['id_utilizador']);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-$carteira = mysqli_fetch_assoc($result);
+$stmt = $conn->prepare($sql_check);
+$stmt->bind_param("i", $_SESSION['id_utilizador']);
+$stmt->execute();
+$result = $stmt->get_result();
+$carteira = $result->fetch_assoc();
+$stmt->close();
 
 if (!$carteira) {
     // Criar carteira para o utilizador
     $sql_create = "INSERT INTO carteiras (id_utilizador, tipo, saldo) VALUES (?, 'cliente', 0.00)";
-    $stmt = mysqli_prepare($conn, $sql_create);
-    mysqli_stmt_bind_param($stmt, "i", $_SESSION['id_utilizador']);
-    mysqli_stmt_execute($stmt);
+    $stmt = $conn->prepare($sql_create);
+    $stmt->bind_param("i", $_SESSION['id_utilizador']);
+    $stmt->execute();
+    $stmt->close();
 
     // Obter a carteira recém-criada
     $sql_get = "SELECT id_carteira, saldo FROM carteiras WHERE id_utilizador = ?";
-    $stmt = mysqli_prepare($conn, $sql_get);
-    mysqli_stmt_bind_param($stmt, "i", $_SESSION['id_utilizador']);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $carteira = mysqli_fetch_assoc($result);
+    $stmt = $conn->prepare($sql_get);
+    $stmt->bind_param("i", $_SESSION['id_utilizador']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $carteira = $result->fetch_assoc();
+    $stmt->close();
 }
 
 // Obter transações recentes
 $sql = "SELECT * FROM transacoes
         WHERE id_carteira_origem = ? OR id_carteira_destino = ?
         ORDER BY data_operacao DESC LIMIT 10";
-$stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, "ii", $carteira['id_carteira'], $carteira['id_carteira']);
-mysqli_stmt_execute($stmt);
-$transacoes = mysqli_stmt_get_result($stmt);
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("ii", $carteira['id_carteira'], $carteira['id_carteira']);
+$stmt->execute();
+$transacoes = $stmt->get_result();
+$stmt->close();
 ?>
 
 <!DOCTYPE html>
@@ -138,7 +147,7 @@ $transacoes = mysqli_stmt_get_result($stmt);
             <h1>A Sua Carteira</h1>
             <div class="balance-card">
                 <h2>Saldo Atual</h2>
-                <p class="balance-amount"><?php echo number_format($carteira['saldo'], 2); ?>€</p>
+                <p class="balance-amount"><?php echo htmlspecialchars(number_format($carteira['saldo'], 2)); ?>€</p>
             </div>
         </section>
 
@@ -181,14 +190,14 @@ $transacoes = mysqli_stmt_get_result($stmt);
                         </tr>
                     </thead>
                     <tbody>
-                        <?php while ($transacao = mysqli_fetch_assoc($transacoes)): ?>
+                        <?php while ($transacao = $transacoes->fetch_assoc()): ?>
                         <tr>
-                            <td><?php echo date('d/m/Y H:i', strtotime($transacao['data_operacao'])); ?></td>
-                            <td><?php echo ucfirst($transacao['tipo']); ?></td>
+                            <td><?php echo htmlspecialchars(date('d/m/Y H:i', strtotime($transacao['data_operacao']))); ?></td>
+                            <td><?php echo htmlspecialchars(ucfirst($transacao['tipo'])); ?></td>
                             <td class="<?php echo $transacao['tipo'] === 'deposito' ? 'positive' : 'negative'; ?>">
-                                <?php echo ($transacao['tipo'] === 'deposito' ? '+' : '-') . number_format($transacao['valor'], 2); ?>€
+                                <?php echo htmlspecialchars(($transacao['tipo'] === 'deposito' ? '+' : '-') . number_format($transacao['valor'], 2)); ?>€
                             </td>
-                            <td><?php echo $transacao['descricao']; ?></td>
+                            <td><?php echo htmlspecialchars($transacao['descricao']); ?></td>
                         </tr>
                         <?php endwhile; ?>
                     </tbody>

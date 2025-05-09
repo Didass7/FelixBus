@@ -60,31 +60,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         // Prepara e executa a consulta de inserção
                         $sql = "INSERT INTO alertas (titulo, conteudo, data_inicio, data_fim, criado_por, ativo)
                                 VALUES (?, ?, ?, ?, ?, ?)";
-                        $stmt = mysqli_prepare($conn, $sql);
-                        mysqli_stmt_bind_param($stmt, "ssssii", $titulo, $conteudo, $data_inicio, $data_fim, $id_admin, $ativo);
+                        $stmt = $conn->prepare($sql);
+                        $stmt->bind_param("ssssii", $titulo, $conteudo, $data_inicio, $data_fim, $id_admin, $ativo);
 
-                        if (mysqli_stmt_execute($stmt)) {
+                        if ($stmt->execute()) {
                             $mensagem = "Alerta criado com sucesso!";
                         } else {
-                            $erro = "Erro ao criar alerta: " . mysqli_error($conn);
+                            $erro = "Erro ao criar alerta: {$stmt->error}";
                         }
+                        $stmt->close();
                     } elseif ($_POST['acao'] === 'editar' && isset($_POST['id_alerta'])) {
                         // Prepara e executa a consulta de atualização
                         $id_alerta = $_POST['id_alerta'];
                         $sql = "UPDATE alertas SET titulo = ?, conteudo = ?, data_inicio = ?, data_fim = ?, ativo = ?
                                 WHERE id_alerta = ?";
-                        $stmt = mysqli_prepare($conn, $sql);
-                        mysqli_stmt_bind_param($stmt, "ssssii", $titulo, $conteudo, $data_inicio, $data_fim, $ativo, $id_alerta);
+                        $stmt = $conn->prepare($sql);
+                        $stmt->bind_param("ssssii", $titulo, $conteudo, $data_inicio, $data_fim, $ativo, $id_alerta);
 
-                        if (mysqli_stmt_execute($stmt)) {
+                        if ($stmt->execute()) {
                             $mensagem = "Alerta atualizado com sucesso!";
                         } else {
-                            $erro = "Erro ao atualizar alerta: " . mysqli_error($conn);
+                            $erro = "Erro ao atualizar alerta: {$stmt->error}";
                         }
+                        $stmt->close();
                     }
                 }
             } catch (Exception $e) {
-                $erro = "Erro ao processar datas: " . $e->getMessage();
+                $erro = "Erro ao processar datas: {$e->getMessage()}";
             }
         }
     }
@@ -94,14 +96,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Prepara e executa a consulta de eliminação
         $sql = "DELETE FROM alertas WHERE id_alerta = ?";
-        $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "i", $id_alerta);
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $id_alerta);
 
-        if (mysqli_stmt_execute($stmt)) {
+        if ($stmt->execute()) {
             $mensagem = "Alerta eliminado com sucesso!";
         } else {
-            $erro = "Erro ao eliminar alerta: " . mysqli_error($conn);
+            $erro = "Erro ao eliminar alerta: {$stmt->error}";
         }
+        $stmt->close();
     }
 }
 
@@ -114,14 +117,15 @@ if (isset($_GET['editar']) && is_numeric($_GET['editar'])) {
 
     // Prepara e executa a consulta
     $sql = "SELECT * FROM alertas WHERE id_alerta = ?";
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "i", $id_alerta);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $id_alerta);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-    if ($row = mysqli_fetch_assoc($result)) {
+    if ($row = $result->fetch_assoc()) {
         $alerta_edicao = $row;
     }
+    $stmt->close();
 }
 
 /**
@@ -131,7 +135,10 @@ $sql_alertas = "SELECT a.*, u.nome_completo as nome_admin
                 FROM alertas a
                 JOIN utilizadores u ON a.criado_por = u.id_utilizador
                 ORDER BY a.data_criacao DESC";
-$result_alertas = mysqli_query($conn, $sql_alertas);
+$stmt_alertas = $conn->prepare($sql_alertas);
+$stmt_alertas->execute();
+$result_alertas = $stmt_alertas->get_result();
+$stmt_alertas->close();
 ?>
 
 <!DOCTYPE html>
@@ -164,13 +171,13 @@ $result_alertas = mysqli_query($conn, $sql_alertas);
         <!-- Mensagens de alerta -->
         <?php if (!empty($mensagem)): ?>
             <div class="alert alert-success">
-                <?php echo $mensagem; ?>
+                <?php echo htmlspecialchars($mensagem); ?>
             </div>
         <?php endif; ?>
 
         <?php if (!empty($erro)): ?>
             <div class="alert alert-error">
-                <?php echo $erro; ?>
+                <?php echo htmlspecialchars($erro); ?>
             </div>
         <?php endif; ?>
 
@@ -181,20 +188,20 @@ $result_alertas = mysqli_query($conn, $sql_alertas);
                 <!-- Campos ocultos -->
                 <input type="hidden" name="acao" value="<?php echo $alerta_edicao ? 'editar' : 'criar'; ?>">
                 <?php if ($alerta_edicao): ?>
-                    <input type="hidden" name="id_alerta" value="<?php echo $alerta_edicao['id_alerta']; ?>">
+                    <input type="hidden" name="id_alerta" value="<?php echo htmlspecialchars($alerta_edicao['id_alerta']); ?>">
                 <?php endif; ?>
 
                 <!-- Informações básicas -->
                 <div class="form-group">
                     <label for="titulo">Título</label>
                     <input type="text" id="titulo" name="titulo" class="form-input"
-                           value="<?php echo $alerta_edicao ? $alerta_edicao['titulo'] : ''; ?>"
+                           value="<?php echo $alerta_edicao ? htmlspecialchars($alerta_edicao['titulo']) : ''; ?>"
                            required>
                 </div>
 
                 <div class="form-group">
                     <label for="conteudo">Conteúdo</label>
-                    <textarea id="conteudo" name="conteudo" class="form-input" rows="4" required><?php echo $alerta_edicao ? $alerta_edicao['conteudo'] : ''; ?></textarea>
+                    <textarea id="conteudo" name="conteudo" class="form-input" rows="4" required><?php echo $alerta_edicao ? htmlspecialchars($alerta_edicao['conteudo']) : ''; ?></textarea>
                 </div>
 
                 <!-- Período de validade -->
@@ -202,14 +209,14 @@ $result_alertas = mysqli_query($conn, $sql_alertas);
                     <div class="form-group">
                         <label for="data_inicio">Data de Início</label>
                         <input type="datetime-local" id="data_inicio" name="data_inicio" class="form-input"
-                               value="<?php echo $alerta_edicao ? date('Y-m-d\TH:i', strtotime($alerta_edicao['data_inicio'])) : ''; ?>"
+                               value="<?php echo $alerta_edicao ? htmlspecialchars(date('Y-m-d\TH:i', strtotime($alerta_edicao['data_inicio']))) : ''; ?>"
                                required>
                     </div>
 
                     <div class="form-group">
                         <label for="data_fim">Data de Fim</label>
                         <input type="datetime-local" id="data_fim" name="data_fim" class="form-input"
-                               value="<?php echo $alerta_edicao ? date('Y-m-d\TH:i', strtotime($alerta_edicao['data_fim'])) : ''; ?>"
+                               value="<?php echo $alerta_edicao ? htmlspecialchars(date('Y-m-d\TH:i', strtotime($alerta_edicao['data_fim']))) : ''; ?>"
                                required>
                     </div>
                 </div>
@@ -237,7 +244,7 @@ $result_alertas = mysqli_query($conn, $sql_alertas);
         <section class="list-section">
             <h2>Alertas Existentes</h2>
 
-            <?php if ($result_alertas && mysqli_num_rows($result_alertas) > 0): ?>
+            <?php if ($result_alertas && $result_alertas->num_rows > 0): ?>
                 <div class="alerts-list">
                     <table class="data-table">
                         <thead>
@@ -251,26 +258,26 @@ $result_alertas = mysqli_query($conn, $sql_alertas);
                             </tr>
                         </thead>
                         <tbody>
-                            <?php while ($alerta = mysqli_fetch_assoc($result_alertas)): ?>
+                            <?php while ($alerta = $result_alertas->fetch_assoc()): ?>
                                 <tr>
-                                    <td><?php echo $alerta['titulo']; ?></td>
-                                    <td><?php echo date('d/m/Y H:i', strtotime($alerta['data_inicio'])); ?></td>
-                                    <td><?php echo date('d/m/Y H:i', strtotime($alerta['data_fim'])); ?></td>
+                                    <td><?php echo htmlspecialchars($alerta['titulo']); ?></td>
+                                    <td><?php echo htmlspecialchars(date('d/m/Y H:i', strtotime($alerta['data_inicio']))); ?></td>
+                                    <td><?php echo htmlspecialchars(date('d/m/Y H:i', strtotime($alerta['data_fim']))); ?></td>
                                     <td>
                                         <span class="status-badge <?php echo $alerta['ativo'] ? 'active' : 'inactive'; ?>">
                                             <?php echo $alerta['ativo'] ? 'Ativo' : 'Inativo'; ?>
                                         </span>
                                     </td>
-                                    <td><?php echo $alerta['nome_admin']; ?></td>
+                                    <td><?php echo htmlspecialchars($alerta['nome_admin']); ?></td>
                                     <td class="actions">
                                         <!-- Botão de edição -->
-                                        <a href="gerir_alertas.php?editar=<?php echo $alerta['id_alerta']; ?>"
+                                        <a href="gerir_alertas.php?editar=<?php echo htmlspecialchars($alerta['id_alerta']); ?>"
                                            class="btn-action edit">Editar</a>
 
                                         <!-- Formulário de eliminação -->
                                         <form method="POST" action="gerir_alertas.php" class="delete-form"
                                               onsubmit="return confirm('Tem a certeza que deseja eliminar este alerta?');">
-                                            <input type="hidden" name="id_alerta" value="<?php echo $alerta['id_alerta']; ?>">
+                                            <input type="hidden" name="id_alerta" value="<?php echo htmlspecialchars($alerta['id_alerta']); ?>">
                                             <button type="submit" name="excluir" class="btn-action delete">Eliminar</button>
                                         </form>
                                     </td>

@@ -24,23 +24,26 @@ $erro = '';
 $saldo_empresa = 0;
 
 // Obter saldo da empresa
-$result_empresa = mysqli_query($conn, "SELECT saldo FROM carteiras WHERE tipo = 'empresa' LIMIT 1");
-if ($empresa = mysqli_fetch_assoc($result_empresa)) {
+$result_empresa = $conn->query("SELECT saldo FROM carteiras WHERE tipo = 'empresa' LIMIT 1");
+if ($empresa = $result_empresa->fetch_assoc()) {
     $saldo_empresa = $empresa['saldo'];
 }
+$result_empresa->close();
 
 // Processar operações de carteira (depósito ou levantamento)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Obter dados do formulário
     $id_cliente = $_POST['id_cliente'];
     $operacao = $_POST['operacao'];
-    $valor = floatval($_POST['valor']);
+    $valor = (double)$_POST['valor'];
 
     // Obter carteira do cliente
-    $stmt = mysqli_prepare($conn, "SELECT id_carteira, saldo FROM carteiras WHERE id_utilizador = ?");
-    mysqli_stmt_bind_param($stmt, "i", $id_cliente);
-    mysqli_stmt_execute($stmt);
-    $carteira = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+    $stmt = $conn->prepare("SELECT id_carteira, saldo FROM carteiras WHERE id_utilizador = ?");
+    $stmt->bind_param("i", $id_cliente);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $carteira = $result->fetch_assoc();
+    $stmt->close();
 
     // Verificar se a carteira existe
     if (!$carteira) {
@@ -49,27 +52,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Processar depósito
         if ($operacao === 'deposito') {
             $novo_saldo = $carteira['saldo'] + $valor;
-            $stmt = mysqli_prepare($conn, "UPDATE carteiras SET saldo = ? WHERE id_carteira = ?");
-            mysqli_stmt_bind_param($stmt, "di", $novo_saldo, $carteira['id_carteira']);
+            $stmt = $conn->prepare("UPDATE carteiras SET saldo = ? WHERE id_carteira = ?");
+            $stmt->bind_param("di", $novo_saldo, $carteira['id_carteira']);
 
-            if (mysqli_stmt_execute($stmt)) {
+            if ($stmt->execute()) {
                 $mensagem = "Depósito realizado com sucesso!";
             } else {
                 $erro = "Erro ao realizar depósito.";
             }
+            $stmt->close();
         }
         // Processar levantamento
         elseif ($operacao === 'levantamento') {
             if ($carteira['saldo'] >= $valor) {
                 $novo_saldo = $carteira['saldo'] - $valor;
-                $stmt = mysqli_prepare($conn, "UPDATE carteiras SET saldo = ? WHERE id_carteira = ?");
-                mysqli_stmt_bind_param($stmt, "di", $novo_saldo, $carteira['id_carteira']);
+                $stmt = $conn->prepare("UPDATE carteiras SET saldo = ? WHERE id_carteira = ?");
+                $stmt->bind_param("di", $novo_saldo, $carteira['id_carteira']);
 
-                if (mysqli_stmt_execute($stmt)) {
+                if ($stmt->execute()) {
                     $mensagem = "Levantamento realizado com sucesso!";
                 } else {
                     $erro = "Erro ao realizar levantamento.";
                 }
+                $stmt->close();
             } else {
                 $erro = "Saldo insuficiente.";
             }
@@ -82,7 +87,7 @@ $sql_clientes = "SELECT u.id_utilizador, u.nome_completo, u.email, c.saldo
                 FROM utilizadores u
                 LEFT JOIN carteiras c ON u.id_utilizador = c.id_utilizador
                 WHERE u.perfil = 'cliente'";
-$result_clientes = mysqli_query($conn, $sql_clientes);
+$result_clientes = $conn->query($sql_clientes);
 ?>
 
 <!DOCTYPE html>
@@ -120,7 +125,7 @@ $result_clientes = mysqli_query($conn, $sql_clientes);
                 <h2>Carteira da Empresa</h2>
                 <div class="saldo-valor">
                     <span class="saldo-label">Saldo Total:</span>
-                    <span class="saldo-amount"><?php echo number_format($saldo_empresa, 2); ?>€</span>
+                    <span class="saldo-amount"><?php echo htmlspecialchars(number_format($saldo_empresa, 2)); ?>€</span>
                 </div>
             </div>
         </div>
@@ -129,24 +134,24 @@ $result_clientes = mysqli_query($conn, $sql_clientes);
 
         <!-- Mensagens de alerta -->
         <?php if ($mensagem): ?>
-            <div class="alert success"><?php echo $mensagem; ?></div>
+            <div class="alert success"><?php echo htmlspecialchars($mensagem); ?></div>
         <?php endif; ?>
         <?php if ($erro): ?>
-            <div class="alert error"><?php echo $erro; ?></div>
+            <div class="alert error"><?php echo htmlspecialchars($erro); ?></div>
         <?php endif; ?>
 
         <!-- Lista de carteiras dos clientes -->
         <div class="carteiras-grid">
-            <?php while ($cliente = mysqli_fetch_assoc($result_clientes)): ?>
+            <?php while ($cliente = $result_clientes->fetch_assoc()): ?>
                 <div class="carteira-card">
-                    <h3><?php echo $cliente['nome_completo']; ?></h3>
-                    <p>Email: <?php echo $cliente['email']; ?></p>
-                    <p>Saldo Atual: <?php echo number_format($cliente['saldo'] ?? 0, 2); ?>€</p>
+                    <h3><?php echo htmlspecialchars($cliente['nome_completo']); ?></h3>
+                    <p>Email: <?php echo htmlspecialchars($cliente['email']); ?></p>
+                    <p>Saldo Atual: <?php echo htmlspecialchars(number_format($cliente['saldo'] ?? 0, 2)); ?>€</p>
 
                     <div class="operacoes">
                         <!-- Formulário de depósito -->
                         <form action="gerir_carteiras.php" method="POST" class="operacao-form">
-                            <input type="hidden" name="id_cliente" value="<?php echo $cliente['id_utilizador']; ?>">
+                            <input type="hidden" name="id_cliente" value="<?php echo htmlspecialchars($cliente['id_utilizador']); ?>">
                             <input type="hidden" name="operacao" value="deposito">
                             <div class="form-group">
                                 <input type="number" name="valor" step="0.01" min="0.01" required placeholder="Valor">
@@ -156,7 +161,7 @@ $result_clientes = mysqli_query($conn, $sql_clientes);
 
                         <!-- Formulário de levantamento -->
                         <form action="gerir_carteiras.php" method="POST" class="operacao-form">
-                            <input type="hidden" name="id_cliente" value="<?php echo $cliente['id_utilizador']; ?>">
+                            <input type="hidden" name="id_cliente" value="<?php echo htmlspecialchars($cliente['id_utilizador']); ?>">
                             <input type="hidden" name="operacao" value="levantamento">
                             <div class="form-group">
                                 <input type="number" name="valor" step="0.01" min="0.01" required placeholder="Valor">

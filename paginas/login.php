@@ -53,12 +53,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Prepara e executa a consulta para encontrar o utilizador
             $sql = "SELECT * FROM utilizadores WHERE nome_utilizador = ?";
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "s", $username);
-            mysqli_stmt_execute($stmt);
-            $result = mysqli_stmt_get_result($stmt);
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("s", $username);
+            $stmt->execute();
+            $result = $stmt->get_result();
 
-            if ($user = mysqli_fetch_assoc($result)) {
+            if ($user = $result->fetch_assoc()) {
                 // Verifica se a conta está validada (apenas para clientes)
                 $validado = $user['validado'] ?? 1; // Assume validado se a coluna não existir
 
@@ -98,10 +98,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } catch (Exception $e) {
             $error = "Erro: " . $e->getMessage();
         } finally {
-            // Fecha a ligação à base de dados
-            if (isset($conn)) {
-                mysqli_close($conn);
-            }
+            // Não é necessário fechar a conexão explicitamente
+            // O PHP fechará automaticamente quando o script terminar
         }
     }
 }

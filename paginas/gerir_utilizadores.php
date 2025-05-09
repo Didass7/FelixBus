@@ -53,13 +53,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
             // Prepara e executa a query de inserção
             $sql = "INSERT INTO utilizadores (nome_completo, email, nome_utilizador, hash_password, perfil, telefone, morada)
                     VALUES (?, ?, ?, ?, ?, ?, ?)";
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "sssssss", $nome, $email, $nome_utilizador, $hash_password, $perfil, $telefone, $morada);
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("sssssss", $nome, $email, $nome_utilizador, $hash_password, $perfil, $telefone, $morada);
 
-            if (mysqli_stmt_execute($stmt)) {
+            if ($stmt->execute()) {
                 $mensagem = "Utilizador inserido com sucesso!";
             } else {
-                $erro = "Erro ao inserir utilizador: " . mysqli_error($conn);
+                $erro = "Erro ao inserir utilizador: " . $stmt->error;
             }
             break;
 
@@ -77,63 +77,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
                 $sql = "UPDATE utilizadores
                        SET nome_completo = ?, email = ?, perfil = ?, telefone = ?, morada = ?, hash_password = ?
                        WHERE id_utilizador = ?";
-                $stmt = mysqli_prepare($conn, $sql);
-                mysqli_stmt_bind_param($stmt, "ssssssi", $nome, $email, $perfil, $telefone, $morada, $hash_password, $id);
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("ssssssi", $nome, $email, $perfil, $telefone, $morada, $hash_password, $id);
             } else {
                 $sql = "UPDATE utilizadores
                        SET nome_completo = ?, email = ?, perfil = ?, telefone = ?, morada = ?
                        WHERE id_utilizador = ?";
-                $stmt = mysqli_prepare($conn, $sql);
-                mysqli_stmt_bind_param($stmt, "sssssi", $nome, $email, $perfil, $telefone, $morada, $id);
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("sssssi", $nome, $email, $perfil, $telefone, $morada, $id);
             }
 
-            if (mysqli_stmt_execute($stmt)) {
+            if ($stmt->execute()) {
                 $_SESSION['mensagem'] = "Utilizador atualizado com sucesso!";
                 header("Location: gerir_utilizadores.php#lista");
                 exit();
             } else {
-                $erro = "Erro ao atualizar utilizador: " . mysqli_error($conn);
+                $erro = "Erro ao atualizar utilizador: " . $stmt->error;
             }
             break;
 
         case 'validar':
             // Atualiza o estado de validação para 1 (validado)
             $sql = "UPDATE utilizadores SET validado = 1 WHERE id_utilizador = ?";
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "i", $id);
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("i", $id);
 
-            if (mysqli_stmt_execute($stmt)) {
+            if ($stmt->execute()) {
                 $_SESSION['mensagem'] = "Utilizador validado com sucesso!";
                 header("Location: gerir_utilizadores.php#lista");
                 exit();
             } else {
-                $erro = "Erro ao validar utilizador: " . mysqli_error($conn);
+                $erro = "Erro ao validar utilizador: " . $stmt->error;
             }
             break;
 
         case 'rejeitar':
             // Remove utilizador não validado
             $sql = "DELETE FROM utilizadores WHERE id_utilizador = ? AND validado = 0";
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "i", $id);
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("i", $id);
 
-            if (mysqli_stmt_execute($stmt)) {
+            if ($stmt->execute()) {
                 $mensagem = "Registo rejeitado com sucesso!";
             } else {
-                $erro = "Erro ao rejeitar registo: " . mysqli_error($conn);
+                $erro = "Erro ao rejeitar registo: " . $stmt->error;
             }
             break;
 
         case 'desvalidar':
             // Atualiza o estado de validação para 0 (não validado)
             $sql = "UPDATE utilizadores SET validado = 0 WHERE id_utilizador = ?";
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "i", $id);
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("i", $id);
 
-            if (mysqli_stmt_execute($stmt)) {
+            if ($stmt->execute()) {
                 $mensagem = "Utilizador desvalidado com sucesso!";
             } else {
-                $erro = "Erro ao desvalidar utilizador: " . mysqli_error($conn);
+                $erro = "Erro ao desvalidar utilizador: " . $stmt->error;
             }
             break;
     }
@@ -146,18 +146,18 @@ $utilizador_edicao = null;
 if (isset($_GET['editar']) && is_numeric($_GET['editar'])) {
     $id = $_GET['editar'];
     $sql = "SELECT * FROM utilizadores WHERE id_utilizador = ?";
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "i", $id);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $utilizador_edicao = mysqli_fetch_assoc($result);
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $utilizador_edicao = $result->fetch_assoc();
 }
 
 /**
  * Obtém lista de todos os utilizadores
  */
 $sql = "SELECT * FROM utilizadores ORDER BY data_registo DESC";
-$result = mysqli_query($conn, $sql);
+$result = $conn->query($sql);
 ?>
 
 <!DOCTYPE html>
@@ -187,10 +187,10 @@ $result = mysqli_query($conn, $sql);
     <main class="container">
         <!-- Mensagens de alerta -->
         <?php if ($mensagem): ?>
-            <div class="alert alert-success"><?php echo $mensagem; ?></div>
+            <div class="alert alert-success"><?php echo htmlspecialchars($mensagem); ?></div>
         <?php endif; ?>
         <?php if ($erro): ?>
-            <div class="alert alert-error"><?php echo $erro; ?></div>
+            <div class="alert alert-error"><?php echo htmlspecialchars($erro); ?></div>
         <?php endif; ?>
 
         <!-- Formulário de Inserção/Edição -->
@@ -278,7 +278,7 @@ $result = mysqli_query($conn, $sql);
                         </tr>
                     </thead>
                     <tbody>
-                        <?php while ($user = mysqli_fetch_assoc($result)): ?>
+                        <?php while ($user = $result->fetch_assoc()): ?>
                             <tr>
                                 <td><?php echo htmlspecialchars($user['nome_completo']); ?></td>
                                 <td><?php echo htmlspecialchars($user['email']); ?></td>

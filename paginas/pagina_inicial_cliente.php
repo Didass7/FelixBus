@@ -10,12 +10,12 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'cliente')) {
 }
 
 // Obtém os alertas ativos dentro do período válido
-$sql_alertas = "SELECT * FROM alertas 
-                WHERE ativo = 1 
-                AND data_inicio <= NOW() 
-                AND data_fim >= NOW() 
+$sql_alertas = "SELECT * FROM alertas
+                WHERE ativo = 1
+                AND data_inicio <= NOW()
+                AND data_fim >= NOW()
                 ORDER BY data_criacao DESC";
-$result_alertas = mysqli_query($conn, $sql_alertas);
+$result_alertas = $conn->query($sql_alertas);
 ?>
 <!DOCTYPE html>
 <html lang="pt-PT">
@@ -50,7 +50,7 @@ $result_alertas = mysqli_query($conn, $sql_alertas);
                     <h1 class="hero-title">Viagens de Luxo Reimaginadas</h1>
                     <p class="hero-subtitle">Conforto excepcional a preços acessíveis</p>
                 </div>
-                
+
                 <div class="action-buttons">
                     <button class="btn-primary" type="button" onclick="window.location.href='consultar_rotas.php'">
                         Consultar Rotas e Horários
@@ -59,16 +59,16 @@ $result_alertas = mysqli_query($conn, $sql_alertas);
             </div>
 
             <!-- Secção de Alertas Ativos -->
-            <?php if (mysqli_num_rows($result_alertas) > 0): ?>
+            <?php if ($result_alertas->num_rows > 0): ?>
                 <div class="hero-alerts">
                     <h2 class="alerts-title">Alertas e Promoções</h2>
                     <div class="alerts-container">
-                        <?php while ($alerta = mysqli_fetch_assoc($result_alertas)): ?>
+                        <?php while ($alerta = $result_alertas->fetch_assoc()): ?>
                             <div class="alert-card">
-                                <h3><?php echo $alerta['titulo']; ?></h3>
-                                <p><?php echo $alerta['conteudo']; ?></p>
+                                <h3><?php echo htmlspecialchars($alerta['titulo']); ?></h3>
+                                <p><?php echo htmlspecialchars($alerta['conteudo']); ?></p>
                                 <div class="alert-date">
-                                    <small>Válido até: <?php echo date('d/m/Y', strtotime($alerta['data_fim'])); ?></small>
+                                    <small>Válido até: <?php echo htmlspecialchars(date('d/m/Y', strtotime($alerta['data_fim']))); ?></small>
                                 </div>
                             </div>
                         <?php endwhile; ?>
