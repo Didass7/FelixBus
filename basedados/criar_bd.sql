@@ -95,7 +95,7 @@ CREATE TABLE bilhetes (
     preco_pago DECIMAL(10,2) NOT NULL,
     valido BOOLEAN NOT NULL DEFAULT 1,
     numero_lugar INT NOT NULL,
-    comprado_por INT COMMENT,
+    comprado_por INT,
     FOREIGN KEY (id_horario) REFERENCES horarios(id_horario),
     FOREIGN KEY (id_utilizador) REFERENCES utilizadores(id_utilizador),
     FOREIGN KEY (comprado_por) REFERENCES utilizadores(id_utilizador)
