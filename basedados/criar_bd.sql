@@ -8,7 +8,7 @@ USE felixbus;
 -- Tabela de Utilizadores
 CREATE TABLE utilizadores (
     id_utilizador INT AUTO_INCREMENT PRIMARY KEY,
-    nome_utilizador VARCHAR(255) UNIQUE NOT NULL
+    nome_utilizador VARCHAR(255) UNIQUE NOT NULL,
     hash_password VARCHAR(255) NOT NULL
     email VARCHAR(255) UNIQUE NOT NULL,
     nome_completo VARCHAR(255) NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE rotas (
     id_rota INT AUTO_INCREMENT PRIMARY KEY,
     origem VARCHAR(255) NOT NULL,
     destino VARCHAR(255) NOT NULL,
-    criado_por INT NOT NULL
+    criado_por INT NOT NULL,
     data_criacao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     data_atualizacao DATETIME NOT NULL ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (criado_por) REFERENCES utilizadores(id_utilizador)
