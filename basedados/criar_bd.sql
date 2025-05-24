@@ -8,15 +8,15 @@ USE felixbus;
 -- Tabela de Utilizadores
 CREATE TABLE utilizadores (
     id_utilizador INT AUTO_INCREMENT PRIMARY KEY,
-    nome_utilizador VARCHAR(255) UNIQUE NOT NULL COMMENT 'Nome único para login',
-    hash_password VARCHAR(255) NOT NULL COMMENT 'Password encriptada',
+    nome_utilizador VARCHAR(255) UNIQUE NOT NULL
+    hash_password VARCHAR(255) NOT NULL
     email VARCHAR(255) UNIQUE NOT NULL,
     nome_completo VARCHAR(255) NOT NULL,
     telefone VARCHAR(20),
     morada TEXT,
     perfil ENUM('cliente', 'funcionário', 'administrador') NOT NULL DEFAULT 'cliente',
     data_registo DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    validado BOOLEAN NOT NULL DEFAULT 0 COMMENT 'Indica se o usuário foi validado pelo administrador'
+    validado BOOLEAN NOT NULL DEFAULT 0
 );
 
 -- Tabela de Rotas
@@ -24,7 +24,7 @@ CREATE TABLE rotas (
     id_rota INT AUTO_INCREMENT PRIMARY KEY,
     origem VARCHAR(255) NOT NULL,
     destino VARCHAR(255) NOT NULL,
-    criado_por INT NOT NULL COMMENT 'Administrador que criou a rota',
+    criado_por INT NOT NULL
     data_criacao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     data_atualizacao DATETIME NOT NULL ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (criado_por) REFERENCES utilizadores(id_utilizador)
@@ -36,11 +36,11 @@ CREATE TABLE horarios (
     id_rota INT NOT NULL,
     hora_partida TIME NOT NULL,
     hora_chegada TIME NOT NULL,
-    capacidade_autocarro INT NOT NULL COMMENT 'Número total de lugares',
-    lugares_disponiveis INT NOT NULL COMMENT 'Lugares restantes',
+    capacidade_autocarro INT NOT NULL,
+    lugares_disponiveis INT NOT NULL,
     preco DECIMAL(10,2) NOT NULL,
-    data_inicio DATE NOT NULL COMMENT 'Data de início da operação',
-    data_fim DATE NULL COMMENT 'Data de fim da operação (opcional)',
+    data_inicio DATE NOT NULL,
+    data_fim DATE NULL,
     data_criacao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     data_atualizacao DATETIME NOT NULL ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (id_rota) REFERENCES rotas(id_rota)
@@ -53,16 +53,16 @@ CREATE TABLE alertas (
     conteudo TEXT NOT NULL,
     data_inicio DATETIME NOT NULL,
     data_fim DATETIME NOT NULL,
-    criado_por INT NOT NULL COMMENT 'Administrador responsável',
+    criado_por INT NOT NULL,
     data_criacao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    ativo BOOLEAN NOT NULL DEFAULT 1 COMMENT 'Se o alerta está visível',
+    ativo BOOLEAN NOT NULL DEFAULT 1,
     FOREIGN KEY (criado_por) REFERENCES utilizadores(id_utilizador)
 );
 
 -- Tabela de Carteiras
 CREATE TABLE carteiras (
     id_carteira INT AUTO_INCREMENT PRIMARY KEY,
-    id_utilizador INT UNIQUE COMMENT 'Null para carteira da empresa',
+    id_utilizador INT UNIQUE,
     tipo ENUM('cliente', 'empresa') NOT NULL DEFAULT 'cliente',
     saldo DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     data_criacao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -75,11 +75,11 @@ INSERT INTO carteiras (id_utilizador, tipo, saldo) VALUES (NULL, 'empresa', 0.00
 -- Tabela de Transações
 CREATE TABLE transacoes (
     id_transacao INT AUTO_INCREMENT PRIMARY KEY,
-    id_carteira_origem INT COMMENT 'Null para depósitos iniciais',
-    id_carteira_destino INT COMMENT 'Null para levantamentos',
+    id_carteira_origem INT,
+    id_carteira_destino INT,
     valor DECIMAL(10,2) NOT NULL,
     tipo ENUM('deposito', 'levantamento', 'transferencia') NOT NULL,
-    descricao TEXT COMMENT 'Detalhes da operação',
+    descricao TEXT,
     data_operacao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_carteira_origem) REFERENCES carteiras(id_carteira),
     FOREIGN KEY (id_carteira_destino) REFERENCES carteiras(id_carteira)
@@ -87,15 +87,15 @@ CREATE TABLE transacoes (
 
 -- Tabela de Bilhetes
 CREATE TABLE bilhetes (
-    codigo_bilhete CHAR(8) PRIMARY KEY COMMENT 'Código único de validação',
+    codigo_bilhete CHAR(8) PRIMARY KEY,
     id_horario INT NOT NULL,
     id_utilizador INT NOT NULL,
-    data_viagem DATE NOT NULL COMMENT 'Data específica da viagem',
+    data_viagem DATE NOT NULL,
     data_compra DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    preco_pago DECIMAL(10,2) NOT NULL COMMENT 'Valor no momento da compra',
-    valido BOOLEAN NOT NULL DEFAULT 1 COMMENT 'Se o bilhete está ativo',
+    preco_pago DECIMAL(10,2) NOT NULL,
+    valido BOOLEAN NOT NULL DEFAULT 1,
     numero_lugar INT NOT NULL,
-    comprado_por INT COMMENT 'ID do funcionário que realizou a compra, NULL se foi o próprio cliente',
+    comprado_por INT COMMENT,
     FOREIGN KEY (id_horario) REFERENCES horarios(id_horario),
     FOREIGN KEY (id_utilizador) REFERENCES utilizadores(id_utilizador),
     FOREIGN KEY (comprado_por) REFERENCES utilizadores(id_utilizador)
