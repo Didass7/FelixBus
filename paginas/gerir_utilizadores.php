@@ -50,7 +50,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
             $telefone = trim($_POST['telefone']);
             $morada = trim($_POST['morada']);
 
-            // Prepara e executa a query de inserção
+            // Verificar se já existe um utilizador com o mesmo nome de utilizador
+            $sql_check_username = "SELECT id_utilizador FROM utilizadores WHERE nome_utilizador = ?";
+            $stmt_check_username = $conn->prepare($sql_check_username);
+            $stmt_check_username->bind_param("s", $nome_utilizador);
+            $stmt_check_username->execute();
+            $result_username = $stmt_check_username->get_result();
+
+            if ($result_username->num_rows > 0) {
+                $erro = "Erro: Já existe um utilizador com o nome de utilizador '$nome_utilizador'. Por favor, escolha outro nome de utilizador.";
+                $stmt_check_username->close();
+                break;
+            }
+            $stmt_check_username->close();
+
+            // Verificar se já existe um utilizador com o mesmo email
+            $sql_check_email = "SELECT id_utilizador FROM utilizadores WHERE email = ?";
+            $stmt_check_email = $conn->prepare($sql_check_email);
+            $stmt_check_email->bind_param("s", $email);
+            $stmt_check_email->execute();
+            $result_email = $stmt_check_email->get_result();
+
+            if ($result_email->num_rows > 0) {
+                $erro = "Erro: Já existe um utilizador com o email '$email'. Por favor, utilize outro endereço de email.";
+                $stmt_check_email->close();
+                break;
+            }
+            $stmt_check_email->close();
+
+            // Se não existem duplicados, proceder com a inserção
             $sql = "INSERT INTO utilizadores (nome_completo, email, nome_utilizador, hash_password, perfil, telefone, morada)
                     VALUES (?, ?, ?, ?, ?, ?, ?)";
             $stmt = $conn->prepare($sql);
@@ -61,6 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
             } else {
                 $erro = "Erro ao inserir utilizador: " . $stmt->error;
             }
+            $stmt->close();
             break;
 
         case 'editar':
@@ -70,6 +99,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
             $perfil = $_POST['perfil'];
             $telefone = trim($_POST['telefone']);
             $morada = trim($_POST['morada']);
+
+            // Verificar se já existe outro utilizador com o mesmo email (excluindo o utilizador atual)
+            $sql_check_email = "SELECT id_utilizador FROM utilizadores WHERE email = ? AND id_utilizador != ?";
+            $stmt_check_email = $conn->prepare($sql_check_email);
+            $stmt_check_email->bind_param("si", $email, $id);
+            $stmt_check_email->execute();
+            $result_email = $stmt_check_email->get_result();
+
+            if ($result_email->num_rows > 0) {
+                $erro = "Erro: Já existe outro utilizador com o email '$email'. Por favor, utilize outro endereço de email.";
+                $stmt_check_email->close();
+                break;
+            }
+            $stmt_check_email->close();
 
             // Verifica se foi fornecida uma nova password
             if (!empty($_POST['password'])) {
@@ -94,6 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
             } else {
                 $erro = "Erro ao atualizar utilizador: " . $stmt->error;
             }
+            $stmt->close();
             break;
 
         case 'validar':
