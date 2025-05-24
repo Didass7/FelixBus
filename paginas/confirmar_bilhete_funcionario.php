@@ -275,7 +275,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $saldo_suficiente) {
     <!-- Barra de navegação -->
     <nav class="navbar">
         <div class="logo">
-            <a href="<?php echo $_SESSION['perfil'] === 'administrador' ? 'pagina_inicial_admin.php' : 'pagina_inicial_funcionario.php'; ?>">
+            <a href="index.php">
                 <img src="logo.png" alt="FelixBus Logo">
             </a>
         </div>

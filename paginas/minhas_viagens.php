@@ -47,9 +47,7 @@ $stmt->close();
     <!-- Barra de Navegação -->
     <nav class="navbar">
         <div class="logo">
-            <a href="<?php echo $_SESSION['perfil'] === 'cliente' ? 'pagina_inicial_cliente.php' :
-                           ($_SESSION['perfil'] === 'funcionário' ? 'pagina_inicial_funcionario.php' :
-                           ($_SESSION['perfil'] === 'administrador' ? 'pagina_inicial_admin.php' : 'index.php')); ?>">
+            <a href="index.php">
                 <img src="logo.png" alt="FelixBus Logo">
             </a>
         </div>

@@ -68,21 +68,6 @@ if (isset($_GET['id_cliente'])) {
     $data_viagem = $_GET['data_viagem'] ?? date('Y-m-d');
 
     // Garantir que existam registos de viagens diárias para todos os horários na data selecionada
-    criarRegistosViagensSeNecessario($conn, $data_viagem);
-
-    // Processar pesquisa de rotas
-    if (isset($_GET['pesquisar'])) {
-        $resultados = pesquisarRotas($conn, $data_viagem, $origem, $destino);
-    }
-}
-
-/**
- * Cria registos de viagens diárias para todos os horários na data especificada, se não existirem
- *
- * @param mysqli $conn Conexão com a base de dados
- * @param string $data_viagem Data da viagem no formato Y-m-d
- */
-function criarRegistosViagensSeNecessario($conn, $data_viagem) {
     // Obter todos os horários disponíveis
     $result_horarios = $conn->query("SELECT id_horario, lugares_disponiveis FROM horarios");
     $todos_horarios = [];
@@ -110,61 +95,52 @@ function criarRegistosViagensSeNecessario($conn, $data_viagem) {
             $stmt->execute();
         }
     }
-}
 
-/**
- * Pesquisa rotas disponíveis com base nos critérios fornecidos
- *
- * @param mysqli $conn Conexão com a base de dados
- * @param string $data_viagem Data da viagem
- * @param string $origem Cidade de origem (opcional)
- * @param string $destino Cidade de destino (opcional)
- * @return array Array associativo com os resultados da pesquisa
- */
-function pesquisarRotas($conn, $data_viagem, $origem, $destino) {
-    $sql = "SELECT h.id_horario, r.origem, r.destino,
-               TIME(h.hora_partida) as hora_partida,
-               TIME(h.hora_chegada) as hora_chegada,
-               h.preco,
-               vd.lugares_disponiveis as lugares_disponiveis_data
-            FROM horarios h
-            JOIN rotas r ON h.id_rota = r.id_rota
-            JOIN viagens_diarias vd ON h.id_horario = vd.id_horario AND vd.data_viagem = ?
-            WHERE 1=1";
+    // Processar pesquisa de rotas
+    if (isset($_GET['pesquisar'])) {
+        $sql = "SELECT h.id_horario, r.origem, r.destino,
+                   TIME(h.hora_partida) as hora_partida,
+                   TIME(h.hora_chegada) as hora_chegada,
+                   h.preco,
+                   vd.lugares_disponiveis as lugares_disponiveis_data
+                FROM horarios h
+                JOIN rotas r ON h.id_rota = r.id_rota
+                JOIN viagens_diarias vd ON h.id_horario = vd.id_horario AND vd.data_viagem = ?
+                WHERE 1=1";
 
-    // Preparar parâmetros
-    $params = [$data_viagem];
-    $types = "s";
+        // Preparar parâmetros
+        $params = [$data_viagem];
+        $types = "s";
 
-    // Adicionar filtros se fornecidos
-    if (!empty($origem)) {
-        $sql .= " AND r.origem = ?";
-        $params[] = $origem;
-        $types .= "s";
+        // Adicionar filtros se fornecidos
+        if (!empty($origem)) {
+            $sql .= " AND r.origem = ?";
+            $params[] = $origem;
+            $types .= "s";
+        }
+
+        if (!empty($destino)) {
+            $sql .= " AND r.destino = ?";
+            $params[] = $destino;
+            $types .= "s";
+        }
+
+        $sql .= " ORDER BY h.hora_partida ASC";
+
+        // Executar consulta
+        $stmt = $conn->prepare($sql);
+        if ($stmt) {
+            $stmt->bind_param($types, ...$params);
+            if ($stmt->execute()) {
+                $result = $stmt->get_result();
+                $resultados = $result->fetch_all(MYSQLI_ASSOC);
+            } else {
+                $resultados = [];
+            }
+        } else {
+            $resultados = [];
+        }
     }
-
-    if (!empty($destino)) {
-        $sql .= " AND r.destino = ?";
-        $params[] = $destino;
-        $types .= "s";
-    }
-
-    $sql .= " ORDER BY h.hora_partida ASC";
-
-    // Executar consulta
-    $stmt = $conn->prepare($sql);
-    if (!$stmt) {
-        return [];
-    }
-
-    $stmt->bind_param($types, ...$params);
-
-    if (!$stmt->execute()) {
-        return [];
-    }
-
-    $result = $stmt->get_result();
-    return $result->fetch_all(MYSQLI_ASSOC);
 }
 ?>
 

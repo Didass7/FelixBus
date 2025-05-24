@@ -283,25 +283,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body onload="noBack();" onpageshow="if (event.persisted) noBack();" onunload="">
     <nav class="navbar">
         <div class="logo">
-            <a href="<?php
-                if (isset($_SESSION['id_utilizador'])) {
-                    switch($_SESSION['perfil']) {
-                        case 'cliente':
-                            echo 'pagina_inicial_cliente.php';
-                            break;
-                        case 'funcionário':
-                            echo 'pagina_inicial_funcionario.php';
-                            break;
-                        case 'administrador':
-                            echo 'pagina_inicial_admin.php';
-                            break;
-                        default:
-                            echo 'index.php';
-                    }
-                } else {
-                    echo 'index.php';
-                }
-            ?>">
+            <a href="index.php">
                 <img src="logo.png" alt="FelixBus Logo">
             </a>
         </div>

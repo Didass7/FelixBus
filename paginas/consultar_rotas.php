@@ -133,25 +133,7 @@ if (isset($_GET['pesquisar'])) {
     <!-- Barra de Navegação -->
     <nav class="navbar">
         <div class="logo">
-            <a href="<?php
-                // Determinar a página inicial com base no perfil do utilizador
-                $pagina_destino = 'index.php';
-
-                if (isset($_SESSION['perfil'])) {
-                    // Mapeamento direto de perfis para páginas
-                    $paginas = [
-                        'cliente' => 'pagina_inicial_cliente.php',
-                        'funcionário' => 'pagina_inicial_funcionario.php',
-                        'administrador' => 'pagina_inicial_admin.php'
-                    ];
-
-                    // Verificar se o perfil existe no mapeamento
-                    if (isset($paginas[$_SESSION['perfil']])) {
-                        $pagina_destino = $paginas[$_SESSION['perfil']];
-                    }
-                }
-                echo $pagina_destino;
-            ?>">
+            <a href="index.php">
                 <img src="logo.png" alt="FelixBus Logo">
             </a>
         </div>

@@ -119,17 +119,7 @@ $stmt->close();
 <body>
     <nav class="navbar">
         <div class="logo">
-            <a href="<?php
-                if ($_SESSION['perfil'] === 'cliente') {
-                    echo 'pagina_inicial_cliente.php';
-                } elseif ($_SESSION['perfil'] === 'funcionário') {
-                    echo 'pagina_inicial_funcionario.php';
-                } elseif ($_SESSION['perfil'] === 'administrador') {
-                    echo 'pagina_inicial_admin.php';
-                } else {
-                    echo 'index.php';
-                }
-            ?>">
+            <a href="index.php">
                 <img src="logo.png" alt="FelixBus Logo">
             </a>
         </div>

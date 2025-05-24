@@ -15,25 +15,7 @@ include '../basedados/basedados.h';
     <!-- Barra de Navegação -->
     <nav class="navbar">
         <div class="logo">
-            <a href="<?php
-                // Determina a página inicial com base no perfil do utilizador
-                $pagina_destino = 'index.php';
-
-                if(isset($_SESSION['id_utilizador']) && isset($_SESSION['perfil'])) {
-                    // Mapeamento direto de perfis para páginas
-                    $paginas = [
-                        'administrador' => 'pagina_inicial_admin.php',
-                        'funcionário' => 'pagina_inicial_funcionario.php',
-                        'cliente' => 'pagina_inicial_cliente.php'
-                    ];
-
-                    // Verifica se o perfil existe no mapeamento
-                    if(isset($paginas[$_SESSION['perfil']])) {
-                        $pagina_destino = $paginas[$_SESSION['perfil']];
-                    }
-                }
-                echo $pagina_destino;
-            ?>">
+            <a href="index.php">
                 <img src="logo.png" alt="FelixBus Logo">
             </a>
         </div>

@@ -26,22 +26,7 @@ $valor_padrao = 'Não disponível';
     <!-- Barra de Navegação -->
     <nav class="navbar">
         <div class="logo">
-            <?php
-            // Define página inicial conforme perfil
-            $pagina_inicial = 'index.php';
-            switch ($_SESSION['perfil']) {
-                case 'cliente':
-                    $pagina_inicial = 'pagina_inicial_cliente.php';
-                    break;
-                case 'funcionário':
-                    $pagina_inicial = 'pagina_inicial_funcionario.php';
-                    break;
-                case 'administrador':
-                    $pagina_inicial = 'pagina_inicial_admin.php';
-                    break;
-            }
-            ?>
-            <a href="<?php echo $pagina_inicial; ?>">
+            <a href="index.php">
                 <img src="logo.png" alt="FelixBus Logo">
             </a>
         </div>
