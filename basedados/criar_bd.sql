@@ -178,8 +178,7 @@ INSERT INTO rotas (id_rota, origem, destino, criado_por) VALUES
 
 -- Inserir horários para as rotas
 INSERT INTO horarios (
-    id_rota, hora_partida, hora_chegada, capacidade_autocarro, lugares_disponiveis, preco,
-    data_inicio, data_fim
+    id_rota, hora_partida, hora_chegada, capacidade_autocarro, lugares_disponiveis, preco, data_inicio, data_fim
 ) VALUES
 (1, '08:00:00', '12:30:00', 50, 50, 60.00, '2025-04-10', NULL),
 (2, '09:00:00', '15:30:00', 50, 50, 75.00, '2025-04-10', NULL),
