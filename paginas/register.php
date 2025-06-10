@@ -97,7 +97,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception("Este nome de utilizador já está registado.");
             }
 
-            $stmt_check->close();
+            // Close the statement only after all operations are complete
+            if (isset($stmt_check)) {
+                $stmt_check->close();
+            }
 
             // Preparar dados para inserção
             $hashed_password = md5($password); // Nota: MD5 não é seguro para produção
@@ -117,10 +120,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception("Erro ao registar utilizador");
             }
 
-            $stmt_insert->close();
-
-            // Obter ID do novo utilizador e criar carteira
+            // Obter ID do novo utilizador ANTES de fechar o statement
             $id_utilizador = $stmt_insert->insert_id;
+
+            // Close the statement only after all operations are complete
+            if (isset($stmt_insert)) {
+                $stmt_insert->close();
+            }
+
+            // Criar carteira
             $sql_create_wallet = "INSERT INTO carteiras (id_utilizador, tipo, saldo) VALUES (?, 'cliente', 0.00)";
             $stmt_wallet = $conn->prepare($sql_create_wallet);
             $stmt_wallet->bind_param("i", $id_utilizador);
