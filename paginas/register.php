@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $stmt_check->close();
 
-            $hashed_password = md5($password); // nota: MD5 não é seguro para produção
+            $hashed_password = md5($password);
 
             $sql_insert = "INSERT INTO utilizadores
                           (email, hash_password, perfil, nome_utilizador, data_registo, nome_completo, telefone, morada)
