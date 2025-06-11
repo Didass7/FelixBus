@@ -1,17 +1,10 @@
 <?php
-/**
- * Página de Registo de Utilizadores
- *
- * Este ficheiro permite que novos utilizadores se registem na plataforma FelixBus.
- * Após o registo bem-sucedido, é criada uma carteira para o utilizador e este é redirecionado para a página de login.
- */
+session_start(); // inicia a sessão
 
-session_start();
-include '../basedados/basedados.h';
+include '../basedados/basedados.h'; // inclui a ligação à base de dados
 
-// Verificar se o utilizador já está autenticado
+// verifica se o utilizador já está autenticado
 if (isset($_SESSION['id_utilizador'])) {
-    // Redirecionar para a página adequada conforme o perfil do utilizador
     switch ($_SESSION['perfil']) {
         case 'administrador':
             header("Location: pagina_inicial_admin.php");
@@ -28,40 +21,44 @@ if (isset($_SESSION['id_utilizador'])) {
     exit();
 }
 
-// Recuperar dados da sessão para repopular o formulário em caso de erro
+// recupera dados da sessão para repopular o formulário em caso de erro
 $error = $_SESSION['register_error'] ?? null;
 $old_username = $_SESSION['old_username'] ?? '';
+$old_email = $_SESSION['old_email'] ?? '';
 $old_nome_completo = $_SESSION['old_nome_completo'] ?? '';
 $old_morada = $_SESSION['old_morada'] ?? '';
 $old_telefone = $_SESSION['old_telefone'] ?? '';
 
-// Limpar variáveis de sessão após utilização
-unset($_SESSION['register_error'],
-      $_SESSION['old_username'],
-      $_SESSION['old_nome_completo'],
-      $_SESSION['old_morada'],
-      $_SESSION['old_telefone']);
+// limpa variáveis de sessão após utilização
+unset(
+    $_SESSION['register_error'],
+    $_SESSION['old_username'],
+    $_SESSION['old_email'],
+    $_SESSION['old_nome_completo'],
+    $_SESSION['old_morada'],
+    $_SESSION['old_telefone']
+);
 
-// Processar o formulário quando submetido
+// processa o formulário quando submetido
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Obter e limpar dados do formulário
     $username = trim($_POST['username']);
+    $email = trim($_POST['email']);
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
     $nome_completo = trim($_POST['nome_completo']);
     $morada = trim($_POST['morada']);
     $telefone = trim($_POST['telefone']);
 
-    // Validar dados do formulário - verificação simplificada
+    // valida dados do formulário
     $campos = [
         'nome de utilizador' => $username,
+        'email' => $email,
         'palavra-passe' => $password,
         'nome completo' => $nome_completo,
         'morada' => $morada,
         'número de telefone' => $telefone
     ];
 
-    // Verificar campos vazios
     foreach ($campos as $campo => $valor) {
         if (empty($valor)) {
             $error = "Por favor, introduza o {$campo}.";
@@ -69,7 +66,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Verificar regras específicas se não houver erros anteriores
     if (!$error) {
         if (strlen($password) < 3) {
             $error = "A palavra-passe deve ter pelo menos 3 caracteres.";
@@ -78,15 +74,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Se não houver erros, prosseguir com o registo
+    // regista o utilizador se não houver erros
     if (!$error) {
-        // Verificar conexão com a base de dados
         if (!$conn) {
             die("Erro na ligação à base de dados: " . mysqli_connect_error());
         }
 
         try {
-            // Verificar se o nome de utilizador já existe
             $sql_check = "SELECT id_utilizador FROM utilizadores WHERE nome_utilizador = ?";
             $stmt_check = $conn->prepare($sql_check);
             $stmt_check->bind_param("s", $username);
@@ -97,16 +91,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception("Este nome de utilizador já está registado.");
             }
 
-            // Close the statement only after all operations are complete
-            if (isset($stmt_check)) {
-                $stmt_check->close();
-            }
+            $stmt_check->close();
 
-            // Preparar dados para inserção
-            $hashed_password = md5($password); // Nota: MD5 não é seguro para produção
-            $email = "{$username}@example.com"; // Email temporário baseado no nome de utilizador
+            $hashed_password = md5($password); // nota: MD5 não é seguro para produção
 
-            // Inserir novo utilizador
             $sql_insert = "INSERT INTO utilizadores
                           (email, hash_password, perfil, nome_utilizador, data_registo, nome_completo, telefone, morada)
                           VALUES (?, ?, 'cliente', ?, NOW(), ?, ?, ?)";
@@ -120,15 +108,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception("Erro ao registar utilizador");
             }
 
-            // Obter ID do novo utilizador ANTES de fechar o statement
             $id_utilizador = $stmt_insert->insert_id;
+            $stmt_insert->close();
 
-            // Close the statement only after all operations are complete
-            if (isset($stmt_insert)) {
-                $stmt_insert->close();
-            }
-
-            // Criar carteira
             $sql_create_wallet = "INSERT INTO carteiras (id_utilizador, tipo, saldo) VALUES (?, 'cliente', 0.00)";
             $stmt_wallet = $conn->prepare($sql_create_wallet);
             $stmt_wallet->bind_param("i", $id_utilizador);
@@ -139,29 +121,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $stmt_wallet->close();
 
-            // Redirecionar para página de login com mensagem de sucesso
             header("Location: login.php?success=1&pending=1");
             exit();
 
         } catch (Exception $e) {
-            // Capturar mensagem de erro
             $error = $e->getMessage();
         } finally {
-            // Fechar conexão com a base de dados
             $conn->close();
         }
     }
 
-    // Se houver erro, guardar dados para repopular formulário
     if ($error) {
-        // Guardar mensagem de erro e dados do formulário numa única operação
         $_SESSION['register_error'] = $error;
         $_SESSION['old_username'] = $username;
+        $_SESSION['old_email'] = $email;
         $_SESSION['old_nome_completo'] = $nome_completo;
         $_SESSION['old_morada'] = $morada;
         $_SESSION['old_telefone'] = $telefone;
 
-        // Redirecionar de volta para o formulário
         header("Location: register.php");
         exit();
     }
@@ -177,7 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <!-- Barra de Navegação -->
+    <!-- barra de navegação com links principais -->
     <nav class="navbar">
         <div class="logo">
             <a href="index.php">
@@ -193,20 +170,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </nav>
 
-    <!-- Secção Principal -->
+    <!-- secção principal com formulário de registo -->
     <section class="hero">
         <div class="hero-content">
             <div class="login-container">
-                <!-- Mensagem de erro, se existir -->
                 <?php if (isset($error)): ?>
                     <div class="error-message"><?= htmlspecialchars($error) ?></div>
                 <?php endif; ?>
 
                 <h2>Registo de Nova Conta</h2>
 
-                <!-- Formulário de Registo -->
                 <form method="POST" action="register.php">
-                    <!-- Nome de Utilizador -->
                     <div class="input-container">
                         <i class="fa fa-user"></i>
                         <input type="text" name="username"
@@ -215,7 +189,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                value="<?= htmlspecialchars($old_username) ?>">
                     </div>
 
-                    <!-- Nome Completo -->
+                    <div class="input-container">
+                        <i class="fa fa-envelope"></i>
+                        <input type="email" name="email"
+                               placeholder="Email"
+                               required
+                               value="<?= htmlspecialchars($old_email ?? '') ?>">
+                    </div>
+
                     <div class="input-container">
                         <i class="fa fa-id-card"></i>
                         <input type="text" name="nome_completo"
@@ -224,7 +205,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                value="<?= htmlspecialchars($old_nome_completo) ?>">
                     </div>
 
-                    <!-- Morada -->
                     <div class="input-container">
                         <i class="fa fa-home"></i>
                         <input type="text" name="morada"
@@ -233,7 +213,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                value="<?= htmlspecialchars($old_morada) ?>">
                     </div>
 
-                    <!-- Telefone -->
                     <div class="input-container">
                         <i class="fa fa-phone"></i>
                         <input type="tel" name="telefone"
@@ -242,7 +221,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                value="<?= htmlspecialchars($old_telefone) ?>">
                     </div>
 
-                    <!-- Palavra-passe -->
                     <div class="input-container">
                         <i class="fa fa-lock"></i>
                         <input type="password" name="password"
@@ -250,7 +228,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                required>
                     </div>
 
-                    <!-- Confirmar Palavra-passe -->
                     <div class="input-container">
                         <i class="fa fa-lock"></i>
                         <input type="password" name="confirm_password"
@@ -258,10 +235,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                required>
                     </div>
 
-                    <!-- Botão de Submissão -->
                     <button type="submit">Registar</button>
 
-                    <!-- Ligação para Login -->
                     <div class="login-link">
                         Já tem conta? <a href="login.php">Inicie sessão aqui</a>
                     </div>
@@ -270,7 +245,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </section>
 
-    <!-- Rodapé -->
+    <!-- rodapé com links úteis e redes sociais -->
     <footer class="footer">
         <div class="social-links">
             <a href="#" class="social-link">FB</a>

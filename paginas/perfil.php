@@ -1,18 +1,15 @@
 <?php
-// Inicia a sessão
-session_start();
+session_start(); // inicia a sessão
 
-// Inclui ligação à base de dados
-include '../basedados/basedados.h';
+include '../basedados/basedados.h'; // inclui a ligação à base de dados
 
-// Verifica se o utilizador está autenticado com perfil válido
+// verifica se o utilizador está autenticado com perfil válido
 if (!isset($_SESSION['id_utilizador']) || !in_array($_SESSION['perfil'], ['cliente', 'funcionário', 'administrador'])) {
     header("Location: login.php");
     exit();
 }
 
-// Valor padrão para campos vazios
-$valor_padrao = 'Não disponível';
+$valor_padrao = 'Não disponível'; // valor padrão para campos vazios
 ?>
 <!DOCTYPE html>
 <html lang="pt-PT">
@@ -23,7 +20,7 @@ $valor_padrao = 'Não disponível';
     <link rel="stylesheet" href="perfil.css">
 </head>
 <body>
-    <!-- Barra de Navegação -->
+    <!-- barra de navegação com links dinâmicos baseados no perfil -->
     <nav class="navbar">
         <div class="logo">
             <a href="index.php">
@@ -33,7 +30,6 @@ $valor_padrao = 'Não disponível';
 
         <div class="nav-links">
             <?php
-            // Links de navegação
             switch ($_SESSION['perfil']) {
                 case 'cliente':
                     echo '<a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>';
@@ -48,14 +44,13 @@ $valor_padrao = 'Não disponível';
                     break;
             }
 
-            // Links comuns a todos os perfis
             echo '<a href="perfil.php" class="nav-link">Perfil</a>';
             echo '<a href="logout.php" class="nav-link">Sair</a>';
             ?>
         </div>
     </nav>
 
-    <!-- Perfil do Utilizador -->
+    <!-- secção de perfil do utilizador com informações e formulário de edição -->
     <section class="hero">
         <div class="hero-content">
             <h1 class="hero-title">
@@ -65,15 +60,12 @@ $valor_padrao = 'Não disponível';
                 </span>
             </h1>
 
-            <!-- Informações do Utilizador -->
             <section class="user-info">
                 <div class="user-info-container">
                     <h2>Informações do Utilizador</h2>
 
-                    <!-- Dados do utilizador -->
                     <ul id="user-info-display">
                         <?php
-                        // Campos a mostrar
                         $campos = [
                             'nome_completo' => 'Nome Completo',
                             'nome_utilizador' => 'Nome de Utilizador',
@@ -82,7 +74,6 @@ $valor_padrao = 'Não disponível';
                             'morada' => 'Morada'
                         ];
 
-                        // Mostra cada campo
                         foreach ($campos as $campo => $label) {
                             $valor = isset($_SESSION[$campo]) && !empty($_SESSION[$campo]) ?
                                     $_SESSION[$campo] : $valor_padrao;
@@ -91,22 +82,16 @@ $valor_padrao = 'Não disponível';
                         ?>
                     </ul>
 
-                    <!-- Botão de edição -->
                     <button id="edit-button" class="btn-primary">Editar</button>
 
-                    <!-- Formulário de edição (oculto) -->
                     <form method="POST" action="atualizar_perfil.php" id="edit-form" style="display: none;">
                         <ul>
                             <?php
-                            // Gera campos do formulário
                             foreach ($campos as $campo => $label) {
                                 echo '<li>';
                                 echo '<label for="' . htmlspecialchars($campo) . '">' . htmlspecialchars($label) . ':</label>';
 
-                                // Tipo de campo
                                 $tipo = ($campo == 'email') ? 'email' : 'text';
-
-                                // Valor do campo
                                 $valor = isset($_SESSION[$campo]) && !empty($_SESSION[$campo]) ?
                                         $_SESSION[$campo] : '';
 
@@ -117,7 +102,6 @@ $valor_padrao = 'Não disponível';
                             ?>
                         </ul>
 
-                        <!-- Botões -->
                         <div class="button-group">
                             <button type="submit" class="btn-primary">Guardar</button>
                             <button type="button" id="cancel-button" class="btn-secondary">Cancelar</button>
@@ -128,23 +112,20 @@ $valor_padrao = 'Não disponível';
         </div>
     </section>
 
-    <!-- Script para mostrar/ocultar formulário -->
+    <!-- script para alternar entre visualização e edição -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Elementos da página
             const editBtn = document.getElementById('edit-button');
             const cancelBtn = document.getElementById('cancel-button');
             const form = document.getElementById('edit-form');
             const info = document.getElementById('user-info-display');
 
-            // Botão Editar
             editBtn.addEventListener('click', () => {
                 info.style.display = 'none';
                 form.style.display = 'block';
                 editBtn.style.display = 'none';
             });
 
-            // Botão Cancelar
             cancelBtn.addEventListener('click', () => {
                 form.style.display = 'none';
                 info.style.display = 'block';
@@ -153,23 +134,20 @@ $valor_padrao = 'Não disponível';
         });
     </script>
 
-    <!-- Rodapé -->
+    <!-- rodapé com links úteis e redes sociais -->
     <footer class="footer">
-        <!-- Redes sociais -->
         <div class="social-links">
             <a href="#" class="social-link">FB</a>
             <a href="#" class="social-link">TW</a>
             <a href="#" class="social-link">IG</a>
         </div>
 
-        <!-- Links úteis -->
         <div class="footer-links">
             <a href="empresa.php" class="footer-link">Sobre Nós</a>
             <a href="empresa.php#contactos" class="footer-link">Contactos</a>
             <a href="consultar_rotas.php" class="footer-link">Rotas e Horários</a>
         </div>
 
-        <!-- Copyright -->
         <p>&copy; <?php echo date('Y'); ?> FelixBus. Todos os direitos reservados.</p>
     </footer>
 </body>

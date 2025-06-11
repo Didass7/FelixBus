@@ -1,4 +1,6 @@
 <?php
+// inicia a sessão e inclui o ficheiro de ligação à base de dados
+// obtém alertas ativos e verifica mensagens da sessão
 session_start();
 include '../basedados/basedados.h';
 
@@ -23,11 +25,11 @@ if (isset($_SESSION['mensagem'])) {
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Barra de Navegação -->
+    <!-- barra de navegação -->
     <nav class="navbar">
         <div class="logo">
             <a href="<?php
-                // Determinar a página inicial com base no perfil do utilizador
+                // determina a página inicial para o link do logo com base no perfil do utilizador
                 $pagina_destino = 'index.php';
                 if (isset($_SESSION['perfil'])) {
                     if ($_SESSION['perfil'] === 'cliente') {
@@ -46,7 +48,7 @@ if (isset($_SESSION['mensagem'])) {
         <div class="nav-links">
             <?php if (isset($_SESSION['id_utilizador'])): ?>
                 <?php
-                // Menu para utilizadores autenticados com base no perfil
+                // define os links de navegação para utilizadores autenticados, variando conforme o perfil
                 if ($_SESSION['perfil'] === 'cliente'): ?>
                     <a href="minhas_viagens.php" class="nav-link">Minhas Viagens</a>
                     <a href="carteira.php" class="nav-link">Carteira</a>
@@ -62,7 +64,7 @@ if (isset($_SESSION['mensagem'])) {
                     <a href="logout.php" class="nav-link">Logout</a>
                 <?php endif; ?>
             <?php else: ?>
-                <!-- Menu para visitantes não autenticados -->
+                <!-- define os links de navegação para visitantes não autenticados -->
                 <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
                 <a href="empresa.php" class="nav-link">Sobre Nós</a>
                 <a href="register.php" class="nav-link">Registar</a>
@@ -72,10 +74,10 @@ if (isset($_SESSION['mensagem'])) {
         </div>
     </nav>
 
-    <!-- Secção Principal da Página -->
+    <!-- secção principal da página -->
     <section class="hero">
         <div class="hero-container">
-            <!-- Conteúdo Principal com Texto e Botões -->
+            <!-- conteúdo principal com texto e botões -->
             <div class="hero-content">
                 <div class="hero-text">
                     <h1 class="hero-title">Viagens de Luxo Reimaginadas</h1>
@@ -83,20 +85,20 @@ if (isset($_SESSION['mensagem'])) {
                     <p class="login-subtitle">Crie uma conta ou faça Login para usufruir dos nossos serviços!</p>
                 </div>
 
-                <!-- Botões para Autenticação -->
+                <!-- botões para autenticação -->
                 <div class="login-button">
                     <button class="btn-primary" type="button" onclick="window.location.href='login.php'">Login</button>
                     <button class="btn-primary" type="button" onclick="window.location.href='register.php'">Registar</button>
                 </div>
             </div>
 
-            <!-- Secção de Alertas -->
+            <!-- secção de alertas -->
             <?php if (mysqli_num_rows($result_alertas) > 0): ?>
             <div class="hero-alerts">
                 <h2 class="alerts-title">Alertas e Promoções</h2>
                 <div class="alerts-container">
                     <?php
-                    // Apresentar cada alerta ativo
+                    // apresenta cada alerta ativo recuperado da base de dados
                     while ($alerta = mysqli_fetch_assoc($result_alertas)):
                     ?>
                     <div class="alert-card">
@@ -113,23 +115,23 @@ if (isset($_SESSION['mensagem'])) {
         </div>
     </section>
 
-    <!-- Rodapé da Página -->
+    <!-- rodapé da página -->
     <footer class="footer">
-        <!-- Ligações para Redes Sociais -->
+        <!-- ligações para redes sociais -->
         <div class="social-links">
             <a href="#" class="social-link">FB</a>
             <a href="#" class="social-link">TW</a>
             <a href="#" class="social-link">IG</a>
         </div>
 
-        <!-- Ligações para Páginas Informativas -->
+        <!-- ligações para páginas informativas -->
         <div class="footer-links">
             <a href="empresa.php" class="footer-link">Sobre Nós</a>
             <a href="empresa.php#contactos" class="footer-link">Contactos</a>
             <a href="consultar_rotas.php" class="footer-link">Rotas e Horários</a>
         </div>
 
-        <!-- Informação de Direitos de Autor -->
+        <!-- informação de direitos de autor -->
         <p>&copy; 2024 FelixBus. Todos os direitos reservados.</p>
     </footer>
 </body>

@@ -2,18 +2,18 @@
 session_start();
 include '../basedados/basedados.h';
 
-// Inicialização de variáveis para o formulário de pesquisa
+// inicializa variáveis para o formulário de pesquisa
 $origem = trim($_GET['origem'] ?? '');
 $destino = trim($_GET['destino'] ?? '');
 $data_viagem = $_GET['data_viagem'] ?? date('Y-m-d');
 $resultados = [];
 
-// Verificar a ligação à base de dados
+// verifica a ligação à base de dados
 if (!$conn) {
     die("Erro na ligação à base de dados: " . mysqli_connect_error());
 }
 
-// Obter todas as origens distintas para o menu de seleção
+// obtém todas as origens distintas para o menu de seleção
 $sql_origens = "SELECT DISTINCT origem FROM rotas WHERE origem IS NOT NULL ORDER BY origem";
 $stmt_origens = $conn->prepare($sql_origens);
 
@@ -28,14 +28,14 @@ if (!$result_origens) {
     die("Erro ao obter origens: {$stmt_origens->error}");
 }
 
-// Guardar as origens num array
+// armazena as origens num array
 $origens = [];
 while ($row = $result_origens->fetch_assoc()) {
     $origens[] = $row['origem'];
 }
 $stmt_origens->close();
 
-// Obter todos os destinos distintos para o menu de seleção
+// obtém todos os destinos distintos para o menu de seleção
 $sql_destinos = "SELECT DISTINCT destino FROM rotas WHERE destino IS NOT NULL ORDER BY destino";
 $stmt_destinos = $conn->prepare($sql_destinos);
 
@@ -50,16 +50,16 @@ if (!$result_destinos) {
     die("Erro ao obter destinos: {$stmt_destinos->error}");
 }
 
-// Guardar os destinos num array
+// armazena os destinos num array
 $destinos = [];
 while ($row = $result_destinos->fetch_assoc()) {
     $destinos[] = $row['destino'];
 }
 $stmt_destinos->close();
 
-// Procurar viagens disponíveis quando o utilizador clica em "Pesquisar"
+// pesquisa viagens disponíveis quando o utilizador clica em "Pesquisar"
 if (isset($_GET['pesquisar'])) {
-    // Consulta para obter rotas, horários e lugares disponíveis para a data selecionada
+    // consulta para obter rotas, horários e lugares disponíveis para a data selecionada
     $sql = "SELECT r.id_rota, r.origem, r.destino, h.id_horario,
             h.hora_partida, h.hora_chegada, h.preco, h.lugares_disponiveis,
             COALESCE(vd.lugares_disponiveis, h.lugares_disponiveis) as lugares_disponiveis_data
@@ -69,11 +69,11 @@ if (isset($_GET['pesquisar'])) {
                 AND vd.data_viagem = ?
             WHERE 1=1";
 
-    // Preparar parâmetros para a consulta parametrizada
+    // prepara parâmetros para a consulta parametrizada
     $params = [$data_viagem];
-    $types = "s"; // String para a data
+    $types = "s"; // tipo string para a data
 
-    // Adicionar filtros de origem e destino se fornecidos
+    // adiciona filtros de origem e destino se fornecidos
     if (!empty($origem) || !empty($destino)) {
         if (!empty($origem)) {
             $sql .= " AND r.origem = ?";
@@ -88,35 +88,35 @@ if (isset($_GET['pesquisar'])) {
         }
     }
 
-    // Ordenar resultados por hora de partida
+    // ordena resultados por hora de partida
     $sql .= " ORDER BY h.hora_partida ASC";
 
-    // Preparar a consulta
+    // prepara a consulta
     $stmt = $conn->prepare($sql);
 
     if (!$stmt) {
         die("Erro na preparação da consulta: " . mysqli_error($conn));
     }
 
-    // Associar parâmetros à consulta
+    // associa parâmetros à consulta
     $stmt->bind_param($types, ...$params);
 
-    // Executar a consulta
+    // executa a consulta
     if (!$stmt->execute()) {
         die("Erro na execução da consulta: {$stmt->error}");
     }
 
-    // Obter resultados
+    // obtém resultados
     $result = $stmt->get_result();
 
     if (!$result) {
         die("Erro ao obter resultados: {$stmt->error}");
     }
 
-    // Guardar todos os resultados num array associativo
+    // armazena todos os resultados num array associativo
     $resultados = $result->fetch_all(MYSQLI_ASSOC);
 
-    // Fechar o statement
+    // fecha o statement
     $stmt->close();
 }
 ?>

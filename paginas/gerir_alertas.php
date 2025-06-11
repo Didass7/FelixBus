@@ -1,41 +1,23 @@
 <?php
-/**
- * Gestão de Alertas - FelixBus
- *
- * Este ficheiro permite aos administradores gerir alertas e promoções do sistema.
- * Funcionalidades:
- * - Criar novos alertas
- * - Editar alertas existentes
- * - Eliminar alertas
- * - Visualizar todos os alertas
- *
- * @author FelixBus
- * @version 1.0
- */
-
-// Inicia a sessão
 session_start();
-
-// Inclui o ficheiro de ligação à base de dados
 include '../basedados/basedados.h';
 
-// Verifica se o utilizador está autenticado e tem perfil de administrador
+// verifica se o utilizador está autenticado e tem perfil de administrador
 if (!isset($_SESSION['id_utilizador']) || $_SESSION['perfil'] !== 'administrador') {
     header("Location: login.php");
     exit();
 }
 
-// Inicializa variáveis de mensagens
+// inicializa variáveis de mensagens
 $mensagem = '';
 $erro = '';
 
-/**
- * Processa o formulário de criação/edição/eliminação de alertas
- */
+
+ //processa o formulário de criação, edição ou eliminação de alertas
+ 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Verifica se é uma ação de criação ou edição
     if (isset($_POST['acao'])) {
-        // Recolhe e limpa os dados do formulário
+        // recolhe e valida os dados do formulário
         $titulo = trim($_POST['titulo'] ?? '');
         $conteudo = trim($_POST['conteudo'] ?? '');
         $data_inicio = $_POST['data_inicio'] ?? '';
@@ -43,21 +25,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id_admin = $_SESSION['id_utilizador'];
         $ativo = isset($_POST['ativo']) ? 1 : 0;
 
-        // Valida os dados
         if (empty($titulo) || empty($conteudo) || empty($data_inicio) || empty($data_fim)) {
             $erro = "Todos os campos são obrigatórios.";
         } else {
             try {
-                // Verifica se as datas são válidas
+                // valida as datas e executa a ação correspondente (criar ou editar)
                 $data_inicio_obj = new DateTime($data_inicio);
                 $data_fim_obj = new DateTime($data_fim);
 
                 if ($data_fim_obj < $data_inicio_obj) {
                     $erro = "A data de fim deve ser posterior à data de início.";
                 } else {
-                    // Cria ou atualiza o alerta
                     if ($_POST['acao'] === 'criar') {
-                        // Prepara e executa a consulta de inserção
                         $sql = "INSERT INTO alertas (titulo, conteudo, data_inicio, data_fim, criado_por, ativo)
                                 VALUES (?, ?, ?, ?, ?, ?)";
                         $stmt = $conn->prepare($sql);
@@ -70,7 +49,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                         $stmt->close();
                     } elseif ($_POST['acao'] === 'editar' && isset($_POST['id_alerta'])) {
-                        // Prepara e executa a consulta de atualização
                         $id_alerta = $_POST['id_alerta'];
                         $sql = "UPDATE alertas SET titulo = ?, conteudo = ?, data_inicio = ?, data_fim = ?, ativo = ?
                                 WHERE id_alerta = ?";
@@ -89,12 +67,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $erro = "Erro ao processar datas: {$e->getMessage()}";
             }
         }
-    }
-    // Verifica se é uma ação de eliminação
-    elseif (isset($_POST['excluir']) && isset($_POST['id_alerta'])) {
+    } elseif (isset($_POST['excluir']) && isset($_POST['id_alerta'])) {
+        // elimina o alerta especificado
         $id_alerta = $_POST['id_alerta'];
-
-        // Prepara e executa a consulta de eliminação
         $sql = "DELETE FROM alertas WHERE id_alerta = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("i", $id_alerta);
@@ -109,13 +84,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 /**
- * Obtém dados do alerta para edição
+ * obtém dados do alerta para edição, se aplicável
  */
 $alerta_edicao = null;
 if (isset($_GET['editar']) && is_numeric($_GET['editar'])) {
     $id_alerta = $_GET['editar'];
-
-    // Prepara e executa a consulta
     $sql = "SELECT * FROM alertas WHERE id_alerta = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $id_alerta);
@@ -129,7 +102,7 @@ if (isset($_GET['editar']) && is_numeric($_GET['editar'])) {
 }
 
 /**
- * Obtém todos os alertas para exibição na tabela
+ * obtém todos os alertas para exibição na tabela
  */
 $sql_alertas = "SELECT a.*, u.nome_completo as nome_admin
                 FROM alertas a

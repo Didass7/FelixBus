@@ -1,32 +1,23 @@
 <?php
-/**
- * Atualização de Perfil - FelixBus
- *
- * Este script processa a atualização dos dados do perfil do utilizador.
- * Recebe os dados do formulário, valida-os, atualiza na base de dados
- * e na sessão atual.
- *
- * @author FelixBus
- * @version 1.0
- */
 
-// Iniciar sessão e verificar autenticação
+
+// iniciar sessão e verificar autenticação
 session_start();
 if (!isset($_SESSION['id_utilizador'])) {
     header("Location: login.php");
     exit();
 }
 
-// Verificar se o pedido é do tipo POST
+// verificar se o pedido é do tipo post
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: perfil.php");
     exit();
 }
 
-// Incluir ligação à base de dados
+// incluir ligação à base de dados
 include '../basedados/basedados.h';
 
-// Obter dados do formulário
+// obter dados do formulário
 $id_utilizador = $_SESSION['id_utilizador'];
 $nome_completo = trim($_POST['nome_completo']);
 $nome_utilizador = trim($_POST['nome_utilizador']);
@@ -35,7 +26,7 @@ $telefone = trim($_POST['telefone']);
 $morada = trim($_POST['morada']);
 
 try {
-    // Atualizar dados do utilizador na base de dados
+    // atualizar dados do utilizador na base de dados
     $sql = "UPDATE utilizadores SET
             nome_completo = ?, nome_utilizador = ?,
             email = ?, telefone = ?, morada = ?
@@ -58,7 +49,7 @@ try {
 
     $stmt->close();
 
-    // Atualizar dados na sessão
+    // atualizar dados na sessão
     $_SESSION['nome_completo'] = $nome_completo;
     $_SESSION['nome_utilizador'] = $nome_utilizador;
     $_SESSION['email'] = $email;

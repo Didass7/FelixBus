@@ -1,15 +1,15 @@
 <?php
-session_start();
+session_start(); // inicia a sessão
 
-include '../basedados/basedados.h';
+include '../basedados/basedados.h'; // inclui a ligação à base de dados
 
-// Verifica se o utilizador está autenticado e é um cliente
+// verifica se o utilizador está autenticado e é um cliente
 if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'cliente')) {
     header("Location: login.php");
     exit();
 }
 
-// Obtém os alertas ativos dentro do período válido
+// obtém os alertas ativos dentro do período válido
 $sql_alertas = "SELECT * FROM alertas
                 WHERE ativo = 1
                 AND data_inicio <= NOW()
@@ -26,7 +26,7 @@ $result_alertas = $conn->query($sql_alertas);
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Barra de Navegação -->
+    <!-- barra de navegação com links principais -->
     <nav class="navbar">
         <div class="logo">
             <a href="pagina_inicial_cliente.php">
@@ -42,7 +42,7 @@ $result_alertas = $conn->query($sql_alertas);
         </div>
     </nav>
 
-    <!-- Conteúdo Principal -->
+    <!-- secção principal com informações e alertas -->
     <section class="hero">
         <div class="hero-container">
             <div class="hero-content">
@@ -58,7 +58,7 @@ $result_alertas = $conn->query($sql_alertas);
                 </div>
             </div>
 
-            <!-- Secção de Alertas Ativos -->
+            <!-- secção de alertas ativos -->
             <?php if ($result_alertas->num_rows > 0): ?>
                 <div class="hero-alerts">
                     <h2 class="alerts-title">Alertas e Promoções</h2>
@@ -78,7 +78,7 @@ $result_alertas = $conn->query($sql_alertas);
         </div>
     </section>
 
-    <!-- Rodapé da Página -->
+    <!-- rodapé com links úteis e redes sociais -->
     <footer class="footer">
         <div class="social-links">
             <a href="#" class="social-link">FB</a>

@@ -1,26 +1,10 @@
 <?php
-/**
- * Página de Login - FelixBus
- *
- * Esta página permite aos utilizadores autenticarem-se no sistema.
- * Verifica as credenciais e redireciona para a página adequada conforme o perfil.
- *
- * @author FelixBus
- * @version 1.0
- */
+session_start(); // inicia a sessão do utilizador
 
-// Inicia a sessão
-session_start();
+include '../basedados/basedados.h'; // inclui a ligação à base de dados
 
-// Inclui o ficheiro de ligação à base de dados
-include '../basedados/basedados.h';
-
-/**
- * Verifica se o utilizador já está autenticado
- * Redireciona para a página apropriada conforme o perfil
- */
+// verifica se o utilizador já está autenticado e redireciona para a página apropriada
 if (isset($_SESSION['id_utilizador'])) {
-    // Define a página de destino com base no perfil
     $pagina_destino = match($_SESSION['perfil']) {
         'administrador' => 'pagina_inicial_admin.php',
         'funcionário' => 'pagina_inicial_funcionario.php',
@@ -28,30 +12,23 @@ if (isset($_SESSION['id_utilizador'])) {
         default => 'login.php',
     };
 
-    // Redireciona para a página de destino
     header("Location: $pagina_destino");
     exit();
 }
 
-/**
- * Processa o formulário de login
- */
+// processa o formulário de login
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Recolhe e limpa os dados do formulário
-    $username = trim($_POST['username'] ?? '');
-    $password = $_POST['password'] ?? '';
+    $username = trim($_POST['username'] ?? ''); // recolhe e limpa o nome de utilizador
+    $password = $_POST['password'] ?? ''; // recolhe a palavra-passe
 
-    // Valida os dados
     if (empty($username) || empty($password)) {
         $error = "Por favor, preencha todos os campos!";
     } else {
         try {
-            // Verifica a ligação à base de dados
             if (!$conn) {
                 throw new Exception("Erro ao ligar à base de dados: " . mysqli_connect_error());
             }
 
-            // Prepara e executa a consulta para encontrar o utilizador
             $sql = "SELECT * FROM utilizadores WHERE nome_utilizador = ?";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("s", $username);
@@ -59,18 +36,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = $stmt->get_result();
 
             if ($user = $result->fetch_assoc()) {
-                // Verifica se a conta está validada (apenas para clientes)
-                $validado = $user['validado'] ?? 1; // Assume validado se a coluna não existir
+                $validado = $user['validado'] ?? 1; // verifica se a conta está validada
 
                 if ($user['perfil'] === 'cliente' && !$validado) {
                     $error = "A sua conta ainda está pendente de aprovação pelo administrador.";
-                }
-                // Verifica a palavra-passe
-                elseif (md5($password) === $user['hash_password']) {
-                    // Regenera o ID da sessão para evitar roubo de sessão
-                    session_regenerate_id(true);
+                } elseif (md5($password) === $user['hash_password']) {
+                    session_regenerate_id(true); // regenera o ID da sessão
 
-                    // Armazena as informações do utilizador na sessão
+                    // armazena informações do utilizador na sessão
                     $_SESSION['id_utilizador'] = $user['id_utilizador'];
                     $_SESSION['nome_utilizador'] = $user['nome_utilizador'];
                     $_SESSION['perfil'] = $user['perfil'];
@@ -80,7 +53,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['morada'] = $user['morada'];
                     $_SESSION['data_registo'] = $user['data_registo'];
 
-                    // Redireciona conforme o perfil
                     $pagina_destino = match($user['perfil']) {
                         'administrador' => 'pagina_inicial_admin.php',
                         'funcionário' => 'pagina_inicial_funcionario.php',
@@ -97,9 +69,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } catch (Exception $e) {
             $error = "Erro: " . $e->getMessage();
-        } finally {
-            // Não é necessário fechar a conexão explicitamente
-            // O PHP fechará automaticamente quando o script terminar
         }
     }
 }
@@ -115,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <!-- Barra de navegação -->
+    <!-- barra de navegação com links principais -->
     <nav class="navbar">
         <div class="logo">
             <a href="index.php">
@@ -131,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </nav>
 
-    <!-- Secção principal -->
+    <!-- secção principal com formulário de login -->
     <section class="hero">
         <div class="hero-content">
             <div class="login-container">
@@ -183,23 +152,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </section>
 
-    <!-- Rodapé -->
+    <!-- rodapé com links úteis e redes sociais -->
     <footer class="footer">
-        <!-- Redes sociais -->
         <div class="social-links">
             <a href="#" class="social-link">FB</a>
             <a href="#" class="social-link">TW</a>
             <a href="#" class="social-link">IG</a>
         </div>
 
-        <!-- Links úteis -->
         <div class="footer-links">
             <a href="empresa.php" class="footer-link">Sobre Nós</a>
             <a href="empresa.php#contactos" class="footer-link">Contactos</a>
             <a href="consultar_rotas.php" class="footer-link">Rotas e Horários</a>
         </div>
 
-        <!-- Direitos de autor -->
         <p>&copy; 2024 FelixBus. Todos os direitos reservados.</p>
     </footer>
 </body>

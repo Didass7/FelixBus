@@ -2,13 +2,13 @@
 session_start();
 include '../basedados/basedados.h';
 
-// Verificar se o utilizador está autenticado
+// verificar se o utilizador está autenticado e redirecionar caso não esteja
 if (!isset($_SESSION['id_utilizador'])) {
     header("Location: login.php");
     exit();
 }
 
-// Redirecionar funcionários e administradores para as suas páginas iniciais
+// redirecionar funcionários e administradores para as suas páginas iniciais específicas
 if ($_SESSION['perfil'] === 'funcionário') {
     header("Location: pagina_inicial_funcionario.php");
     exit();
@@ -17,13 +17,13 @@ if ($_SESSION['perfil'] === 'funcionário') {
     exit();
 }
 
-// Processar operações de depósito ou levantamento
+// processar operações de depósito ou levantamento quando o formulário é submetido
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_utilizador = $_SESSION['id_utilizador'];
     $operacao = $_POST['operacao'];
     $valor = (float)$_POST['valor'];
 
-    // Obter dados da carteira do utilizador
+    // obter dados da carteira do utilizador para realizar a operação
     $sql = "SELECT id_carteira, saldo FROM carteiras WHERE id_utilizador = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $id_utilizador);
@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->close();
 
     if ($operacao === 'deposito') {
-        // Adicionar fundos à carteira
+        // adicionar fundos à carteira e registar a transação
         $novo_saldo = $carteira['saldo'] + $valor;
         $sql_update = "UPDATE carteiras SET saldo = ? WHERE id_carteira = ?";
         $stmt = $conn->prepare($sql_update);
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute();
         $stmt->close();
 
-        // Registar a transação
+        // registar a transação
         $sql_trans = "INSERT INTO transacoes (id_carteira_destino, valor, tipo, descricao)
                       VALUES (?, ?, 'deposito', 'Depósito de fundos')";
         $stmt = $conn->prepare($sql_trans);
@@ -49,9 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute();
         $stmt->close();
     } elseif ($operacao === 'levantamento') {
-        // Verificar se há saldo suficiente
+        // verificar se há saldo suficiente e, se sim, subtrair fundos e registar a transação
         if ($carteira['saldo'] >= $valor) {
-            // Subtrair fundos da carteira
             $novo_saldo = $carteira['saldo'] - $valor;
             $sql_update = "UPDATE carteiras SET saldo = ? WHERE id_carteira = ?";
             $stmt = $conn->prepare($sql_update);
@@ -59,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute();
             $stmt->close();
 
-            // Registar a transação
+            // registar a transação
             $sql_trans = "INSERT INTO transacoes (id_carteira_origem, valor, tipo, descricao)
                           VALUES (?, ?, 'levantamento', 'Levantamento de fundos')";
             $stmt = $conn->prepare($sql_trans);
@@ -70,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Verificar se o utilizador tem carteira, caso não tenha, criar uma
+// verificar se o utilizador tem uma carteira; se não, criar uma nova
 $sql_check = "SELECT id_carteira, saldo FROM carteiras WHERE id_utilizador = ?";
 $stmt = $conn->prepare($sql_check);
 $stmt->bind_param("i", $_SESSION['id_utilizador']);
@@ -80,14 +79,14 @@ $carteira = $result->fetch_assoc();
 $stmt->close();
 
 if (!$carteira) {
-    // Criar carteira para o utilizador
+    // criar uma nova carteira para o utilizador com saldo inicial zero
     $sql_create = "INSERT INTO carteiras (id_utilizador, tipo, saldo) VALUES (?, 'cliente', 0.00)";
     $stmt = $conn->prepare($sql_create);
     $stmt->bind_param("i", $_SESSION['id_utilizador']);
     $stmt->execute();
     $stmt->close();
 
-    // Obter a carteira recém-criada
+    // obter os dados da carteira recém-criada
     $sql_get = "SELECT id_carteira, saldo FROM carteiras WHERE id_utilizador = ?";
     $stmt = $conn->prepare($sql_get);
     $stmt->bind_param("i", $_SESSION['id_utilizador']);
@@ -97,7 +96,7 @@ if (!$carteira) {
     $stmt->close();
 }
 
-// Obter transações recentes
+// obter as transações recentes da carteira do utilizador
 $sql = "SELECT * FROM transacoes
         WHERE id_carteira_origem = ? OR id_carteira_destino = ?
         ORDER BY data_operacao DESC LIMIT 10";

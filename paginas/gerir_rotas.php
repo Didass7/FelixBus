@@ -1,42 +1,19 @@
 <?php
-/**
- * Gestão de Rotas - FelixBus
- *
- * Este ficheiro permite aos administradores gerir rotas e horários de autocarros.
- *
- * Funcionalidades:
- * - Listar todas as rotas existentes
- * - Criar novas rotas com horários
- * - Editar rotas e horários existentes
- * - Eliminar rotas (apenas se não tiverem horários associados)
- *
- * @author FelixBus
- * @version 1.0
- */
-
-// Inicia a sessão
+// inicia sessão e inclui ligação à base de dados
 session_start();
-
-// Inclui o ficheiro de ligação à base de dados
 include '../basedados/basedados.h';
 
-// Verifica se o utilizador está autenticado e tem perfil de administrador
+// valida autenticação de administrador
 if (!isset($_SESSION['id_utilizador']) || $_SESSION['perfil'] !== 'administrador') {
     header("Location: login.php");
     exit();
 }
 
-// Inicializa variáveis de mensagens
-$mensagem = '';
-$erro = '';
-
-/**
- * Processa as ações do formulário
- */
+// processamento de formulário: ações criar, editar e excluir rotas e horários
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
+    // recolhe dados do formulário e valida campos obrigatórios
     $acao = $_POST['acao'];
 
-    // Recolhe e limpa os dados comuns do formulário
     $origem = trim($_POST['origem'] ?? '');
     $destino = trim($_POST['destino'] ?? '');
     $hora_partida = trim($_POST['hora_partida'] ?? '');
@@ -46,12 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
     $data_inicio = trim($_POST['data_inicio'] ?? '');
     $data_fim = !empty($_POST['data_fim']) ? trim($_POST['data_fim']) : null;
 
-    // Verifica se os campos obrigatórios estão preenchidos
     $campos_vazios = empty($origem) || empty($destino) || empty($hora_partida) ||
                     empty($hora_chegada) || empty($preco) || empty($capacidade) ||
                     empty($data_inicio);
 
     switch ($acao) {
+        // criar nova rota e horário
         case 'criar':
             if ($campos_vazios) {
                 $erro = "Por favor, preencha todos os campos obrigatórios.";
@@ -97,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
                         $id_rota, $hora_partida, $hora_chegada,
                         $capacidade, $capacidade, $preco, $data_inicio);
                 } else {
-                    $stmt_horario->bind_param("issiidss",
+                    $stmt_horario->bind_param("ssiidss",
                         $id_rota, $hora_partida, $hora_chegada,
                         $capacidade, $capacidade, $preco, $data_inicio, $data_fim);
                 }
@@ -114,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
             }
             break;
 
+        // editar rota e horário existente
         case 'editar':
             // Verifica se os IDs necessários estão presentes
             if (!isset($_POST['id_rota']) || !isset($_POST['id_horario'])) {
@@ -199,6 +177,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
             }
             break;
 
+        // excluir rota sem horários associados
         case 'excluir':
             $id_rota = $_POST['id_rota'] ?? 0;
 
@@ -246,9 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
     }
 }
 
-/**
- * Obtém dados da rota para edição
- */
+// carregamento de dados para edição de rota e horários
 $rota_edicao = null;
 $horarios_edicao = [];
 
@@ -312,9 +289,7 @@ if (isset($_GET['editar']) && is_numeric($_GET['editar'])) {
     }
 }
 
-/**
- * Obtém todas as rotas para exibição na tabela
- */
+// obtenção de todas as rotas existentes para exibição
 try {
     $sql = "SELECT
             r.id_rota, r.origem, r.destino,

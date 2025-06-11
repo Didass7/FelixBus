@@ -1,7 +1,8 @@
 <?php
 session_start();
 include '../basedados/basedados.h';
-// Ficheiro de apresentação da empresa FelixBus
+
+// ficheiro de apresentação da empresa FelixBus
 ?>
 <!DOCTYPE html>
 <html lang="pt-PT">
@@ -12,7 +13,7 @@ include '../basedados/basedados.h';
     <link rel="stylesheet" href="empresa.css">
 </head>
 <body>
-    <!-- Barra de Navegação -->
+    <!-- barra de navegação com links dinâmicos baseados no perfil do utilizador -->
     <nav class="navbar">
         <div class="logo">
             <a href="index.php">
@@ -22,7 +23,7 @@ include '../basedados/basedados.h';
         <div class="nav-links">
             <?php if (isset($_SESSION['id_utilizador'])): ?>
                 <?php
-                // Menu para utilizadores autenticados com base no perfil
+                // menu para utilizadores autenticados com base no perfil
                 if ($_SESSION['perfil'] === 'cliente'): ?>
                     <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
                     <a href="minhas_viagens.php" class="nav-link">Minhas Viagens</a>
@@ -39,7 +40,7 @@ include '../basedados/basedados.h';
                     <a href="logout.php" class="nav-link">Logout</a>
                 <?php endif; ?>
             <?php else: ?>
-                <!-- Menu para visitantes: ligações ordenadas por relevância -->
+                <!-- menu para visitantes: ligações ordenadas por relevância -->
                 <a href="index.php" class="nav-link">Início</a>
                 <a href="consultar_rotas.php" class="nav-link">Rotas e Horários</a>
                 <a href="empresa.php" class="nav-link">Sobre Nós</a>
@@ -49,7 +50,7 @@ include '../basedados/basedados.h';
         </div>
     </nav>
 
-    <!-- Secção de Cabeçalho -->
+    <!-- secção de cabeçalho com título e subtítulo da página -->
     <section class="hero">
         <div class="hero-content">
             <h1 class="hero-title">Sobre a FelixBus</h1>
@@ -57,10 +58,10 @@ include '../basedados/basedados.h';
         </div>
     </section>
 
-    <!-- Secção de Informações da Empresa -->
+    <!-- secção de informações da empresa, incluindo história, localização e contactos -->
     <section class="company-info-section">
         <div class="container">
-            <!-- Conteúdo sobre a história da empresa -->
+            <!-- conteúdo sobre a história da empresa -->
             <div class="about-content">
                 <div class="about-text">
                     <h2 class="section-title">Nossa História</h2>
@@ -72,10 +73,10 @@ include '../basedados/basedados.h';
                 </div>
             </div>
 
-            <!-- Informações de contacto e localização -->
+            <!-- informações de contacto e localização -->
             <h2 class="section-title">Informações da Empresa</h2>
             <div class="info-cards">
-                <!-- Cartão com informações de localização -->
+                <!-- cartão com informações de localização -->
                 <div class="info-card" id="localizacao">
                     <h3>Localização</h3>
                     <p>Av. do Empresário, Castelo Branco</p>
@@ -83,7 +84,7 @@ include '../basedados/basedados.h';
                     <p>Código Postal: 6000-767</p>
                 </div>
 
-                <!-- Cartão com horários de funcionamento -->
+                <!-- cartão com horários de funcionamento -->
                 <div class="info-card">
                     <h3>Horário de Funcionamento</h3>
                     <p>Segunda a Sexta: 08:00 - 20:00</p>
@@ -91,7 +92,7 @@ include '../basedados/basedados.h';
                     <p>Domingo: Fechado</p>
                 </div>
 
-                <!-- Cartão com informações de contacto -->
+                <!-- cartão com informações de contacto -->
                 <div class="info-card" id="contactos">
                     <h3>Contactos</h3>
                     <p>Telefone: +351 999 999 999</p>
@@ -102,23 +103,20 @@ include '../basedados/basedados.h';
         </div>
     </section>
 
-    <!-- Rodapé da Página -->
+    <!-- rodapé da página com links para redes sociais e páginas informativas -->
     <footer class="footer">
-        <!-- Ligações para redes sociais -->
         <div class="social-links">
             <a href="#" class="social-link">FB</a>
             <a href="#" class="social-link">TW</a>
             <a href="#" class="social-link">IG</a>
         </div>
 
-        <!-- Ligações para páginas informativas -->
         <div class="footer-links">
             <a href="empresa.php" class="footer-link">Sobre Nós</a>
             <a href="empresa.php#contactos" class="footer-link">Contactos</a>
             <a href="consultar_rotas.php" class="footer-link">Rotas e Horários</a>
         </div>
 
-        <!-- Informação de direitos de autor -->
         <p>&copy; 2024 FelixBus. Todos os direitos reservados.</p>
     </footer>
 </body>

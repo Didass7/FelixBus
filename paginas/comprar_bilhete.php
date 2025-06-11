@@ -1,21 +1,22 @@
 <?php
+// inicia a sessão e inclui o ficheiro de configuração da base de dados
 session_start();
 include '../basedados/basedados.h';
 
-// Redirecionar para minhas viagens se a compra já foi concluída
+// redireciona para a página 'minhas_viagens.php' se uma compra já foi marcada como concluída
 if (isset($_SESSION['compra_concluida']) && $_SESSION['compra_concluida'] === true) {
     unset($_SESSION['compra_concluida']);
     header("Location: minhas_viagens.php");
     exit();
 }
 
-// Verificar se o utilizador está autenticado e tem perfil de cliente
+// verifica se o utilizador está autenticado e tem o perfil de 'cliente'
 if (!isset($_SESSION['id_utilizador']) || $_SESSION['perfil'] != 'cliente') {
     header("Location: login.php");
     exit();
 }
 
-// Verificar se os parâmetros necessários foram fornecidos
+// valida os parâmetros GET 'id_horario' e 'data_viagem'
 if (!isset($_GET['id_horario']) || empty($_GET['id_horario']) ||
     !isset($_GET['data_viagem']) || empty($_GET['data_viagem'])) {
     $_SESSION['mensagem'] = "ID do horário ou data não fornecidos.";
@@ -23,12 +24,13 @@ if (!isset($_GET['id_horario']) || empty($_GET['id_horario']) ||
     exit();
 }
 
+// inicializa variáveis com os dados da sessão e parâmetros GET
 $id_horario = intval($_GET['id_horario']);
 $data_viagem = $_GET['data_viagem'];
 $id_utilizador = $_SESSION['id_utilizador'];
 $mensagem = '';
 
-// Validar a data da viagem
+// valida a data da viagem, garantindo que não é no passado e está dentro de 30 dias
 $data_atual = date('Y-m-d');
 $data_limite = date('Y-m-d', strtotime('+30 days'));
 
@@ -44,7 +46,7 @@ if ($data_viagem > $data_limite) {
     exit();
 }
 
-// Obter informações do horário selecionado
+// obtém informações detalhadas do horário selecionado, incluindo origem, destino e bilhetes vendidos
 $sql_horario = "SELECT h.*, r.origem, r.destino,
                 (SELECT COUNT(*) FROM bilhetes b
                  WHERE b.id_horario = h.id_horario AND b.data_viagem = ?) as bilhetes_vendidos
@@ -53,7 +55,6 @@ $sql_horario = "SELECT h.*, r.origem, r.destino,
                 WHERE h.id_horario = ?";
 
 $stmt = $conn->prepare($sql_horario);
-
 if (!$stmt) {
     $_SESSION['mensagem'] = "Erro ao preparar a consulta: " . mysqli_error($conn);
     header("Location: consultar_rotas.php");
@@ -61,7 +62,6 @@ if (!$stmt) {
 }
 
 $stmt->bind_param("si", $data_viagem, $id_horario);
-
 if (!$stmt->execute()) {
     $_SESSION['mensagem'] = "Erro ao executar a consulta: {$stmt->error}";
     header("Location: consultar_rotas.php");
@@ -72,14 +72,14 @@ $result = $stmt->get_result();
 $horario = $result->fetch_assoc();
 $stmt->close();
 
-// Verificar se o horário existe e contém todos os dados necessários
+// verifica se o horário foi encontrado e contém os dados essenciais
 if (!$horario || !isset($horario['preco']) || !isset($horario['lugares_disponiveis'])) {
     $_SESSION['mensagem'] = "Horário não encontrado ou dados incompletos.";
     header("Location: consultar_rotas.php");
     exit();
 }
 
-// Criar ou obter registo na tabela viagens_diarias
+// cria ou obtém um registo na tabela 'viagens_diarias' para a data e horário especificados
 $sql_viagem_diaria = "INSERT INTO viagens_diarias (id_horario, data_viagem, lugares_disponiveis)
                       SELECT ?, ?, h.lugares_disponiveis
                       FROM horarios h
@@ -92,7 +92,7 @@ $stmt->execute();
 $id_viagem_diaria = $stmt->insert_id;
 $stmt->close();
 
-// Verificar disponibilidade de lugares para a data específica
+// verifica a disponibilidade de lugares para a viagem diária
 $sql_verificar_lugares = "SELECT lugares_disponiveis
                           FROM viagens_diarias
                           WHERE id_viagem_diaria = ?";
@@ -109,10 +109,10 @@ if ($viagem['lugares_disponiveis'] <= 0) {
     exit();
 }
 
-// Processar a compra quando o formulário é submetido
+// processa a compra do bilhete quando o formulário é submetido
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        // Verificar saldo da carteira do cliente
+        // verifica o saldo da carteira do cliente
         $sql_carteira = "SELECT id_carteira, saldo FROM carteiras WHERE id_utilizador = ?";
         $stmt = $conn->prepare($sql_carteira);
         $stmt->bind_param("i", $id_utilizador);
@@ -129,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("Saldo insuficiente. Por favor, carregue a sua carteira.");
         }
 
-        // Atualizar saldo do cliente
+        // atualiza o saldo da carteira do cliente
         $novo_saldo = $carteira_cliente['saldo'] - (float)$horario['preco'];
         $sql_update = "UPDATE carteiras SET saldo = ? WHERE id_carteira = ?";
         $stmt = $conn->prepare($sql_update);
@@ -137,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute();
         $stmt->close();
 
-        // Obter carteira da empresa
+        // obtém a carteira da empresa e atualiza o saldo
         $sql_empresa = "SELECT id_carteira FROM carteiras WHERE tipo = 'empresa' LIMIT 1";
         $stmt_empresa = $conn->prepare($sql_empresa);
         $stmt_empresa->execute();
@@ -149,14 +149,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("Carteira da empresa não encontrada.");
         }
 
-        // Atualizar saldo da empresa
         $sql_update = "UPDATE carteiras SET saldo = saldo + ? WHERE id_carteira = ?";
         $stmt = $conn->prepare($sql_update);
         $stmt->bind_param("di", $horario['preco'], $carteira_empresa['id_carteira']);
         $stmt->execute();
         $stmt->close();
 
-        // Registar a transação
+        // regista a transação da compra
         $sql_trans = "INSERT INTO transacoes (id_carteira_origem, id_carteira_destino, valor, tipo, descricao)
                       VALUES (?, ?, ?, 'bilhete', 'Compra de bilhete')";
         $stmt = $conn->prepare($sql_trans);
@@ -168,17 +167,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute();
         $stmt->close();
 
-        // Gerar código único para o bilhete
+        // gera um código único para o bilhete
         $codigo_bilhete = '';
         do {
-            // Gerar código aleatório de 8 caracteres
             $codigo_bilhete = '';
             $caracteres = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
             for ($i = 0; $i < 8; $i++) {
                 $codigo_bilhete .= $caracteres[rand(0, strlen($caracteres) - 1)];
             }
 
-            // Verificar se o código já existe
             $sql = "SELECT 1 FROM bilhetes WHERE codigo_bilhete = ?";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("s", $codigo_bilhete);
@@ -187,10 +184,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->close();
         } while ($result->num_rows > 0);
 
-        // Obter lugares já ocupados para este horário e data
-        $sql = "SELECT numero_lugar
-                FROM bilhetes
-                WHERE id_horario = ? AND data_viagem = ?";
+        // atribui um lugar disponível ao bilhete
+        $sql = "SELECT numero_lugar FROM bilhetes WHERE id_horario = ? AND data_viagem = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("is", $id_horario, $data_viagem);
         $stmt->execute();
@@ -202,7 +197,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $stmt->close();
 
-        // Obter capacidade total do autocarro
         $sql = "SELECT capacidade_autocarro FROM horarios WHERE id_horario = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("i", $id_horario);
@@ -212,18 +206,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $capacidade = $horario_capacidade['capacidade_autocarro'];
         $stmt->close();
 
-        // Calcular lugares disponíveis
-        $lugares_disponiveis = array_diff(range(1, $capacidade), $lugares_ocupados);
+        $lugares_disponiveis_numeros = array_diff(range(1, $capacidade), $lugares_ocupados);
 
-        // Verificar se há lugares disponíveis
-        if (empty($lugares_disponiveis)) {
-            throw new Exception("Não há lugares disponíveis.");
+        if (empty($lugares_disponiveis_numeros)) {
+            throw new Exception("Não há lugares específicos disponíveis para atribuição, embora a contagem geral indicasse disponibilidade.");
         }
 
-        // Selecionar um lugar aleatório dos disponíveis
-        $lugar = array_rand(array_flip($lugares_disponiveis));
+        $lugar = array_rand(array_flip($lugares_disponiveis_numeros));
 
-        // Criar o bilhete
+        // cria o registo do bilhete na base de dados
         $sql_bilhete = "INSERT INTO bilhetes (codigo_bilhete, id_horario, id_utilizador, data_viagem, preco_pago, numero_lugar)
                         VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql_bilhete);
@@ -238,16 +229,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute();
         $stmt->close();
 
-        // Atualizar lugares disponíveis
-        $sql_lugares = "UPDATE viagens_diarias
-                        SET lugares_disponiveis = lugares_disponiveis - 1
-                        WHERE id_viagem_diaria = ?";
+        // atualiza o número de lugares disponíveis
+        $sql_lugares = "UPDATE viagens_diarias SET lugares_disponiveis = lugares_disponiveis - 1 WHERE id_viagem_diaria = ?";
         $stmt = $conn->prepare($sql_lugares);
         $stmt->bind_param("i", $id_viagem_diaria);
         $stmt->execute();
         $stmt->close();
 
-        // Redirecionar
         $_SESSION['compra_concluida'] = true;
         header("Location: minhas_viagens.php");
         exit();
@@ -268,13 +256,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
-        // Prevenir navegação para trás
+        // força a navegação para a frente, tentando impedir que o utilizador use o botão "voltar" do navegador.
+        // isto ajuda a evitar problemas com o estado da página após uma submissão de formulário.
         window.history.forward();
         function noBack() {
             window.history.forward();
         }
 
-        // Prevenir reenvio do formulário
+        // previne o reenvio do formulário ao atualizar a página.
+        // substitui o estado atual no histórico do navegador por null,
+        // o que significa que uma atualização não tentará reenviar os dados do POST.
         if (window.history.replaceState) {
             window.history.replaceState(null, null, window.location.href);
         }

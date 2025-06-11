@@ -1,43 +1,32 @@
 <?php
-/**
- * Sistema de Gestão de Carteiras
- *
- * Este ficheiro permite que funcionários e administradores gerenciem as carteiras dos clientes,
- * realizando operações de depósito e levantamento.
- *
- * @author FelixBus
- * @version 1.0
- */
-
+// inicializa a sessão e verifica permissões de acesso do utilizador
 session_start();
 include '../basedados/basedados.h';
 
-// Verificar permissões de acesso
 if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'funcionário' && $_SESSION['perfil'] !== 'administrador')) {
     header("Location: login.php");
     exit();
 }
 
-// Inicializar variáveis
+// inicializa variáveis para mensagens e saldo da empresa
 $mensagem = '';
 $erro = '';
 $saldo_empresa = 0;
 
-// Obter saldo da empresa
+// obtém o saldo total da empresa a partir da base de dados
 $result_empresa = $conn->query("SELECT saldo FROM carteiras WHERE tipo = 'empresa' LIMIT 1");
 if ($empresa = $result_empresa->fetch_assoc()) {
     $saldo_empresa = $empresa['saldo'];
 }
 $result_empresa->close();
 
-// Processar operações de carteira (depósito ou levantamento)
+// processa operações de depósito ou levantamento submetidas pelo formulário
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Obter dados do formulário
     $id_cliente = $_POST['id_cliente'];
     $operacao = $_POST['operacao'];
     $valor = (double)$_POST['valor'];
 
-    // Obter carteira do cliente
+    // verifica se a carteira do cliente existe
     $stmt = $conn->prepare("SELECT id_carteira, saldo FROM carteiras WHERE id_utilizador = ?");
     $stmt->bind_param("i", $id_cliente);
     $stmt->execute();
@@ -45,11 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $carteira = $result->fetch_assoc();
     $stmt->close();
 
-    // Verificar se a carteira existe
     if (!$carteira) {
         $erro = "Carteira não encontrada.";
     } else {
-        // Processar depósito
+        // realiza depósito na carteira do cliente
         if ($operacao === 'deposito') {
             $novo_saldo = $carteira['saldo'] + $valor;
             $stmt = $conn->prepare("UPDATE carteiras SET saldo = ? WHERE id_carteira = ?");
@@ -62,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $stmt->close();
         }
-        // Processar levantamento
+        // realiza levantamento se o saldo for suficiente
         elseif ($operacao === 'levantamento') {
             if ($carteira['saldo'] >= $valor) {
                 $novo_saldo = $carteira['saldo'] - $valor;
@@ -82,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Obter lista de clientes com seus saldos
+// obtém a lista de clientes e os respetivos saldos
 $sql_clientes = "SELECT u.id_utilizador, u.nome_completo, u.email, c.saldo
                 FROM utilizadores u
                 LEFT JOIN carteiras c ON u.id_utilizador = c.id_utilizador
@@ -99,7 +87,7 @@ $result_clientes = $conn->query($sql_clientes);
     <link rel="stylesheet" href="gerir_carteiras.css">
 </head>
 <body>
-    <!-- Barra de navegação -->
+    <!-- barra de navegação com links para diferentes áreas do sistema -->
     <nav class="navbar">
         <div class="logo">
             <a href="index.php">
@@ -117,9 +105,8 @@ $result_clientes = $conn->query($sql_clientes);
         </div>
     </nav>
 
-    <!-- Conteúdo principal -->
+    <!-- exibe o saldo total da empresa -->
     <main class="container">
-        <!-- Carteira da empresa -->
         <div class="empresa-carteira">
             <div class="carteira-empresa-card">
                 <h2>Carteira da Empresa</h2>
@@ -132,7 +119,7 @@ $result_clientes = $conn->query($sql_clientes);
 
         <h1>Gestão de Carteiras</h1>
 
-        <!-- Mensagens de alerta -->
+        <!-- exibe mensagens de sucesso ou erro -->
         <?php if ($mensagem): ?>
             <div class="alert success"><?php echo htmlspecialchars($mensagem); ?></div>
         <?php endif; ?>
@@ -140,7 +127,7 @@ $result_clientes = $conn->query($sql_clientes);
             <div class="alert error"><?php echo htmlspecialchars($erro); ?></div>
         <?php endif; ?>
 
-        <!-- Lista de carteiras dos clientes -->
+        <!-- lista as carteiras dos clientes com opções de depósito e levantamento -->
         <div class="carteiras-grid">
             <?php while ($cliente = $result_clientes->fetch_assoc()): ?>
                 <div class="carteira-card">
@@ -149,7 +136,7 @@ $result_clientes = $conn->query($sql_clientes);
                     <p>Saldo Atual: <?php echo htmlspecialchars(number_format($cliente['saldo'] ?? 0, 2)); ?>€</p>
 
                     <div class="operacoes">
-                        <!-- Formulário de depósito -->
+                        <!-- formulário para realizar depósito -->
                         <form action="gerir_carteiras.php" method="POST" class="operacao-form">
                             <input type="hidden" name="id_cliente" value="<?php echo htmlspecialchars($cliente['id_utilizador']); ?>">
                             <input type="hidden" name="operacao" value="deposito">
@@ -159,7 +146,7 @@ $result_clientes = $conn->query($sql_clientes);
                             </div>
                         </form>
 
-                        <!-- Formulário de levantamento -->
+                        <!-- formulário para realizar levantamento -->
                         <form action="gerir_carteiras.php" method="POST" class="operacao-form">
                             <input type="hidden" name="id_cliente" value="<?php echo htmlspecialchars($cliente['id_utilizador']); ?>">
                             <input type="hidden" name="operacao" value="levantamento">
@@ -174,7 +161,7 @@ $result_clientes = $conn->query($sql_clientes);
         </div>
     </main>
 
-    <!-- Rodapé -->
+    <!-- rodapé com links úteis e redes sociais -->
     <footer class="footer">
         <div class="social-links">
             <a href="#" class="social-link">FB</a>

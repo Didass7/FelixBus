@@ -1,47 +1,38 @@
 <?php
-/**
- * Gestão de Utilizadores
- *
- * Este ficheiro permite ao administrador gerir utilizadores do sistema FelixBus,
- * incluindo inserção, edição, validação e remoção de utilizadores.
- *
- * Acesso ao ficheiro: apenas Administradores.
- */
-
-// Inicia a sessão
+// inicia a sessão
 session_start();
 
-// Inclui o ficheiro de ligação à base de dados
+// inclui o ficheiro de ligação à base de dados
 include '../basedados/basedados.h';
 
-// Verifica se o utilizador está autenticado e tem perfil de administrador
+// verifica se o utilizador está autenticado e tem perfil de administrador
 if (!isset($_SESSION['id_utilizador']) || $_SESSION['perfil'] !== 'administrador') {
     header("Location: login.php");
     exit();
 }
 
-// Inicializa variáveis de mensagens
+// inicializa variáveis de mensagens
 $mensagem = '';
 $erro = '';
 
-// Verifica se existe mensagem na sessão
+// verifica se existe mensagem na sessão
 if (isset($_SESSION['mensagem'])) {
     $mensagem = $_SESSION['mensagem'];
     unset($_SESSION['mensagem']);
 }
 
 /**
- * Processa as ações de gestão de utilizadores
+ * processa as ações de gestão de utilizadores
  */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
     $acao = $_POST['acao'];
 
-    // Obtém o ID do utilizador para ações que o requerem
+    // obtém o ID do utilizador para ações que o requerem
     $id = $_POST['id_utilizador'] ?? null;
 
     switch ($acao) {
         case 'inserir':
-            // Recolhe e limpa os dados do formulário
+            // recolhe e limpa os dados do formulário
             $nome = trim($_POST['nome']);
             $email = trim($_POST['email']);
             $nome_utilizador = trim($_POST['username']);
@@ -50,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
             $telefone = trim($_POST['telefone']);
             $morada = trim($_POST['morada']);
 
-            // Verificar se já existe um utilizador com o mesmo nome de utilizador
+            // verificar se já existe um utilizador com o mesmo nome de utilizador
             $sql_check_username = "SELECT id_utilizador FROM utilizadores WHERE nome_utilizador = ?";
             $stmt_check_username = $conn->prepare($sql_check_username);
             $stmt_check_username->bind_param("s", $nome_utilizador);
@@ -64,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
             }
             $stmt_check_username->close();
 
-            // Verificar se já existe um utilizador com o mesmo email
+            // verificar se já existe um utilizador com o mesmo email
             $sql_check_email = "SELECT id_utilizador FROM utilizadores WHERE email = ?";
             $stmt_check_email = $conn->prepare($sql_check_email);
             $stmt_check_email->bind_param("s", $email);
@@ -78,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
             }
             $stmt_check_email->close();
 
-            // Se não existem duplicados, proceder com a inserção
+            // se não existem duplicados, proceder com a inserção
             $sql = "INSERT INTO utilizadores (nome_completo, email, nome_utilizador, hash_password, perfil, telefone, morada)
                     VALUES (?, ?, ?, ?, ?, ?, ?)";
             $stmt = $conn->prepare($sql);
@@ -93,14 +84,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
             break;
 
         case 'editar':
-            // Recolhe e limpa os dados do formulário
+            // recolhe e limpa os dados do formulário
             $nome = trim($_POST['nome']);
             $email = trim($_POST['email']);
             $perfil = $_POST['perfil'];
             $telefone = trim($_POST['telefone']);
             $morada = trim($_POST['morada']);
 
-            // Verificar se já existe outro utilizador com o mesmo email (excluindo o utilizador atual)
+            // verificar se já existe outro utilizador com o mesmo email (excluindo o utilizador atual)
             $sql_check_email = "SELECT id_utilizador FROM utilizadores WHERE email = ? AND id_utilizador != ?";
             $stmt_check_email = $conn->prepare($sql_check_email);
             $stmt_check_email->bind_param("si", $email, $id);
@@ -114,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
             }
             $stmt_check_email->close();
 
-            // Verifica se foi fornecida uma nova password
+            // verifica se foi fornecida uma nova password
             if (!empty($_POST['password'])) {
                 $hash_password = md5($_POST['password']);
                 $sql = "UPDATE utilizadores
@@ -141,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
             break;
 
         case 'validar':
-            // Atualiza o estado de validação para 1 (validado)
+            // atualiza o estado de validação para 1 (validado)
             $sql = "UPDATE utilizadores SET validado = 1 WHERE id_utilizador = ?";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("i", $id);
@@ -156,7 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
             break;
 
         case 'rejeitar':
-            // Remove utilizador não validado
+            // remove utilizador não validado
             $sql = "DELETE FROM utilizadores WHERE id_utilizador = ? AND validado = 0";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("i", $id);
@@ -169,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
             break;
 
         case 'desvalidar':
-            // Atualiza o estado de validação para 0 (não validado)
+            // atualiza o estado de validação para 0 (não validado)
             $sql = "UPDATE utilizadores SET validado = 0 WHERE id_utilizador = ?";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("i", $id);
@@ -184,7 +175,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
 }
 
 /**
- * Obtém dados do utilizador para edição
+ * obtém dados do utilizador para edição
  */
 $utilizador_edicao = null;
 if (isset($_GET['editar']) && is_numeric($_GET['editar'])) {
@@ -198,7 +189,7 @@ if (isset($_GET['editar']) && is_numeric($_GET['editar'])) {
 }
 
 /**
- * Obtém lista de todos os utilizadores
+ * obtém lista de todos os utilizadores
  */
 $sql = "SELECT * FROM utilizadores ORDER BY data_registo DESC";
 $result = $conn->query($sql);

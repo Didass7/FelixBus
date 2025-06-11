@@ -2,22 +2,13 @@
 session_start();
 include '../basedados/basedados.h';
 
-/**
- * Sistema de Gestão de Bilhetes
- *
- * Este ficheiro permite que funcionários e administradores comprem bilhetes para clientes.
- *
- * @author FelixBus
- * @version 1.0
- */
-
-// Verificar permissões de acesso
+// verifica permissões de acesso
 if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'funcionário' && $_SESSION['perfil'] !== 'administrador')) {
     header("Location: login.php");
     exit();
 }
 
-// Inicializar variáveis
+// inicializa variáveis
 $mensagem = '';
 $erro = '';
 $resultados = [];
@@ -25,13 +16,13 @@ $origens = [];
 $destinos = [];
 $cliente_info = [];
 
-// Obter mensagem da sessão, se existir
+// obtém mensagem da sessão, se existir
 if (isset($_SESSION['mensagem'])) {
     $mensagem = $_SESSION['mensagem'];
     unset($_SESSION['mensagem']);
 }
 
-// Obter lista de clientes
+// obtém lista de clientes
 $sql_clientes = "SELECT u.id_utilizador, u.nome_completo, u.email, c.saldo
                 FROM utilizadores u
                 LEFT JOIN carteiras c ON u.id_utilizador = c.id_utilizador
@@ -39,43 +30,41 @@ $sql_clientes = "SELECT u.id_utilizador, u.nome_completo, u.email, c.saldo
                 ORDER BY u.nome_completo ASC";
 $result_clientes = $conn->query($sql_clientes);
 
-// Processar seleção de cliente
+// processa seleção de cliente
 if (isset($_GET['id_cliente'])) {
     $id_cliente = $_GET['id_cliente'];
 
-    // Obter informações do cliente selecionado
+    // obtém informações do cliente selecionado
     $stmt = $conn->prepare("SELECT nome_completo, email FROM utilizadores WHERE id_utilizador = ?");
     $stmt->bind_param("i", $id_cliente);
     $stmt->execute();
     $result = $stmt->get_result();
     $cliente_info = $result->fetch_assoc();
 
-    // Obter origens disponíveis
+    // obtém origens disponíveis
     $result_origens = $conn->query("SELECT DISTINCT origem FROM rotas WHERE origem IS NOT NULL ORDER BY origem");
     while ($row = $result_origens->fetch_assoc()) {
         $origens[] = $row['origem'];
     }
 
-    // Obter destinos disponíveis
+    // obtém destinos disponíveis
     $result_destinos = $conn->query("SELECT DISTINCT destino FROM rotas WHERE destino IS NOT NULL ORDER BY destino");
     while ($row = $result_destinos->fetch_assoc()) {
         $destinos[] = $row['destino'];
     }
 
-    // Definir parâmetros de pesquisa
+    // define parâmetros de pesquisa
     $origem = trim($_GET['origem'] ?? '');
     $destino = trim($_GET['destino'] ?? '');
     $data_viagem = $_GET['data_viagem'] ?? date('Y-m-d');
 
-    // Garantir que existam registos de viagens diárias para todos os horários na data selecionada
-    // Obter todos os horários disponíveis
+    // garante que existam registos de viagens diárias para todos os horários na data selecionada
     $result_horarios = $conn->query("SELECT id_horario, lugares_disponiveis FROM horarios");
     $todos_horarios = [];
     while ($horario = $result_horarios->fetch_assoc()) {
         $todos_horarios[$horario['id_horario']] = $horario['lugares_disponiveis'];
     }
 
-    // Verificar quais horários já têm registos para a data selecionada
     $stmt = $conn->prepare("SELECT id_horario FROM viagens_diarias WHERE data_viagem = ?");
     $stmt->bind_param("s", $data_viagem);
     $stmt->execute();
@@ -86,7 +75,6 @@ if (isset($_GET['id_cliente'])) {
         $horarios_existentes[] = $row['id_horario'];
     }
 
-    // Criar registos para horários que ainda não existem na data selecionada
     foreach ($todos_horarios as $id_horario => $lugares_disponiveis) {
         if (!in_array($id_horario, $horarios_existentes)) {
             $stmt = $conn->prepare(
@@ -96,7 +84,7 @@ if (isset($_GET['id_cliente'])) {
         }
     }
 
-    // Processar pesquisa de rotas
+    // processa pesquisa de rotas
     if (isset($_GET['pesquisar'])) {
         $sql = "SELECT h.id_horario, r.origem, r.destino,
                    TIME(h.hora_partida) as hora_partida,
@@ -108,11 +96,9 @@ if (isset($_GET['id_cliente'])) {
                 JOIN viagens_diarias vd ON h.id_horario = vd.id_horario AND vd.data_viagem = ?
                 WHERE 1=1";
 
-        // Preparar parâmetros
         $params = [$data_viagem];
         $types = "s";
 
-        // Adicionar filtros se fornecidos
         if (!empty($origem)) {
             $sql .= " AND r.origem = ?";
             $params[] = $origem;
@@ -127,7 +113,6 @@ if (isset($_GET['id_cliente'])) {
 
         $sql .= " ORDER BY h.hora_partida ASC";
 
-        // Executar consulta
         $stmt = $conn->prepare($sql);
         if ($stmt) {
             $stmt->bind_param($types, ...$params);

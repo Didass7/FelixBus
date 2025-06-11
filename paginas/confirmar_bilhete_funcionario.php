@@ -1,30 +1,21 @@
 <?php
-/**
- * Confirmação de Compra de Bilhetes por Funcionários - FelixBus
- *
- * Esta página permite que funcionários comprem bilhetes para clientes.
- *
- * @author FelixBus
- * @version 1.0
- */
-
 session_start();
 include '../basedados/basedados.h';
 
-// Verificar permissões de acesso
+// verifica permissões de acesso do utilizador
 if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'funcionário' && $_SESSION['perfil'] !== 'administrador')) {
     header("Location: login.php");
     exit();
 }
 
-// Verificar parâmetros necessários
+// valida os parâmetros necessários para a operação
 if (!isset($_GET['id_horario']) || !isset($_GET['data_viagem']) || !isset($_GET['id_cliente'])) {
     $_SESSION['mensagem'] = "Informações necessárias não fornecidas.";
     header("Location: gerir_bilhetes.php");
     exit();
 }
 
-// Inicializar variáveis
+// inicializa variáveis com os dados fornecidos e da sessão
 $id_horario = intval($_GET['id_horario']);
 $data_viagem = $_GET['data_viagem'];
 $id_cliente = intval($_GET['id_cliente']);
@@ -32,7 +23,7 @@ $id_funcionario = $_SESSION['id_utilizador'];
 $mensagem = '';
 $saldo_suficiente = true;
 
-// Validar data da viagem
+// valida a data da viagem, garantindo que não é no passado e está dentro de 30 dias
 $data_atual = date('Y-m-d');
 $data_limite = date('Y-m-d', strtotime('+30 days'));
 
@@ -48,7 +39,7 @@ if ($data_viagem > $data_limite) {
     exit();
 }
 
-// Obter informações do cliente
+// obtém informações do cliente a partir do id fornecido
 $stmt = $conn->prepare("SELECT nome_completo, email FROM utilizadores WHERE id_utilizador = ? AND perfil = 'cliente'");
 $stmt->bind_param("i", $id_cliente);
 $stmt->execute();
@@ -62,7 +53,7 @@ if (!$cliente) {
     exit();
 }
 
-// Obter informações do horário
+// obtém informações do horário selecionado
 $sql_horario = "SELECT h.*, r.origem, r.destino
                 FROM horarios h
                 INNER JOIN rotas r ON h.id_rota = r.id_rota
@@ -80,7 +71,7 @@ if (!$horario || !isset($horario['preco'])) {
     exit();
 }
 
-// Obter ou criar registo na tabela viagens_diarias
+// cria ou obtém registo na tabela viagens_diarias para a data e horário especificados
 $stmt = $conn->prepare("INSERT INTO viagens_diarias (id_horario, data_viagem, lugares_disponiveis)
                       SELECT ?, ?, h.lugares_disponiveis
                       FROM horarios h
@@ -91,7 +82,7 @@ $stmt->execute();
 $id_viagem_diaria = $stmt->insert_id;
 $stmt->close();
 
-// Verificar lugares disponíveis
+// verifica a disponibilidade de lugares para a viagem diária
 $stmt = $conn->prepare("SELECT lugares_disponiveis FROM viagens_diarias WHERE id_viagem_diaria = ?");
 $stmt->bind_param("i", $id_viagem_diaria);
 $stmt->execute();
@@ -105,7 +96,7 @@ if ($viagem['lugares_disponiveis'] <= 0) {
     exit();
 }
 
-// Verificar saldo do cliente
+// verifica o saldo do cliente para a compra
 $stmt = $conn->prepare("SELECT id_carteira, saldo FROM carteiras WHERE id_utilizador = ?");
 $stmt->bind_param("i", $id_cliente);
 $stmt->execute();
@@ -117,10 +108,10 @@ if (!$carteira_cliente || $carteira_cliente['saldo'] < $horario['preco']) {
     $saldo_suficiente = false;
 }
 
-// Processar compra quando o formulário é submetido
+// processa a compra do bilhete quando o formulário é submetido
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $saldo_suficiente) {
     try {
-        // Verificar saldo novamente (pode ter mudado)
+        // verifica novamente o saldo do cliente
         $stmt = $conn->prepare("SELECT id_carteira, saldo FROM carteiras WHERE id_utilizador = ?");
         $stmt->bind_param("i", $id_cliente);
         $stmt->execute();
@@ -136,14 +127,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $saldo_suficiente) {
             throw new Exception("Saldo insuficiente. O cliente precisa carregar a carteira.");
         }
 
-        // 1. Atualizar saldo do cliente
+        // atualiza o saldo do cliente e da empresa, regista a transação e gera o bilhete
         $novo_saldo = $carteira_cliente['saldo'] - (float)$horario['preco'];
         $stmt = $conn->prepare("UPDATE carteiras SET saldo = ? WHERE id_carteira = ?");
         $stmt->bind_param("di", $novo_saldo, $carteira_cliente['id_carteira']);
         $stmt->execute();
         $stmt->close();
 
-        // 2. Obter carteira da empresa
         $stmt_empresa = $conn->prepare("SELECT id_carteira FROM carteiras WHERE tipo = 'empresa' LIMIT 1");
         $stmt_empresa->execute();
         $result_empresa = $stmt_empresa->get_result();
@@ -154,13 +144,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $saldo_suficiente) {
             throw new Exception("Carteira da empresa não encontrada.");
         }
 
-        // 3. Atualizar saldo da empresa
         $stmt = $conn->prepare("UPDATE carteiras SET saldo = saldo + ? WHERE id_carteira = ?");
         $stmt->bind_param("di", $horario['preco'], $carteira_empresa['id_carteira']);
         $stmt->execute();
         $stmt->close();
 
-        // 4. Registar transação
         $stmt = $conn->prepare("INSERT INTO transacoes (id_carteira_origem, id_carteira_destino, valor, tipo, descricao)
                               VALUES (?, ?, ?, 'bilhete', 'Compra de bilhete por funcionário')");
         $stmt->bind_param("iid",
@@ -171,7 +159,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $saldo_suficiente) {
         $stmt->execute();
         $stmt->close();
 
-        // 5. Gerar código único para o bilhete
         do {
             $codigo_bilhete = '';
             $caracteres = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -187,7 +174,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $saldo_suficiente) {
             $stmt->close();
         } while ($exists);
 
-        // 6. Encontrar lugar disponível
         $stmt = $conn->prepare("SELECT numero_lugar FROM bilhetes WHERE id_horario = ? AND data_viagem = ?");
         $stmt->bind_param("is", $id_horario, $data_viagem);
         $stmt->execute();
@@ -215,7 +201,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $saldo_suficiente) {
 
         $lugar = array_rand(array_flip($lugares_disponiveis));
 
-        // 7. Inserir bilhete
         $stmt = $conn->prepare("INSERT INTO bilhetes (codigo_bilhete, id_horario, id_utilizador, data_viagem, preco_pago, numero_lugar, comprado_por)
                               VALUES (?, ?, ?, ?, ?, ?, ?)");
         $stmt->bind_param("siisdii",
@@ -230,7 +215,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $saldo_suficiente) {
         $stmt->execute();
         $stmt->close();
 
-        // 8. Atualizar lugares disponíveis
         $stmt = $conn->prepare("UPDATE viagens_diarias SET lugares_disponiveis = lugares_disponiveis - 1 WHERE id_viagem_diaria = ?");
         $stmt->bind_param("i", $id_viagem_diaria);
         $stmt->execute();

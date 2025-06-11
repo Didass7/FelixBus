@@ -64,26 +64,6 @@ $stmt->close();
         <h2>Minhas Viagens</h2>
 
         <!-- Mensagens de Sistema -->
-        <?php if (isset($_GET['cancelamento']) && $_GET['cancelamento'] == 'sucesso'): ?>
-            <div class="success-message">
-                Viagem cancelada com sucesso! O valor foi reembolsado para sua carteira.
-            </div>
-        <?php endif; ?>
-
-        <?php if (isset($_GET['erro'])): ?>
-            <div class="error-message">
-                <?php
-                $mensagens_erro = [
-                    'nao_encontrado' => "Bilhete não encontrado no sistema.",
-                    'partida' => "Não é possível cancelar esta viagem pois já partiu.",
-                    'limite_tempo' => "Não é possível cancelar a viagem com menos de 1 hora de antecedência.",
-                    'sistema' => "Ocorreu um erro no sistema. Por favor, tente novamente."
-                ];
-                echo $mensagens_erro[$_GET['erro']] ?? "Erro ao processar o cancelamento. Por favor, tente novamente.";
-                ?>
-            </div>
-        <?php endif; ?>
-
         <?php if (isset($_GET['success'])): ?>
             <div class="success-message">
                 Viagem reservada com sucesso!
@@ -110,20 +90,6 @@ $stmt->close();
                             <p><strong>Chegada:</strong> <?php echo htmlspecialchars(date('H:i', strtotime($viagem['hora_chegada_time']))); ?></p>
                             <p><strong>Lugar:</strong> <?php echo htmlspecialchars($viagem['numero_lugar']); ?></p>
                             <p><strong>Preço:</strong> <?php echo htmlspecialchars(number_format($viagem['preco_pago'], 2, ',', '.')); ?> €</p>
-
-                            <?php
-                            // Verifica se a viagem ainda não partiu para mostrar opção de cancelamento
-                            $data_hora_partida = date('Y-m-d H:i:s', strtotime($viagem['data_viagem'] . ' ' . $viagem['hora_partida_time']));
-                            if (strtotime($data_hora_partida) > time()):
-                            ?>
-                                <div class="trip-actions">
-                                    <a href="cancelar_viagem.php?id=<?php echo htmlspecialchars($viagem['codigo_bilhete']); ?>"
-                                       class="btn-secondary"
-                                       onclick="return confirm('Tem certeza que deseja cancelar esta viagem?')">
-                                        Cancelar Viagem
-                                    </a>
-                                </div>
-                            <?php endif; ?>
                         </div>
                     </div>
                 <?php endforeach; ?>

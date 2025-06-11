@@ -1,19 +1,9 @@
 <?php
-/**
- * Página Inicial do Funcionário - FelixBus
- *
- * Esta página apresenta o painel de gestão para funcionários,
- * com acesso às principais funcionalidades do sistema.
- *
- * @author FelixBus
- * @version 1.0
- */
+session_start(); // inicia a sessão
 
-// Iniciar sessão e incluir ligação à base de dados
-session_start();
-include '../basedados/basedados.h';
+include '../basedados/basedados.h'; // inclui a ligação à base de dados
 
-// Verificar se o utilizador está autenticado como funcionário
+// verifica se o utilizador está autenticado como funcionário
 if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'funcionário')) {
     header("Location: login.php");
     exit();
@@ -28,7 +18,7 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'funcionário
     <link rel="stylesheet" href="pagina_inicial_funcionario.css">
 </head>
 <body>
-    <!-- Barra de navegação -->
+    <!-- barra de navegação com links principais -->
     <nav class="navbar">
         <div class="logo">
             <a href="pagina_inicial_funcionario.php">
@@ -42,15 +32,13 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'funcionário
         </div>
     </nav>
 
-    <!-- Hero section com imagem de fundo -->
+    <!-- secção principal com funcionalidades de gestão -->
     <section class="hero">
         <div class="hero-content">
             <h1>Painel de Gestão</h1>
             <p class="hero-subtitle">Bem-vindo à área do funcionário da FelixBus</p>
 
-            <!-- Cartões de funcionalidades -->
             <div class="dashboard-cards">
-                <!-- Gestão de Carteiras -->
                 <a href="gerir_carteiras.php" class="dashboard-card">
                     <div class="card-content">
                         <h3>Gestão de Carteiras</h3>
@@ -58,7 +46,6 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'funcionário
                     </div>
                 </a>
 
-                <!-- Gestão de Bilhetes -->
                 <a href="gerir_bilhetes.php" class="dashboard-card">
                     <div class="card-content">
                         <h3>Gestão de Bilhetes</h3>
@@ -66,7 +53,6 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'funcionário
                     </div>
                 </a>
 
-                <!-- Perfil do Funcionário -->
                 <a href="perfil.php" class="dashboard-card">
                     <div class="card-content">
                         <h3>O Meu Perfil</h3>
@@ -77,7 +63,7 @@ if (!isset($_SESSION['id_utilizador']) || ($_SESSION['perfil'] !== 'funcionário
         </div>
     </section>
 
-    <!-- Rodapé -->
+    <!-- rodapé com links úteis -->
     <footer class="footer">
         <div class="footer-links">
             <a href="empresa.php" class="footer-link">Sobre Nós</a>
