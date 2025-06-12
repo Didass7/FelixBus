@@ -1,18 +1,22 @@
 <?php
-session_start(); // inicia a sessão do utilizador
-
-include '../basedados/basedados.h'; // inclui a ligação à base de dados
+session_start();
+include '../basedados/basedados.h';
 
 // verifica se o utilizador já está autenticado e redireciona para a página apropriada
 if (isset($_SESSION['id_utilizador'])) {
-    $pagina_destino = match($_SESSION['perfil']) {
-        'administrador' => 'pagina_inicial_admin.php',
-        'funcionário' => 'pagina_inicial_funcionario.php',
-        'cliente' => 'pagina_inicial_cliente.php',
-        default => 'login.php',
-    };
-
-    header("Location: $pagina_destino");
+    switch ($_SESSION['perfil']) {
+        case 'administrador':
+            header("Location: pagina_inicial_admin.php");
+            break;
+        case 'funcionário':
+            header("Location: pagina_inicial_funcionario.php");
+            break;
+        case 'cliente':
+            header("Location: pagina_inicial_cliente.php");
+            break;
+        default:
+            header("Location: login.php");
+    }
     exit();
 }
 
@@ -53,13 +57,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['morada'] = $user['morada'];
                     $_SESSION['data_registo'] = $user['data_registo'];
 
-                    $pagina_destino = match($user['perfil']) {
-                        'administrador' => 'pagina_inicial_admin.php',
-                        'funcionário' => 'pagina_inicial_funcionario.php',
-                        default => 'pagina_inicial_cliente.php',
-                    };
-
-                    header("Location: $pagina_destino");
+                    switch ($user['perfil']) {
+                        case 'administrador':
+                            header("Location: pagina_inicial_admin.php");
+                            break;
+                        case 'funcionário':
+                            header("Location: pagina_inicial_funcionario.php");
+                            break;
+                        default:
+                            header("Location: pagina_inicial_cliente.php");
+                    }
                     exit();
                 } else {
                     $error = "Credenciais inválidas!";

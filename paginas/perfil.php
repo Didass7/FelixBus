@@ -4,7 +4,10 @@ session_start(); // inicia a sessão
 include '../basedados/basedados.h'; // inclui a ligação à base de dados
 
 // verifica se o utilizador está autenticado com perfil válido
-if (!isset($_SESSION['id_utilizador']) || !in_array($_SESSION['perfil'], ['cliente', 'funcionário', 'administrador'])) {
+if (!isset($_SESSION['id_utilizador']) || 
+    ($_SESSION['perfil'] != 'cliente' && 
+     $_SESSION['perfil'] != 'funcionário' && 
+     $_SESSION['perfil'] != 'administrador')) {
     header("Location: login.php");
     exit();
 }
