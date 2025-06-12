@@ -81,6 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         try {
+            //Verifica se já existe um utilizador com o mesmo nome de utilizador
             $sql_check = "SELECT id_utilizador FROM utilizadores WHERE nome_utilizador = ?";
             $stmt_check = $conn->prepare($sql_check);
             $stmt_check->bind_param("s", $username);
@@ -93,8 +94,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $stmt_check->close();
 
+            //converte a senha para um hash MD5
             $hashed_password = md5($password);
 
+            //insere dados na tabela utilizadores
             $sql_insert = "INSERT INTO utilizadores
                           (email, hash_password, perfil, nome_utilizador, data_registo, nome_completo, telefone, morada)
                           VALUES (?, ?, 'cliente', ?, NOW(), ?, ?, ?)";
