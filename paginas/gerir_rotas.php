@@ -3,6 +3,9 @@
 session_start();
 include '../basedados/basedados.h';
 
+$mensagem = '';
+$erro = '';
+
 // valida autenticação de administrador
 if (!isset($_SESSION['id_utilizador']) || $_SESSION['perfil'] !== 'administrador') {
     header("Location: login.php");
