@@ -1,6 +1,6 @@
-Project Title: FelixBus: Bus Travel Management Web Application
+<h2>Project Title: FelixBus: Bus Travel Management Web Application</h2>
 
-Technologies: PHP, MySQL, SQL, HTML/CSS
+<h3>Technologies: PHP, MySQL, SQL, HTML/CSS</h3>
 
 Description:
 
